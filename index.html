@@ -526,6 +526,7 @@ a.src:hover { color: var(--accent); border-color: var(--accent); }
 .g-input { position: relative; } .g-input .input { text-align: right; padding-right: 22px; font-family: var(--f-display); font-size: 20px; font-weight: 600; }
 .g-input span { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--ink-3); }
 .tag.bad { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
+.alert-card { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); display: grid; gap: 8px; }
 </style>
 </head><body>
 <div class="app">
@@ -829,7 +830,7 @@ const KB = [
 <li><b>Dimanche · Repos.</b></li>
 </ul>
 <p><b>Progression :</b> double progression. Reste sur la même charge tant que toutes les séries n'atteignent pas le haut de la fourchette ; ensuite l'app propose +2,5 kg (haut du corps) ou +5 kg (squat, soulevé de terre, presse, hip thrust). <b>Repos :</b> 3 min sur les gros mouvements, 45 s à 1 min 30 sur l'isolation ; le chrono se règle tout seul.</p>
-<p><b>Alternance TNT :</b> toutes les 6 à 8 semaines, fais une semaine plus légère (moitié des séries, mêmes charges) pour laisser tendons et système nerveux récupérer.</p>`,
+<p><b>Alternance TNT, automatique :</b> la 7e semaine de chaque cycle, l'app divise tes séries par deux en gardant les charges, pour laisser tendons et système nerveux récupérer. Au début du cycle suivant, elle te propose de changer de variante sur un exercice par séance (jamais tes mouvements de référence). Réglable dans Menu › Réglages.</p>`,
     src: 'Construit à partir de la Méthode Delavier 2 (programme avancé 5 jours, rattrapage des pectoraux, alternance TNT, récupération)',
   },
   {
@@ -839,7 +840,7 @@ const KB = [
 <li><b>Calories en vagues :</b> un peu plus les jours d'entraînement, un peu moins les jours de repos, environ +150 kcal par jour en moyenne. L'app calcule chaque jour tout seul (Repas).</li>
 <li><b>Protéines 2,2 g/kg :</b> au-dessus des 1,6–1,7 g/kg retenus par le guide Delavier pour la force, parce que tu cherches aussi à perdre du gras : les protéines protègent le muscle et calent.</li>
 <li><b>Ce qui compte :</b> la moyenne de tes pesées (2 à 3 par semaine, le matin à jeun) et ton tour de taille (1 fois par semaine, au nombril). Le poids monte et la taille reste stable : c'est du muscle.</li>
-<li><b>Ajustements :</b> si la moyenne prend plus de 0,6 kg par mois et que la taille monte, retire 150 kcal. Si poids et charges stagnent 3 semaines, ajoute 150 kcal.</li>
+<li><b>Ajustements automatiques :</b> toutes les 2 semaines, l'app compare ta moyenne de poids à celle d'il y a 2 semaines. Plus de 0,6 kg par mois avec une taille qui monte : −150 kcal. Poids stable sans baisse de taille : +150 kcal. Tu peux annuler un ajustement depuis l'accueil. Il faut 2 pesées par semaine au minimum.</li>
 <li><b>Marche inclinée :</b> 20 à 30 min après chaque séance (inclinaison 12, 5 km/h), soit environ 1 200 à 1 400 kcal de plus par semaine. Elle est intégrée au calcul (niveau d'activité ×1,6), mais pas entièrement « remangée » : c'est elle qui fait fondre le gras pendant que la muscu construit.</li>
 <li><b>Hors salle :</b> 8 000 pas par jour et 7 à 9 h de sommeil font le reste.</li>
 <li><b>Rythme réaliste :</b> +0,4 à +0,6 kg par mois, soit 74 kg vers l'été 2027 en restant sec.</li>
@@ -1171,6 +1172,47 @@ Object.keys(DISHES).forEach((id) => {
   FOODS[id] = { n, kcal, p, c, f, rayon: 'Divers', price: 0, dish: true };
 });
 
+/* Variantes par exercice : [nom, matériel, polyarticulaire]. Servent à remplacer un exercice si la machine est prise
+   et à la rotation proposée à chaque nouveau cycle. Chaque variante garde son propre historique et son propre PR. */
+const EXALT = {
+  'p-incline': [['Développé incliné haltères (30°)', 'halteres', true], ['Développé incliné machine', 'machine', true]],
+  'p-xover': [['Écartés inclinés haltères (haut des pecs)', 'halteres', false], ['Vis-à-vis bas → haut à deux bras', 'poulie', false]],
+  'p-conv': [['Développé machine assis (type Hammer)', 'machine', true], ['Développé couché haltères prise neutre', 'halteres', true]],
+  'p-dips': [['Développé décliné machine', 'machine', true], ['Dips assistés buste penché', 'machine', true]],
+  'e-lat': [['Élévations latérales haltères', 'halteres', false], ['Élévations latérales machine', 'machine', false]],
+  'd-ext': [['Extensions triceps corde à la poulie', 'poulie', false], ['Barre au front (EZ)', 'barre', false]],
+  'j-squat': [['Hack squat', 'machine', true], ['Squat au Smith', 'smith', true]],
+  'd-sdt': [['Soulevé de terre roumain haltères', 'halteres', true], ['Soulevé de terre jambes tendues au Smith', 'smith', true]],
+  'j-legext': [['Fentes bulgares haltères', 'halteres', true], ['Presse à cuisses pieds bas', 'machine', true]],
+  'j-legcurl': [['Leg curl allongé', 'machine', false], ['Leg curl debout unilatéral', 'machine', false]],
+  'j-mollets': [['Mollets à la presse', 'machine', false], ['Mollets debout au Smith', 'smith', false]],
+  'd-tractions': [['Tractions à la barre (lestées)', 'barre', true], ['Tirage vertical prise serrée', 'machine', true]],
+  'd-horizontal': [['Rowing haltère un bras', 'halteres', true], ['Rowing poulie basse', 'poulie', true]],
+  'd-pullover': [['Pull-over haltère allongé', 'halteres', false], ['Tirage bras tendus à la corde', 'poulie', false]],
+  'e-oiseau': [['Oiseau haltères buste penché', 'halteres', false], ['Reverse pec deck', 'machine', false]],
+  'e-y': [['Élévation en Y à la poulie', 'poulie', false], ['Face pull à la corde', 'poulie', false]],
+  'e-pupitre': [['Curl pupitre machine', 'machine', false], ['Curl incliné haltères', 'halteres', false]],
+  'e-marteau': [['Curl marteau corde à la poulie', 'poulie', false], ['Curl inversé barre EZ', 'barre', false]],
+  'v-incl': [['Développé incliné au Smith', 'smith', true], ['Développé incliné machine', 'machine', true]],
+  'p-ecartes': [['Écartés haltères', 'halteres', false], ['Vis-à-vis poulies à mi-hauteur', 'poulie', false]],
+  'v-xover': [['Pec deck prise serrée', 'machine', false], ['Écartés haltères, fin de mouvement serrée', 'halteres', false]],
+  'p-decline': [['Développé décliné machine', 'machine', true], ['Dips buste penché', 'machine', true]],
+  'e-smith': [['Développé militaire haltères assis', 'halteres', true], ['Développé épaules machine', 'machine', true]],
+  'd-overhead': [['Extension triceps haltère derrière la tête', 'halteres', false], ['Barre au front (EZ)', 'barre', false]],
+  'e-curlm': [['Curl barre EZ', 'barre', false], ['Curl à la poulie basse', 'poulie', false]],
+  'e-poignet': [['Curl poignet haltères', 'halteres', false]],
+  'e-extpoignet': [['Extension poignet haltères', 'halteres', false]],
+  'j2-presse': [['Hack squat', 'machine', true], ['Squat au Smith', 'smith', true]],
+  'j2-hip': [['Pont fessier lesté au sol', 'barre', true], ['Kickback fessier à la poulie', 'poulie', false]],
+  'j2-fentes': [['Fentes au Smith', 'smith', true], ['Fentes bulgares haltères', 'halteres', true]],
+  'j2-curl': [['Leg curl assis', 'machine', false], ['Leg curl debout unilatéral', 'machine', false]],
+  'j-add': [['Adducteurs à la poulie', 'poulie', false]],
+  'j2-mollets': [['Mollets debout machine', 'machine', false]],
+  'p-crunch': [['Crunch à la poulie haute', 'poulie', false], ['Crunch au sol lesté', 'pdc', false]],
+};
+/* Mouvements de référence : jamais changés par la rotation, pour mesurer ta progression. */
+const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
+
 (function () {
   'use strict';
 
@@ -1269,13 +1311,15 @@ Object.keys(DISHES).forEach((id) => {
     return {
       schema: SCHEMA, programVersion: PROGRAM_VERSION, updatedAt: 0,
       profile: { name: 'Charles', heightCm: 173.5, weightKg: 70, age: 21, ageConfirmed: false, bodyFat: null, activity: 1.6, goal: 'recompo74', proteinPerKg: 2.2, fatPerKg: 1.0, gym: 'Ma salle' },
-      settings: { restSec: 180, autoRest: true, perExerciseRest: true, sound: true, autoPortions: true, theme: 'auto' },
+      settings: { restSec: 180, autoRest: true, perExerciseRest: true, sound: true, autoPortions: true, autoCal: true, theme: 'auto' },
       program,
       plan: clone(DEFAULT_PLAN),
       goals: defaultGoals(),
       shopping: { stores: clone(DEFAULT_STORES), storeOf: {}, checked: {}, priceOf: {}, extra: [] },
       customRecipes: {},
-      next: {}, uniFirst: {}, homeDishes: {}, quiz: { box: {}, wrong: {} },
+      next: {}, uniFirst: {}, homeDishes: {}, quiz: { box: {}, wrong: {} }, altPR: {}, lastBackup: null,
+      cycle: { start: mondayOf(today()), every: 7, skip: null, rotFor: mondayOf(today()) },
+      cal: { adj: 0, last: null, hist: [] },
       active: null,
     };
   }
@@ -1453,7 +1497,7 @@ Object.keys(DISHES).forEach((id) => {
   /* ===================== Domaine : programme & séances ===================== */
   const P = () => S.core.program;
   const dayById = (id) => P().find((d) => d.id === id);
-  function findEx(id) { for (const d of P()) { const e = d.exercises.find((x) => x.id === id); if (e) return { day: d, ex: e }; } return null; }
+  function findEx(id) { if (id && String(id).includes('@')) return findAlt(id); for (const d of P()) { const e = d.exercises.find((x) => x.id === id); if (e) return { day: d, ex: e }; } return null; }
   const dayDows = (d) => ((d.dow || []).length > 1 ? [d.pick != null ? d.pick : d.dow[0]] : (d.dow || []));
   const sessionDayFor = (date) => P().find((d) => dayDows(d).includes(dowOf(date))) || null;
   const dayType = (date) => { const d = sessionDayFor(date); return d ? (d.kind === 'crossfit' ? 'crossfit' : 'muscu') : 'repos'; };
@@ -1568,7 +1612,8 @@ Object.keys(DISHES).forEach((id) => {
   }
   function targets(type) {
     const p = S.core.profile; const { w, tdee } = energy();
-    const kcal = Math.round(((tdee + (GOALS[p.goal] || GOALS.recompo74).adj) * DAYTYPES[type].mult) / 10) * 10;
+    const auto = S.core.settings.autoCal !== false && S.core.cal ? S.core.cal.adj || 0 : 0;
+    const kcal = Math.round(((tdee + (GOALS[p.goal] || GOALS.recompo74).adj + auto) * DAYTYPES[type].mult) / 10) * 10;
     const pr = Math.round(w * p.proteinPerKg); const f = Math.round(w * p.fatPerKg);
     return { kcal, p: pr, f, c: Math.max(0, Math.round((kcal - pr * 4 - f * 9) / 4)) };
   }
@@ -1880,6 +1925,7 @@ Object.keys(DISHES).forEach((id) => {
     const tip = TIPS[Math.floor(parseISO(t).getTime() / 864e5) % TIPS.length];
 
     return `${hero}
+      ${homeAlerts()}
       <section class="stack-sm"><div class="section-title"><h2>Ma semaine</h2><button class="link" data-act="openCalendar">Calendrier ›</button></div><div class="week">${week}</div></section>
       ${nutri}
       <section class="grid2">
@@ -1928,6 +1974,7 @@ Object.keys(DISHES).forEach((id) => {
       <div class="row"><span class="plate lg p-${d.plate}"></span><div class="grow"><div class="eyebrow">${esc(dayLabel(d))}${d.time ? ` · ${esc(d.time)}` : ''} · ${esc(S.core.profile.gym)}</div><h2 class="display" style="font-size:30px;text-transform:uppercase;line-height:1">${esc(d.title)}</h2></div></div>
       <div class="muted small">${enabled.length} exercices · ${sets} séries · ≈ ${hm(dayMinutes(d))}${S.core.settings.perExerciseRest ? ' · repos adaptés à chaque exercice' : ` · ${clock(restDefault())} de repos`}</div>
       ${flex}
+      ${deloadNotice()}
       ${d.note ? `<div class="notice">${esc(d.note)}</div>` : ''}
       ${d.warmup ? `<div class="card flat small"><b>Échauffement.</b> ${esc(d.warmup)}</div>` : ''}
       ${UI.editProgram ? '' : start}
@@ -1946,11 +1993,12 @@ Object.keys(DISHES).forEach((id) => {
     return `${ex.sets} × ${esc(reps)}${ex.perSide ? ' par côté' : ''}${ex.setsNote ? ` (${esc(ex.setsNote)})` : ''}${rest}`;
   }
   function progCard(d, ex) {
-    const last = lastEntryFor(ex.id); const up = progressionHint(ex); const open = UI.openTips[ex.id];
+    const view = effEx(ex);
+    const last = lastEntryFor(view.id); const up = progressionHint(view); const open = UI.openTips[ex.id];
     const canToggle = ex.src === 'delavier' || UI.editProgram;
     return `<article class="card ex ${ex.enabled ? '' : 'off'}">
       <div class="ex-head"><span class="plate p-${plateOf(ex.muscle)}" title="${esc((MUSCLES[ex.muscle] || {}).label || '')}"></span>
-        <div class="grow"><h3>${esc(ex.name)}</h3><div class="ex-meta"><span>${exMeta(ex)}</span>${prBtn(ex)}${ex.src === 'delavier' ? '<span class="tag delavier">Delavier</span>' : ''}${ex.enabled ? '' : '<span class="tag">désactivé</span>'}</div></div>
+        <div class="grow"><h3>${esc(view.name)}</h3>${view !== ex ? `<div class="hint">Variante de ce cycle · remplace ${esc(ex.name)}</div>` : ''}<div class="ex-meta"><span>${exMeta(ex)}</span>${prBtn(view)}${ex.src === 'delavier' ? '<span class="tag delavier">Delavier</span>' : ''}${ex.enabled ? '' : '<span class="tag">désactivé</span>'}</div></div>
         ${canToggle ? sw(ex.enabled, 'toggleEx', `data-ex="${ex.id}"`, `Activer ${ex.name}`) : ''}
       </div>
       ${open && ex.tip ? `<div class="tip">${ex.tip}</div>` : ''}
@@ -2069,7 +2117,7 @@ Object.keys(DISHES).forEach((id) => {
   function progRecords() {
     let out = '';
     P().forEach((d) => {
-      const rows = d.exercises.filter((e) => e.type !== 'time').map((ex) => {
+      const rows = d.exercises.filter((e) => e.type !== 'time').map(effEx).map((ex) => {
         const h = exHistory(ex.id).filter((x) => x.top);
         const best = h.reduce((a, x) => (x.e1 > (a ? a.e1 : 0) ? x : a), null);
         return `<button class="li" style="all:unset;cursor:pointer;display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)" data-act="recordSheet" data-ex="${ex.id}">
@@ -2218,6 +2266,8 @@ Object.keys(DISHES).forEach((id) => {
       ${row('Durée de repos par défaut', 'Pour les exercices sans repos conseillé (3 min au départ)', `<select class="input" style="width:110px" id="stRest" data-ch="restSec">${[60, 90, 120, 150, 180, 210, 240, 300].map((s) => `<option value="${s}" ${st.restSec === s ? 'selected' : ''}>${clock(s)}</option>`).join('')}</select>`)}
       ${row('Chrono automatique', 'Démarre quand tu valides une série', sw(st.autoRest, 'setToggle', 'data-k="autoRest"', 'Chrono automatique'))}
       ${row('Son et vibration', 'Bip à la fin du repos (la vibration ne marche pas sur iPhone)', sw(st.sound, 'setToggle', 'data-k="sound"', 'Son'))}
+      ${row('Semaine légère', 'Moitié des séries, mêmes charges, en fin de cycle (alternance TNT)', `<select class="input" style="width:130px" id="stDeload" data-ch="deloadEvery">${[[0, 'Jamais'], [5, 'Toutes les 5 sem.'], [6, 'Toutes les 6 sem.'], [7, 'Toutes les 7 sem.'], [8, 'Toutes les 8 sem.'], [9, 'Toutes les 9 sem.']].map(([v, l]) => `<option value="${v}" ${(S.core.cycle && S.core.cycle.every || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
+      ${row('Calories ajustées toutes seules', `Toutes les 2 semaines selon ta moyenne de poids et ton tour de taille${S.core.cal && S.core.cal.adj ? ` · actuellement ${S.core.cal.adj > 0 ? '+' : ''}${S.core.cal.adj} kcal` : ''}`, sw(st.autoCal !== false, 'setToggle', 'data-k="autoCal"', 'Calories automatiques'))}
       ${row('Portions automatiques', 'Ajuste les quantités des recettes à ta cible du jour', sw(st.autoPortions, 'setToggle', 'data-k="autoPortions"', 'Portions automatiques'))}
     </div>
     <div class="field"><span class="lbl">Thème</span>${seg('theme', [['auto', 'Système'], ['light', 'Clair'], ['dark', 'Sombre']], st.theme)}</div>
@@ -2231,7 +2281,8 @@ Object.keys(DISHES).forEach((id) => {
       ? `<div class="notice"><span class="sync-dot ${st === 'ok' ? 'ok' : st === 'err' ? 'err' : ''}"></span>Tes données sont enregistrées sur ton compte Claude : elles te suivent sur ordinateur et iPhone quand tu ouvres l'app depuis ce lien.</div>`
       : '<div class="notice">Tes données sont enregistrées dans ce navigateur uniquement. Fais une sauvegarde de temps en temps, et avant de changer de téléphone.</div>';
     openSheet('backup', `${sheetHead('Sauvegarde')}${sync}
-      <div class="row wrap"><button class="btn" data-act="copyBackup">${ic('copy')} Copier la sauvegarde</button><button class="btn" data-act="downloadBackup">${ic('save')} Télécharger (.json)</button></div>
+      <div class="row wrap"><button class="btn" data-act="copyBackup">${ic('copy')} Copier la sauvegarde</button><button class="btn primary" data-act="backupNow">${ic('save')} Enregistrer dans Fichiers / iCloud</button></div>
+      <p class="hint" style="margin:0">Dernière sauvegarde : ${S.core.lastBackup ? esc(fmtDate(S.core.lastBackup, { day: 'numeric', month: 'long', year: 'numeric' })) : 'jamais'}. Un rappel s'affiche sur l'accueil chaque semaine.</p>
       <div class="field"><label for="importBox">Restaurer une sauvegarde</label><textarea class="input" id="importBox" placeholder="Colle ici le texte de la sauvegarde"></textarea></div>
       <div class="row wrap"><label class="btn sm" for="importFile">Choisir un fichier</label><input type="file" id="importFile" accept=".json,application/json,text/plain" data-ch="importFile" hidden>
       ${UI.confirm === 'import' ? '<button class="btn sm danger" data-act="importBackup" data-sure="1">Remplacer mes données</button><button class="btn sm" data-act="confirmOff">Annuler</button>' : '<button class="btn sm primary" data-act="importBackup">Restaurer</button>'}</div>
@@ -2685,17 +2736,6 @@ Object.keys(DISHES).forEach((id) => {
       persist(['core']); closeSheet(); render(); toast('Programme, repas et objectifs réinitialisés');
     },
     copyBackup: () => copyText(backupText(), 'Sauvegarde copiée : colle-la dans Notes pour la garder'),
-    downloadBackup: async () => {
-      try {
-        const dl = window.claude && typeof window.claude.use === 'function' ? await window.claude.use('downloads') : null;
-        if (dl) { const r = await dl.save({ filename: `carnet-charles-${today()}.json`, data: backupText() }); if (r && r.status === 'saved') toast('Sauvegarde téléchargée'); return; }
-      } catch (e) { /* refusé par le lecteur : on bascule sur la copie */ }
-      try {
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([backupText()], { type: 'application/json' }));
-        a.download = `carnet-charles-${today()}.json`; document.body.appendChild(a); a.click(); a.remove();
-        setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      } catch (e) { copyText(backupText(), 'Téléchargement indisponible : sauvegarde copiée à la place'); }
-    },
     importBackup: (el) => {
       const text = $('#importBox').value.trim();
       if (!text) { toast('Colle d\'abord le texte de la sauvegarde'); return; }
@@ -2890,24 +2930,26 @@ Object.keys(DISHES).forEach((id) => {
   function startSession(dayId) {
     const d = dayById(dayId); if (!d) return;
     if (S.core.active) { UI.tab = 'train'; UI.trainDay = S.core.active.dayId; UI.view = null; render(); toast('Une séance est déjà en cours'); return; }
-    const warmed = new Set();
-    const entries = d.exercises.filter((e) => e.enabled).map((ex) => {
+    const warmed = new Set(); const deload = isDeload(today());
+    const entries = d.exercises.filter((e) => e.enabled).map((ex0) => {
+      const ex = effEx(ex0);
       const uni = !!ex.perSide && ex.type !== 'time';
       const tw = ex.type === 'wr' ? targetWeight(ex) : null;
       const warm = warmupsFor(ex, tw, warmed.has(ex.muscle));
       if (ex.type === 'wr' && ex.muscle) warmed.add(ex.muscle);
       const nx = (S.core.next || {})[ex.id];
       const mk = () => ({ w: tw, r: null, rir: null, done: false });
-      const sets = Array.from({ length: Math.max(1, ex.sets || 1) }, () => (uni ? { L: mk(), R: mk(), done: false } : Object.assign(mk(), { t: null, d: null })));
+      const nSets = deload ? Math.max(1, Math.ceil((ex.sets || 1) / 2)) : Math.max(1, ex.sets || 1);
+      const sets = Array.from({ length: nSets }, () => (uni ? { L: mk(), R: mk(), done: false } : Object.assign(mk(), { t: null, d: null })));
       return { exId: ex.id, name: ex.name, muscle: ex.muscle, type: ex.type, uni, first: uni ? firstSideFor(ex.id) : null, tw, treps: ex.reps, tr: nx && nx.r ? nx.r : null, warm, sets };
     });
-    const act = { v: 2, id: uid(), dayId: d.id, title: d.title, date: today(), startedAt: Date.now(), entries, note: '', at: null, rest: null };
+    const act = { v: 2, id: uid(), dayId: d.id, title: d.title, date: today(), startedAt: Date.now(), entries, note: '', at: null, rest: null, deload };
     act.at = stepKey(buildSteps(act)[0]);
     S.core.active = act;
     persist(['core']);
     UI.tab = 'train'; UI.trainDay = d.id; UI.editProgram = false; UI.view = null;
     wake(true); audioUnlock(); render(); window.scrollTo(0, 0);
-    toast('Séance démarrée. Bon entraînement !');
+    toast(deload ? 'Semaine légère : séries divisées par deux, mêmes charges.' : 'Séance démarrée. Bon entraînement !');
   }
   function renderActive(d, act) {
     const cs = curStep();
@@ -2951,9 +2993,9 @@ Object.keys(DISHES).forEach((id) => {
     const isWarm = st.k === 'warm';
     const workN = e.sets.filter((s) => !s.skip).length;
     const comp = !!ex.compound;
-    const tags = isWarm
+    const tags = (act.deload ? '<span class="step-kind warm">Semaine légère</span>' : '') + (isWarm
       ? `<span class="step-kind warm">Chauffe ${st.wi + 1}/${e.warm.length}</span>`
-      : `<span class="step-kind">Série ${st.si + 1}/${workN}</span>${st.side ? `<span class="step-kind side">Côté ${SIDE_LABEL[st.side]}</span>` : ''}`;
+      : `<span class="step-kind">Série ${st.si + 1}/${workN}</span>${st.side ? `<span class="step-kind side">Côté ${SIDE_LABEL[st.side]}</span>` : ''}`);
     const tr = e.tr || repsMin(e.treps);
     let target = ''; let inputs = '';
     if (e.type === 'time') {
@@ -2988,7 +3030,7 @@ Object.keys(DISHES).forEach((id) => {
       </div>
       <button class="btn primary block big-btn" data-act="stepDone">${ic('check')} ${btn}</button>
       ${cues ? `<section class="card flat stack-sm"><div class="row between"><b>Consignes</b>${srcChips(ex.refs)}</div>${cues}${ex.tip ? `<details><summary class="small muted">Conseil Delavier détaillé</summary><div class="small" style="margin-top:6px">${ex.tip}</div></details>` : ''}</section>` : ''}
-      <div class="row wrap"><button class="btn sm ghost" data-act="stepAddSet">${ic('plus')} Série en plus</button><button class="btn sm ghost" data-act="stepSkipEx">Passer l'exercice</button></div>
+      <div class="row wrap"><button class="btn sm ghost" data-act="stepSwap">${ic('reset')} Machine prise ? Remplacer</button><button class="btn sm ghost" data-act="stepAddSet">${ic('plus')} Série en plus</button><button class="btn sm ghost" data-act="stepSkipEx">Passer l'exercice</button></div>
     </section>`;
   }
   function nextLabel(act, st) {
@@ -3066,11 +3108,11 @@ Object.keys(DISHES).forEach((id) => {
         newPRs.push({ exId: e.exId, name: e.name, value: maxW, prev: prevPR });
       }
     });
-    const log = { id: act.id, date, dayId: act.dayId, title: act.title, startedAt: act.startedAt, endedAt: Date.now(), entries, note: act.note || '' };
+    const log = { id: act.id, date, dayId: act.dayId, title: act.title, startedAt: act.startedAt, endedAt: Date.now(), entries, note: act.note || '', deload: !!act.deload };
     if (entries.some((e) => e.sets.length)) {
       log.report = computeReport(log, prev, newPRs);
       S.core.next = S.core.next || {};
-      Object.keys(log.report.next).forEach((k) => { S.core.next[k] = Object.assign({ date }, log.report.next[k]); });
+      if (!log.deload) Object.keys(log.report.next).forEach((k) => { S.core.next[k] = Object.assign({ date }, log.report.next[k]); });
       S.core.uniFirst = S.core.uniFirst || {};
       entries.forEach((e) => { if (e.uni && e.first) S.core.uniFirst[e.exId] = e.first; });
       m.logs.push(log);
@@ -3114,11 +3156,13 @@ Object.keys(DISHES).forEach((id) => {
       return { exId: e.exId, name: e.name, cur: bestSetLabel(e), prev: p ? bestSetLabel(p) : null, vol: entryVolume(e), pvol: p ? entryVolume(p) : null, ratio, trend: ratio == null ? 'new' : ratio >= 1.01 ? 'up' : ratio >= 0.99 ? 'eq' : 'down' };
     });
     const wp = per.filter((x) => x.ratio != null);
-    add('progression', 'Progression vs dernière séance identique', 20, wp.length ? wp.reduce((a, x) => a + (x.ratio >= 1.01 ? 1 : x.ratio >= 0.99 ? 0.7 : x.ratio >= 0.95 ? 0.4 : 0.15), 0) / wp.length : 0.7, wp.length ? `${wp.filter((x) => x.trend === 'up').length} exercice(s) en hausse sur ${wp.length}` : 'Première séance de ce type : référence posée', ['schoenfeld2017']);
+    if (log.deload) add('progression', 'Progression vs dernière séance identique', 20, 0.85, 'Semaine légère : la progression n\'est pas attendue cette semaine', ['delavier2']);
+    else add('progression', 'Progression vs dernière séance identique', 20, wp.length ? wp.reduce((a, x) => a + (x.ratio >= 1.01 ? 1 : x.ratio >= 0.99 ? 0.7 : x.ratio >= 0.95 ? 0.4 : 0.15), 0) / wp.length : 0.7, wp.length ? `${wp.filter((x) => x.trend === 'up').length} exercice(s) en hausse sur ${wp.length}` : 'Première séance de ce type : référence posée', ['schoenfeld2017']);
     const vol = work.reduce((a, e) => a + entryVolume(e), 0);
     const pvol = prev ? prev.entries.filter((e) => e.type !== 'time').reduce((a, e) => a + entryVolume(e), 0) : 0;
     const vr = pvol ? vol / pvol : null;
-    add('volume', 'Volume total vs séance précédente', 15, vr == null ? 0.7 : clamp((vr - 0.8) / 0.2, 0, 1), vr == null ? `${fmtInt(vol)} kg, pas de séance précédente` : `${fmtInt(vol)} kg contre ${fmtInt(pvol)} kg (${vr >= 1 ? '+' : ''}${fmt((vr - 1) * 100, 0)} %)`, ['schoenfeld2017']);
+    if (log.deload) add('volume', 'Volume total vs séance précédente', 15, 1, `${fmtInt(vol)} kg : volume réduit volontairement (semaine légère)`, ['delavier2']);
+    else add('volume', 'Volume total vs séance précédente', 15, vr == null ? 0.7 : clamp((vr - 0.8) / 0.2, 0, 1), vr == null ? `${fmtInt(vol)} kg, pas de séance précédente` : `${fmtInt(vol)} kg contre ${fmtInt(pvol)} kg (${vr >= 1 ? '+' : ''}${fmt((vr - 1) * 100, 0)} %)`, ['schoenfeld2017']);
     const rests = [];
     log.entries.forEach((e) => e.sets.forEach((s) => setDoneParts(s).forEach((x) => { if (x.rt && x.rb != null) rests.push(x.rb / x.rt); })));
     const okR = rests.filter((r) => r >= 0.8 && r <= 1.5).length;
@@ -3424,8 +3468,171 @@ Object.keys(DISHES).forEach((id) => {
     return `<div class="card flat small"><b>Écart gauche / droite</b> : ${fmt(avg, 0)} % en moyenne sur ${gs.length} séance${gs.length > 1 ? 's' : ''}, côté ${SIDE_LABEL[weak]} plus faible.${avg >= 10 ? ' Commence par ce côté et aligne l\'autre dessus.' : ' Écart faible, rien à corriger.'} ${srcChips(['bishop2018'])}</div>`;
   }
 
+  /* ===================== Variantes d'exercices (machine prise, rotation) ===================== */
+  const altKey = (base, i) => `${base}@${i}`;
+  /* Une variante se comporte comme un exercice à part entière (historique, PR) tout en héritant muscles et consignes de l'original. */
+  function findAlt(key) {
+    const parts = key.split('@'); const base = parts[0]; const i = +parts[1];
+    const fx = findEx(base); const alt = (EXALT[base] || [])[i];
+    if (!fx || !alt) return null;
+    S.core.altPR = S.core.altPR || {};
+    const ex = Object.assign({}, fx.ex, { id: key, name: alt[0], equip: alt[1], compound: alt[2], tip: '', note: '', src: 'variante', base, variant: i, use: null, enabled: true });
+    Object.defineProperty(ex, 'pr', { get: () => (S.core.altPR[key] != null ? S.core.altPR[key] : null), set: (v) => { S.core.altPR[key] = v; }, enumerable: true, configurable: true });
+    return { day: fx.day, ex };
+  }
+  /* Exercice réellement fait pour une ligne du programme (original ou variante choisie à la rotation). */
+  const effEx = (ex) => (ex && ex.use != null && (EXALT[ex.id] || [])[ex.use] ? (findAlt(altKey(ex.id, ex.use)) || { ex }).ex : ex);
+  function variantsFor(key) {
+    const base = String(key).split('@')[0]; const fx = findEx(base); if (!fx) return [];
+    return [{ key: base, name: fx.ex.name }].concat((EXALT[base] || []).map((a, i) => ({ key: altKey(base, i), name: a[0] }))).filter((v) => v.key !== key);
+  }
+  function swapSheet() {
+    const cs = curStep(); if (!cs || !cs.e) return;
+    const started = cs.e.sets.some((s) => s.done || (s.L && (s.L.done || s.R.done)));
+    const opts = variantsFor(cs.e.exId);
+    openSheet('swap', `${sheetHead('Machine prise ?')}
+      <p class="small muted" style="margin:0">Remplace <b>${esc(cs.e.name)}</b> pour cette séance. La variante a son propre historique et son propre PR : ton suivi ne se mélange pas.</p>
+      ${started ? '<div class="notice">Tu as déjà commencé cet exercice : finis-le ou passe-le, puis remplace le suivant.</div>' : `<div class="list">${opts.map((o) => { const h = lastEntryFor(o.key); return `<button class="li" style="all:unset;cursor:pointer;display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)" data-act="swapPick" data-key="${esc(o.key)}"><div class="grow"><div class="t">${esc(o.name)}</div><div class="s">${h ? `Dernière fois : ${esc(setsSummary(h.entry))}` : 'Pas encore d\'historique : choisis ta charge à la première série'}</div></div>${ic('chev')}</button>`; }).join('') || '<div class="empty">Pas de variante prévue pour cet exercice.</div>'}</div>`}`);
+  }
+
+  /* ===================== Cycles : semaine légère et rotation ===================== */
+  const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 864e5);
+  function cycleNow(date) {
+    const c = S.core.cycle; if (!c || !c.every) return null;
+    let start = c.start;
+    while (daysBetween(start, date) >= c.every * 7) start = addDays(start, c.every * 7);
+    const week = Math.floor(daysBetween(start, date) / 7);
+    return { start, week, every: c.every, deload: week === c.every - 1 && c.skip !== start };
+  }
+  const isDeload = (date) => { const cy = cycleNow(date); return !!(cy && cy.deload); };
+  /* Avance le début de cycle et prépare la rotation quand un nouveau cycle commence. */
+  function ensureCycle() {
+    const c = S.core.cycle; if (!c || !c.every) return;
+    const cy = cycleNow(today()); if (!cy || cy.start === c.start) return;
+    c.start = cy.start; persist(['core']);
+  }
+  function rotationCandidates() {
+    const out = [];
+    P().forEach((d) => {
+      let picked = false;
+      d.exercises.forEach((ex) => {
+        const alts = EXALT[ex.id]; if (!ex.enabled || !alts || !alts.length || REF_LIFTS.includes(ex.id)) return;
+        const nxt = ex.use == null ? 0 : (ex.use + 1 < alts.length ? ex.use + 1 : null);
+        const on = !picked && !effEx(ex).compound; if (on) picked = true;
+        out.push({ id: ex.id, day: d.title, from: effEx(ex).name, to: nxt == null ? ex.name : alts[nxt][0], nxt, on });
+      });
+    });
+    return out;
+  }
+  const rotationPending = () => { const c = S.core.cycle; return !!(c && c.every && c.rotFor !== c.start && rotationCandidates().length); };
+  function rotationSheet() {
+    UI.rot = UI.rot || rotationCandidates();
+    openSheet('rotation', `${sheetHead('Nouveau cycle')}
+      <p class="small" style="margin:0">Delavier conseille de changer d'exercice quand un mouvement ne se « sent » plus. Je coche une variante par séance ; coche ou décoche selon tes sensations. tes mouvements de référence (incliné, squat, soulevé de terre, tractions, développé militaire) ne bougent pas, pour mesurer ta progression. ${srcChips(['delavier2'])}</p>
+      <div class="list">${UI.rot.map((r, i) => `<div class="li"><button class="check" role="checkbox" aria-checked="${r.on}" data-act="rotToggle" data-i="${i}" aria-label="Changer ${esc(r.from)}">${ic('check')}</button><div class="grow"><div class="t">${esc(r.to)}</div><div class="s">au lieu de ${esc(r.from)} · ${esc(r.day)}</div></div></div>`).join('')}</div>
+      <button class="btn primary block big-btn" data-act="rotApply">${ic('check')} Appliquer pour ce cycle</button>
+      <button class="btn block" data-act="rotKeep">Garder le programme actuel</button>`);
+  }
+
+  /* ===================== Calories ajustées toutes les 2 semaines ===================== */
+  function weightAvg(from, to) {
+    const ws = allBody().filter((b) => b.weight && b.date >= from && b.date <= to).map((b) => b.weight);
+    return ws.length >= 2 ? ws.reduce((a, b) => a + b, 0) / ws.length : null;
+  }
+  const lastMeasureIn = (field, from, to) => { const b = allBody().filter((x) => x[field] && x.date >= from && x.date <= to); return b.length ? b[b.length - 1][field] : null; };
+  /* Règle de la fiche « 74 kg sec » : +0,4 à +0,6 kg par mois avec un tour de taille stable. */
+  function autoCalories() {
+    if (S.core.settings.autoCal === false) return;
+    const cal = S.core.cal || (S.core.cal = { adj: 0, last: null, hist: [] });
+    const t = today();
+    if (cal.last && daysBetween(cal.last, t) < 14) return;
+    const now = weightAvg(addDays(t, -6), t); const then = weightAvg(addDays(t, -20), addDays(t, -14));
+    if (now == null || then == null) return;
+    const rate = ((now - then) / 14) * 30;
+    const wNow = lastMeasureIn('taille', addDays(t, -10), t); const wThen = lastMeasureIn('taille', addDays(t, -28), addDays(t, -14));
+    const dW = wNow != null && wThen != null ? wNow - wThen : null;
+    const goal = S.core.profile.goal; let delta = 0; let why = '';
+    if (goal === 'seche') {
+      if (rate > 0) { delta = -150; why = `tu prends ${fmt(rate, 1)} kg par mois alors que tu es en sèche`; }
+      else if (rate < -1.2) { delta = 150; why = `tu perds ${fmt(-rate, 1)} kg par mois, trop vite pour garder ton muscle`; }
+    } else if (rate > 0.6 && (dW == null || dW > 0.3)) { delta = -150; why = `tu prends ${fmt(rate, 1)} kg par mois${dW != null ? ` et ta taille a pris ${fmt(dW, 1)} cm` : ''} : un peu trop vite pour rester sec`; }
+    else if (rate < 0.15 && !(dW != null && dW < -0.3)) { delta = 150; why = `ton poids est stable (${rate >= 0 ? '+' : ''}${fmt(rate, 1)} kg par mois) : il faut un peu plus pour construire du muscle`; }
+    cal.last = t;
+    if (delta) { cal.adj = clamp((cal.adj || 0) + delta, -600, 600); cal.hist = (cal.hist || []).concat([{ date: t, delta, why }]).slice(-20); }
+    else cal.hist = (cal.hist || []).concat([{ date: t, delta: 0, why: dW != null && dW < -0.3 ? 'poids stable et taille en baisse : la recomposition marche, on ne touche à rien' : `rythme de ${fmt(rate, 1)} kg par mois : dans la cible, on ne touche à rien` }]).slice(-20);
+    persist(['core']);
+  }
+
+  /* ===================== Sauvegarde ===================== */
+  function markBackup() { S.core.lastBackup = today(); persist(['core']); render(); toast('Sauvegarde enregistrée'); if (UI.sheet === 'backup') backupSheet(); return true; }
+  async function exportBackupFile() {
+    const text = backupText(); const name = `carnet-charles-${today()}.json`;
+    if (window.claude && typeof window.claude.use === 'function') {
+      try { const dl = await window.claude.use('downloads'); if (dl) { const r = await dl.save({ filename: name, data: text }); return r && (r.status === 'saved' || r.status === 'delivered') ? markBackup() : false; } } catch (e) { return false; }
+    }
+    const file = new File([text], name, { type: 'application/json' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: 'Sauvegarde Carnet' }); return markBackup(); } catch (e) { return false; }
+    }
+    try {
+      const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 4000); return markBackup();
+    } catch (e) { copyText(text, 'Sauvegarde copiée : colle-la dans Notes'); return false; }
+  }
+
+  /* ===================== Cartes de l'accueil ===================== */
+  function homeAlerts() {
+    const out = []; const t = today();
+    const cy = cycleNow(t);
+    if (cy && cy.deload) out.push(`<section class="card alert-card"><div class="row between"><div class="eyebrow">Semaine légère · fin du cycle</div>${srcChips(['delavier2', 'pratique'])}</div><p style="margin:0">Moitié des séries, mêmes charges : tendons et articulations récupèrent avant de repartir plus fort. L'app réduit les séries toute seule.</p><button class="link" data-act="deloadSkip" style="justify-self:start">Pas cette semaine</button></section>`);
+    if (rotationPending()) out.push(`<section class="card alert-card"><div class="eyebrow">Nouveau cycle</div><p style="margin:0">Je te propose de changer de variante sur quelques exercices pour relancer les sensations.</p><button class="btn sm" data-act="rotOpen" style="justify-self:start">Voir les propositions</button></section>`);
+    const cal = S.core.cal; const h = cal && cal.hist && cal.hist[cal.hist.length - 1];
+    if (h && h.delta && daysBetween(h.date, t) <= 3) out.push(`<section class="card alert-card"><div class="eyebrow">Calories ajustées</div><p style="margin:0"><b>${h.delta > 0 ? '+' : ''}${h.delta} kcal par jour</b> : ${esc(h.why)}.</p><button class="link" data-act="calUndo" style="justify-self:start">Annuler cet ajustement</button></section>`);
+    const hasData = allLogs().length > 0;
+    if (hasData && (!S.core.lastBackup || daysBetween(S.core.lastBackup, t) >= 7)) out.push(`<section class="card alert-card"><div class="row between"><div><div class="eyebrow">Sauvegarde de la semaine</div><span class="small muted">${S.core.lastBackup ? `Dernière : ${esc(fmtDate(S.core.lastBackup, { day: 'numeric', month: 'long' }))}` : 'Jamais faite'}. Tes données ne vivent que sur ce téléphone.</span></div></div><button class="btn sm primary" data-act="backupNow" style="justify-self:start">${ic('save')} Enregistrer dans Fichiers / iCloud</button></section>`);
+    return out.join('');
+  }
+  function deloadNotice() { return isDeload(today()) ? '<div class="notice"><b>Semaine légère :</b> les séries sont divisées par deux, garde les mêmes charges.</div>' : ''; }
+
+  Object.assign(ACT, {
+    stepSwap: () => swapSheet(),
+    swapPick: (el) => {
+      const cs = curStep(); if (!cs || !cs.e) return;
+      const { act, e } = cs; const ei = act.entries.indexOf(e);
+      const fx = findEx(el.dataset.key); if (!fx) return; const ex = fx.ex;
+      const warmed = act.entries.slice(0, ei).some((x) => x.type === 'wr' && x.muscle === e.muscle);
+      e.swappedFrom = e.exId; e.exId = ex.id; e.name = ex.name; e.tw = ex.type === 'wr' ? targetWeight(ex) : null; e.tr = null;
+      e.warm = warmupsFor(ex, e.tw, warmed);
+      e.sets.forEach((s) => { if (s.L) { s.L.w = e.tw; s.R.w = e.tw; } else s.w = e.tw; });
+      act.rest = null; if (T.state !== 'idle') resetTimer();
+      act.at = stepKey(buildSteps(act).find((s) => s.ei === ei) || { k: 'end' });
+      persist(['core']); closeSheet(); render(); window.scrollTo(0, 0); toast(`Remplacé par ${ex.name}`);
+    },
+    deloadSkip: () => { const cy = cycleNow(today()); if (cy) { S.core.cycle.skip = cy.start; persist(['core']); render(); toast('Semaine normale cette fois-ci'); } },
+    rotOpen: () => { UI.rot = null; rotationSheet(); },
+    rotToggle: (el) => { const r = UI.rot[+el.dataset.i]; r.on = !r.on; rotationSheet(); },
+    rotApply: () => {
+      (UI.rot || []).forEach((r) => { if (!r.on) return; const fx = findEx(r.id); if (fx) fx.ex.use = r.nxt; });
+      S.core.cycle.rotFor = S.core.cycle.start; UI.rot = null; persist(['core']); closeSheet(); render(); toast('Variantes appliquées pour ce cycle');
+    },
+    rotKeep: () => { S.core.cycle.rotFor = S.core.cycle.start; UI.rot = null; persist(['core']); closeSheet(); render(); },
+    calUndo: () => {
+      const cal = S.core.cal; const h = cal.hist[cal.hist.length - 1]; if (!h) return;
+      cal.adj = clamp((cal.adj || 0) - h.delta, -600, 600); h.delta = 0; h.why = 'ajustement annulé'; persist(['core']); render(); toast('Ajustement annulé');
+    },
+    backupNow: () => { exportBackupFile(); },
+  });
+  Object.assign(CH, {
+    deloadEvery: (el) => {
+      const v = +el.value; S.core.cycle = S.core.cycle || { start: mondayOf(today()), rotFor: mondayOf(today()) };
+      S.core.cycle.every = v; persist(['core']); render(); toast(v ? `Semaine légère toutes les ${v} semaines` : 'Semaines légères désactivées');
+    },
+  });
+
   /* ===================== Démarrage ===================== */
   applyTheme();
+  ensureCycle();
+  autoCalories();
   render();
   setInterval(tick, 250);
   initRemote();
