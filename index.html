@@ -526,17 +526,6 @@ a.src:hover { color: var(--accent); border-color: var(--accent); }
 .g-input { position: relative; } .g-input .input { text-align: right; padding-right: 22px; font-family: var(--f-display); font-size: 20px; font-weight: 600; }
 .g-input span { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); font-size: 12px; color: var(--ink-3); }
 .tag.bad { background: color-mix(in srgb, var(--bad) 15%, transparent); color: var(--bad); }
-.spinner { width: 28px; height: 28px; border-radius: 50%; border: 3px solid var(--sunken); border-top-color: var(--accent); margin: 0 auto 10px; animation: spin 1s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ---------- Photos de physique ---------- */
-.ph-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
-.ph { position: relative; border: 0; padding: 0; background: none; border-radius: 10px; overflow: hidden; }
-.ph img, .compare img { width: 100%; aspect-ratio: 3 / 4; object-fit: cover; display: block; border-radius: 10px; }
-.ph .tag { position: absolute; left: 5px; bottom: 5px; }
-.compare { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.ph-thumb { width: 64px; height: 86px; object-fit: cover; border-radius: 8px; flex: none; }
-.ph-full { width: 100%; border-radius: 14px; }
 </style>
 </head><body>
 <div class="app">
@@ -820,6 +809,7 @@ const KB = [
 <li><b>Compétition intermusculaire.</b> Sur un exercice de base qui fait travailler bras + épaules + pecs, ce sont les muscles les plus forts qui prennent le travail. Chez toi, épaules et triceps « volent » les développés aux pecs.</li>
 <li><b>Clavicules larges.</b> Plus on est large d'épaules, plus il est dur de garder les omoplates serrées sur un banc. Les épaules basculent vers l'avant et poussent à la place des pecs. Les bancs du commerce (25–35 cm) sont trop étroits pour ta carrure.</li>
 <li><b>Haut des pecs en retard.</b> Delavier explique que le recrutement du grand pectoral se fait par zones. En bilatéral, les deltoïdes se projettent vers l'avant et prennent le travail du faisceau claviculaire ; plus le tendon du pec s'insère haut sur le bras, plus ce faisceau est dur à étirer et à sentir. L'incliné ne suffit donc pas : il faut de l'unilatéral et de la poulie basse vers le haut.</li>
+<li><b>Photos du 25 octobre (torse nu).</b> Elles confirment l'analyse : épaules larges et rondes, bras épais, haut du dos et trapèzes développés. Le bas des pecs se dessine mais le haut reste plat sous la clavicule. Pas encore de tablette, avec un peu de gras sur le bas du ventre et les flancs : d'où l'objectif 74 kg sec et la marche inclinée.</li>
 <li><b>Abdos.</b> Les muscles peu sollicités dans la jeunesse partent en retard ; le volume et la fréquence comptent plus que la charge.</li>
 </ul>
 <p><b>Ce que l'app applique :</b> pecs 3 fois par semaine (lourd le lundi, série de 100 le mercredi, volume le vendredi), abdos 4 fois, jambes 2 fois, marche inclinée 5 fois, dos et épaules en entretien, élévation frontale remplacée par l'arrière d'épaule, un conseil technique sur chaque exercice. Les barres « Équilibre » dans Progrès vérifient tout ça.</p>`,
@@ -1249,7 +1239,6 @@ Object.keys(DISHES).forEach((id) => {
     phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/>',
     scale: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 9a5.5 5.5 0 0 1 8 0l-2.5 2.5a2 2 0 0 0-3 0z"/>',
     flame: '<path d="M12 3c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-3.5 2-5 1 1.5 2 2 2 2s-1-4 1-7z"/>',
-    camera: '<path d="M4 8h3l2-2.5h6L17 8h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
     moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
@@ -1747,7 +1736,7 @@ Object.keys(DISHES).forEach((id) => {
 
   /* ===================== UI : feuille, toast, segments ===================== */
   const UI = {
-    tab: 'home', trainDay: null, editProgram: false, openTips: {}, confirm: null, view: null, reportId: null, quiz: null, mealDraft: null, physDraft: null, cmp: null,
+    tab: 'home', trainDay: null, editProgram: false, openTips: {}, confirm: null, view: null, reportId: null, quiz: null, mealDraft: null,
     mealsTab: 'day', mealsDate: today(), mealsWeek: 0, progressTab: 'records', calMonth: monthKey(today()),
     shopWeek: [0, 6].includes(new Date().getDay()) ? 1 : 0, sheet: null, kbQuery: '', foodQuery: '', foodSel: null, pick: null, recipeDraft: null,
   };
@@ -1897,7 +1886,6 @@ Object.keys(DISHES).forEach((id) => {
         <div class="card stack-sm"><div class="eyebrow">Poids</div><div class="stat"><span class="v">${w ? fmt(w, 1) : '—'}<small>kg</small></span><span class="k">${delta != null ? `${delta >= 0 ? '+' : ''}${fmt(delta, 1)} kg depuis le début` : `${wk.length} pesée(s) cette semaine`}</span></div><button class="btn sm" data-act="bodySheet">${ic('plus')} Pesée</button></div>
         <div class="card stack-sm"><div class="eyebrow">Abdos cette semaine</div><div class="stat"><span class="v">${absSessionsThisWeek()}<small>/ ${(S.core.goals.find((g) => g.type === 'habit' && (g.muscle || 'abdos') === 'abdos') || { target: 4 }).target}</small></span><span class="k">séances (minimum Delavier : 2)</span></div><button class="btn sm" data-tab="progress" data-sub="balance">Équilibre</button></div>
       </section>
-      ${homeHealth()}
       <section class="card stack"><div class="row between"><div class="eyebrow">Objectifs</div><button class="link" data-tab="progress" data-sub="goals">Tout voir ›</button></div>${goals || '<p class="muted small">Aucun objectif.</p>'}</section>
       <section class="card flat stack-sm"><div class="row"><span class="plate p-red"></span><div class="eyebrow">Conseil Delavier du jour</div></div><p style="margin:0">${esc(tip)}</p><button class="link" data-act="openMethod" style="justify-self:start">Ouvrir la méthode ›</button></section>
       <section class="grid3">
@@ -2074,8 +2062,8 @@ Object.keys(DISHES).forEach((id) => {
 
   /* ===================== Vue : Progrès ===================== */
   function renderProgress() {
-    const tabs = seg('progressTab', [['records', 'Records'], ['body', 'Corps'], ['goals', 'Objectifs'], ['balance', 'Équilibre'], ['scores', 'Scores'], ['photos', 'Photos'], ['sante', 'Sommeil & pas'], ['calendar', 'Calendrier']], UI.progressTab);
-    const fn = { records: progRecords, body: progBody, goals: progGoals, balance: progBalance, scores: progScores, photos: progPhotos, sante: progHealth, calendar: progCalendar }[UI.progressTab] || progRecords;
+    const tabs = seg('progressTab', [['records', 'Records'], ['body', 'Corps'], ['goals', 'Objectifs'], ['balance', 'Équilibre'], ['scores', 'Scores'], ['calendar', 'Calendrier']], UI.progressTab);
+    const fn = { records: progRecords, body: progBody, goals: progGoals, balance: progBalance, scores: progScores, calendar: progCalendar }[UI.progressTab] || progRecords;
     return `<div class="section-title"><h2>Progrès</h2></div>${tabs}${fn()}`;
   }
   function progRecords() {
@@ -2230,7 +2218,6 @@ Object.keys(DISHES).forEach((id) => {
       ${row('Durée de repos par défaut', 'Pour les exercices sans repos conseillé (3 min au départ)', `<select class="input" style="width:110px" id="stRest" data-ch="restSec">${[60, 90, 120, 150, 180, 210, 240, 300].map((s) => `<option value="${s}" ${st.restSec === s ? 'selected' : ''}>${clock(s)}</option>`).join('')}</select>`)}
       ${row('Chrono automatique', 'Démarre quand tu valides une série', sw(st.autoRest, 'setToggle', 'data-k="autoRest"', 'Chrono automatique'))}
       ${row('Son et vibration', 'Bip à la fin du repos (la vibration ne marche pas sur iPhone)', sw(st.sound, 'setToggle', 'data-k="sound"', 'Son'))}
-      ${inClaude() ? '' : apiKeyRow()}
       ${row('Portions automatiques', 'Ajuste les quantités des recettes à ta cible du jour', sw(st.autoPortions, 'setToggle', 'data-k="autoPortions"', 'Portions automatiques'))}
     </div>
     <div class="field"><span class="lbl">Thème</span>${seg('theme', [['auto', 'Système'], ['light', 'Clair'], ['dark', 'Sombre']], st.theme)}</div>
@@ -2434,7 +2421,7 @@ Object.keys(DISHES).forEach((id) => {
       ${canStart ? `<button class="btn primary" data-act="startSession" data-day="${sd.id}">${ic('play')} Démarrer ${esc(shortTitle(sd).toLowerCase())}</button>` : ''}
       ${sd && !logs.length ? `<button class="btn" data-act="openTrain" data-day="${sd.id}">Voir le programme</button>` : ''}
       <div class="card stack-sm"><div class="row between"><b>Repas</b><span class="hint">${eatenN}/${dp.withR.length} cochés · ${fmtInt(dp.eaten.kcal)} / ${fmtInt(dp.t.kcal)} kcal</span></div>${dp.withR.map((x) => `<div class="small">${dp.j.eaten[x.slot.id] ? '✓' : '·'} ${esc(x.slot.label)} : ${esc(x.r.n)}</div>`).join('')}<button class="btn sm" data-act="openMealsDate" data-date="${date}" style="justify-self:start">Ouvrir les repas</button></div>
-      ${body ? `<div class="small"><b>Mesure :</b> ${body.weight ? `${fmt(body.weight, 1)} kg` : ''}${MEASURES.filter(([k]) => body[k]).map(([k, l]) => ` · ${l} ${fmt(body[k], 1)} cm`).join('')}</div>` : ''}${healthLine(date)}`, () => dayDetailSheet(date));
+      ${body ? `<div class="small"><b>Mesure :</b> ${body.weight ? `${fmt(body.weight, 1)} kg` : ''}${MEASURES.filter(([k]) => body[k]).map(([k, l]) => ` · ${l} ${fmt(body[k], 1)} cm`).join('')}</div>` : ''}`, () => dayDetailSheet(date));
   }
 
   /* ===================== Rendu principal ===================== */
@@ -2508,7 +2495,6 @@ Object.keys(DISHES).forEach((id) => {
     seg: (el) => {
       const k = el.dataset.key; const v = el.dataset.val;
       if (k === 'goal') { S.core.profile.goal = v; persist(['core']); profileSheet(); render(); return; }
-      if (k === 'cmpAngle') { UI.cmp = UI.cmp || {}; UI.cmp.angle = v; fillPhotos(); return; }
       if (k === 'theme') { S.core.settings.theme = v; persist(['core']); applyTheme(); settingsSheet(); return; }
       if (k === 'mealsWeek' || k === 'shopWeek') UI[k] = +v; else UI[k] = v;
       render();
@@ -2810,7 +2796,6 @@ Object.keys(DISHES).forEach((id) => {
   const SIDE_LABEL = { L: 'gauche', R: 'droit' };
   const sidesOf = (s) => (s && (s.L || s.R) ? [s.L, s.R].filter(Boolean) : [s]);
   const setDoneParts = (s) => sidesOf(s).filter((x) => x && x.done);
-  const inClaude = () => !!(window.claude && typeof window.claude.use === 'function');
 
   function lastWorkWeight(exId) {
     const last = lastEntryFor(exId); if (!last) return null;
@@ -3182,8 +3167,6 @@ Object.keys(DISHES).forEach((id) => {
     if (rests.length >= 4 && okR / rests.length < 0.6) axes.push({ p: 2, txt: 'Respecte mieux tes repos, surtout les 3 min sur les gros mouvements : la force de la série suivante en dépend.', src: ['schoenfeld2016', 'singer2024'] });
     const missed = wpl.filter((e) => e.warmDone < e.warmPlanned);
     if (missed.length) axes.push({ p: 1, txt: `Fais toutes tes séries de chauffe avant ${missed.slice(0, 2).map((e) => lc(e.name)).join(' et ')}.`, src: ['mccrary2015'] });
-    const h = healthOn(addDays(log.date, 0)) || healthOn(addDays(log.date, -1));
-    if (h && h.sleep && h.sleep < 6.5) axes.push({ p: 2, txt: `Nuit courte avant la séance (${hm(h.sleep * 60)}) : vise 7 à 9 h, c'est là que se fait la récupération nerveuse.`, src: ['delavier2', 'delavierComplements'] });
     axes.sort((a, b) => a.p - b.p);
     return { score, parts, per, prs: newPRs || [], strengths: strengths.slice(0, 5), axes: axes.slice(0, 5), next };
   }
@@ -3244,7 +3227,6 @@ Object.keys(DISHES).forEach((id) => {
   }
 
   /* ===================== Nutrition : repas réels, photo, plats maison ===================== */
-  const KEY_STORE = 'carnet-anthropic-key';
   const mealItemM = (it) => { const g = num(it.g) || 0; return { kcal: ((it.k100 || 0) * g) / 100, p: ((it.p100 || 0) * g) / 100, c: ((it.c100 || 0) * g) / 100, f: ((it.f100 || 0) * g) / 100 }; };
   const mealM = (meal) => (meal.items || []).reduce((a, it) => addM(a, mealItemM(it)), Z());
   const itemFromFood = (fid, g) => { const f = FOODS[fid]; return { n: f.n, g: g || (f.unit ? f.unit[0] : 100), k100: f.kcal, p100: f.p, c100: f.c, f100: f.f, fid }; };
@@ -3254,12 +3236,11 @@ Object.keys(DISHES).forEach((id) => {
   }
   function mealsCard(date) {
     const j = journal(date);
-    const rows = (j.meals || []).map((m) => { const mm = mealM(m); const sl = SLOTS.find((s) => s.id === m.slot); return `<div class="li"><button class="grow" style="all:unset;cursor:pointer;flex:1;min-width:0" data-act="mealEdit" data-date="${date}" data-id="${m.id}"><div class="t">${esc(m.name || 'Repas')}${m.src === 'photo' ? ' <span class="tag">photo</span>' : m.src === 'plat' ? ' <span class="tag">plat maison</span>' : ''}</div><div class="s">${esc(sl ? sl.label : '')} · ${fmtInt(mm.kcal)} kcal · P ${fmtInt(mm.p)} g · G ${fmtInt(mm.c)} · L ${fmtInt(mm.f)}</div></button><button class="icon-btn" data-act="mealDel" data-date="${date}" data-id="${m.id}" aria-label="Supprimer">${ic('trash')}</button></div>`; }).join('');
+    const rows = (j.meals || []).map((m) => { const mm = mealM(m); const sl = SLOTS.find((s) => s.id === m.slot); return `<div class="li"><button class="grow" style="all:unset;cursor:pointer;flex:1;min-width:0" data-act="mealEdit" data-date="${date}" data-id="${m.id}"><div class="t">${esc(m.name || 'Repas')}${m.src === 'photo' ? ' <span class="tag">photo</span>' : m.src === 'plat' ? ' <span class="tag">recette</span>' : ''}</div><div class="s">${esc(sl ? sl.label : '')} · ${fmtInt(mm.kcal)} kcal · P ${fmtInt(mm.p)} g · G ${fmtInt(mm.c)} · L ${fmtInt(mm.f)}</div></button><button class="icon-btn" data-act="mealDel" data-date="${date}" data-id="${m.id}" aria-label="Supprimer">${ic('trash')}</button></div>`; }).join('');
     return `<section class="card stack-sm">
       <div class="eyebrow">Ce que j'ai vraiment mangé</div>
-      <div class="grid3"><label class="btn" for="mealPhotoInput">${ic('camera')} Photo</label><button class="btn" data-act="mealManual" data-date="${date}">${ic('plus')} À la main</button><button class="btn" data-act="mealDishes" data-date="${date}">${ic('book')} Plat maison</button></div>
-      <input type="file" id="mealPhotoInput" accept="image/*" data-ch="mealPhoto" data-date="${date}" hidden>
-      ${rows || '<p class="muted small" style="margin:0">Chez tes parents ? Prends ton assiette en photo : l\'app estime les aliments et les quantités, tu corriges si besoin.</p>'}
+      <div class="grid2"><button class="btn" data-act="mealManual" data-date="${date}">${ic('plus')} Ajouter un repas</button><button class="btn" data-act="mealDishes" data-date="${date}">${ic('book')} Mes recettes</button></div>
+      ${rows || '<p class="muted small" style="margin:0">Chez tes parents ? Ajoute ce que tu as mangé à la main, ou enregistre les plats de la maison dans « Mes recettes » pour les retrouver en un clic.</p>'}
     </section>`;
   }
   const PROT_IDEAS = [['skyr', 150, 'un skyr (150 g)'], ['oeuf', 165, '3 œufs'], ['fb0', 200, '200 g de fromage blanc'], ['thon', 140, 'une boîte de thon'], ['jambon', 120, '3 tranches de jambon'], ['lait', 300, 'un grand verre de lait']];
@@ -3285,199 +3266,24 @@ Object.keys(DISHES).forEach((id) => {
       <div class="row wrap small"><span class="muted" id="mi-m-${i}">${fmtInt(m.kcal)} kcal · P ${fmtInt(m.p)} g</span>${it.conf ? `<span class="tag ${conf[it.conf] || ''}">confiance ${esc(it.conf)}</span>` : ''}</div></div>
       <div class="g-input"><input class="input num" inputmode="numeric" value="${it.g != null ? Math.round(it.g) : ''}" data-in="miG" data-i="${i}" aria-label="Grammes"><span>g</span></div>
       <button class="icon-btn" data-act="miDel" data-i="${i}" aria-label="Retirer">${ic('trash')}</button></div>`; }).join('');
-    const html = `${sheetHead(md.id ? 'Modifier le repas' : 'Nouveau repas')}
+    const html = `${sheetHead(md.asDish ? (md.dishId ? 'Modifier la recette' : 'Nouvelle recette') : (md.id ? 'Modifier le repas' : 'Nouveau repas'))}
       ${md.note ? `<div class="notice">${esc(md.note)}</div>` : ''}
-      <div class="grid2"><div class="field"><label for="mdName">Nom</label><input class="input" id="mdName" value="${esc(md.name || '')}" data-in="mdName" placeholder="ex. Repas du soir"></div>
-      <div class="field"><label for="mdSlot">Moment</label><select class="input" id="mdSlot" data-ch="mdSlot">${SLOTS.map((s) => `<option value="${s.id}" ${md.slot === s.id ? 'selected' : ''}>${esc(s.label)}</option>`).join('')}</select></div></div>
+      <div class="grid2"><div class="field"><label for="mdName">Nom</label><input class="input" id="mdName" value="${esc(md.name || '')}" data-in="mdName" placeholder="${md.asDish ? 'ex. Hachis de maman' : 'ex. Repas du soir'}"></div>
+      ${md.asDish ? '<p class="hint" style="align-self:end;margin:0">Mets les quantités de ta portion habituelle.</p>' : `<div class="field"><label for="mdSlot">Moment</label><select class="input" id="mdSlot" data-ch="mdSlot">${SLOTS.map((s) => `<option value="${s.id}" ${md.slot === s.id ? 'selected' : ''}>${esc(s.label)}</option>`).join('')}</select></div>`}</div>
       <div class="stack-sm">${rows || '<p class="muted small" style="margin:0">Aucun aliment pour l\'instant.</p>'}</div>
       <div class="search">${ic('search')}<input class="input" id="miSearch" type="search" placeholder="Ajouter un aliment ou un plat" data-in="miSearch" autocomplete="off"></div>
       <div class="list" id="miResults"></div>
       <div class="card flat"><b id="md-total">${fmtInt(tot.kcal)} kcal · P ${fmtInt(tot.p)} g · G ${fmtInt(tot.c)} g · L ${fmtInt(tot.f)} g</b></div>
-      <button class="btn primary block big-btn" data-act="mealSave">${ic('check')} Enregistrer le repas</button>
-      <div class="row wrap"><button class="btn sm" data-act="dishSave">${ic('save')} Enregistrer comme plat maison</button>${md.id ? `<button class="btn sm ghost danger" data-act="mealDel" data-date="${md.date}" data-id="${md.id}">${ic('trash')} Supprimer</button>` : ''}</div>`;
+      ${md.asDish
+        ? `<button class="btn primary block big-btn" data-act="dishSave">${ic('check')} Enregistrer la recette</button>${md.dishId ? `<button class="btn ghost danger" data-act="dishDel" data-id="${md.dishId}" data-date="${md.date}">${ic('trash')} Supprimer la recette</button>` : ''}`
+        : `<button class="btn primary block big-btn" data-act="mealSave">${ic('check')} Enregistrer le repas</button>
+      <div class="row wrap"><button class="btn sm" data-act="dishSave">${ic('save')} L'enregistrer aussi dans mes recettes</button>${md.id ? `<button class="btn sm ghost danger" data-act="mealDel" data-date="${md.date}" data-id="${md.id}">${ic('trash')} Supprimer</button>` : ''}</div>`}`;
     if (UI.sheet === 'meal') refreshSheet(html); else openSheet('meal', html);
   }
   function updateMealTotals() {
     const md = UI.mealDraft; if (!md) return;
     md.items.forEach((it, i) => { const el = $(`#mi-m-${i}`); if (el) { const m = mealItemM(it); el.textContent = `${fmtInt(m.kcal)} kcal · P ${fmtInt(m.p)} g`; } });
     const t = mealM(md); const el = $('#md-total'); if (el) el.textContent = `${fmtInt(t.kcal)} kcal · P ${fmtInt(t.p)} g · G ${fmtInt(t.c)} g · L ${fmtInt(t.f)} g`;
-  }
-  async function downscale(file, max, q) {
-    const url = URL.createObjectURL(file);
-    try {
-      const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
-      const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
-      const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * s); c.height = Math.round(img.naturalHeight * s);
-      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      return await new Promise((res) => c.toBlob(res, 'image/jpeg', q || 0.85));
-    } finally { URL.revokeObjectURL(url); }
-  }
-  const FOOD_PROMPT = 'Tu analyses la photo d\'une assiette (repas familial en France). Identifie chaque aliment visible séparément et estime la quantité en grammes de la portion visible (poids cuit, tel que servi), puis les calories, protéines, glucides et lipides de cette portion. Confiance : « élevé » si l\'aliment et la quantité sont clairs, « moyen » si l\'aliment est clair mais la quantité incertaine, « faible » si l\'aliment lui-même est incertain. N\'invente pas d\'aliment invisible ; si une matière grasse de cuisson ou une sauce est probable, ajoute-la avec la confiance « faible ». Dans « remarque », une phrase courte sur ce qui rend l\'estimation incertaine. Si la photo ne montre pas de nourriture, renvoie une liste vide et explique pourquoi dans « remarque ».';
-  const FOOD_SCHEMA = {
-    type: 'object', additionalProperties: false, required: ['items', 'remarque'],
-    properties: {
-      items: { type: 'array', items: { type: 'object', additionalProperties: false, required: ['nom', 'grammes', 'kcal', 'proteines', 'glucides', 'lipides', 'confiance'], properties: { nom: { type: 'string' }, grammes: { type: 'number' }, kcal: { type: 'number' }, proteines: { type: 'number' }, glucides: { type: 'number' }, lipides: { type: 'number' }, confiance: { type: 'string', enum: ['élevé', 'moyen', 'faible'] } } } },
-      remarque: { type: 'string' },
-    },
-  };
-  function normalizeFood(out) {
-    const items = (out && Array.isArray(out.items) ? out.items : []).map((x) => {
-      const g = Math.max(1, num(x.grammes) || 0); const per = (v) => ((num(v) || 0) / g) * 100;
-      return { n: String(x.nom || 'Aliment'), g, k100: per(x.kcal), p100: per(x.proteines), c100: per(x.glucides), f100: per(x.lipides), conf: ['élevé', 'moyen', 'faible'].includes(x.confiance) ? x.confiance : 'moyen' };
-    });
-    return { items, note: out && out.remarque ? String(out.remarque) : '' };
-  }
-  const blobToB64 = (blob) => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1]); r.onerror = rej; r.readAsDataURL(blob); });
-  async function analyzeFood(blob) {
-    if (inClaude()) {
-      const sample = await window.claude.use('sample');
-      if (sample) {
-        const lim = await sample.limits().catch(() => null);
-        if (lim && lim.images) {
-          const out = await sample.json(`${FOOD_PROMPT}\n\nRéponds uniquement avec un objet JSON de la forme {"items":[{"nom":string,"grammes":number,"kcal":number,"proteines":number,"glucides":number,"lipides":number,"confiance":"élevé"|"moyen"|"faible"}],"remarque":string}.`, { images: [blob], cache: false });
-          return normalizeFood(out);
-        }
-      }
-    }
-    const key = store.get(KEY_STORE);
-    if (key) return analyzeWithApi(key, blob);
-    throw { code: 'no_engine' };
-  }
-  /* Version autonome : appel direct à l'API Anthropic avec la clé de l'utilisateur, stockée uniquement sur son téléphone. */
-  async function analyzeWithApi(key, blob) {
-    const data = await blobToB64(blob);
-    let res;
-    try {
-      res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2026-10-21', 'anthropic-beta': 'server-side-fallback-2026-07-01', 'anthropic-dangerous-direct-browser-access': 'true' },
-        body: JSON.stringify({
-          model: 'claude-opus-5-5', max_tokens: 4000, fallbacks: 'default',
-          output_config: { effort: 'low', format: { type: 'json_schema', schema: FOOD_SCHEMA } },
-          messages: [{ role: 'user', content: [{ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data } }, { type: 'text', text: FOOD_PROMPT }] }],
-        }),
-      });
-    } catch (e) { throw { code: 'network' }; }
-    if (res.status === 401 || res.status === 403) throw { code: 'bad_key' };
-    if (res.status === 429) throw { code: 'rate_limited' };
-    if (!res.ok) throw { code: 'api', message: `Erreur ${res.status}` };
-    const msg = await res.json();
-    if (msg.stop_reason === 'refusal') throw { code: 'refusal' };
-    const text = (msg.content || []).filter((b) => b.type === 'text').map((b) => b.text).join('');
-    try { return normalizeFood(JSON.parse(text)); } catch (e) { throw { code: 'invalid_json' }; }
-  }
-  const FOOD_ERR = {
-    no_engine: 'La reconnaissance photo marche dans la version claude.ai, ou ici avec ta clé API Anthropic (Menu › Réglages). En attendant, ajoute tes aliments à la main.',
-    not_granted: 'Tu n\'as pas autorisé l\'app à envoyer la photo à Claude. Tu peux le changer dans les permissions de l\'artefact.',
-    rate_limited: 'Limite d\'utilisation atteinte pour le moment. Réessaie plus tard ou ajoute le repas à la main.',
-    images_unavailable: 'L\'envoi d\'images à Claude n\'est pas disponible ici. Ajoute le repas à la main.',
-    image_rejected: 'Cette image n\'a pas été acceptée. Reprends la photo en JPEG ou PNG.',
-    bad_key: 'Clé API refusée. Vérifie-la dans Menu › Réglages.',
-    network: 'Pas de réseau. Ajoute le repas à la main, ou réessaie plus tard.',
-    refusal: 'L\'analyse a été refusée. Ajoute le repas à la main.',
-    invalid_json: 'La réponse n\'était pas lisible. Réessaie ou ajoute le repas à la main.',
-  };
-
-  /* ===================== Photos de physique (stockées sur l'appareil, jamais dans le code) ===================== */
-  const PhotoDB = {
-    db: null,
-    open() {
-      return new Promise((res, rej) => {
-        if (this.db) { res(this.db); return; }
-        let req; try { req = indexedDB.open('carnet-photos', 1); } catch (e) { rej(e); return; }
-        req.onupgradeneeded = () => { const d = req.result; if (!d.objectStoreNames.contains('photos')) d.createObjectStore('photos', { keyPath: 'id' }); };
-        req.onsuccess = () => { this.db = req.result; res(this.db); };
-        req.onerror = () => rej(req.error);
-      });
-    },
-    async tx(mode, fn) {
-      const db = await this.open();
-      return new Promise((res, rej) => { const t = db.transaction('photos', mode); const st = t.objectStore('photos'); const r = fn(st); t.oncomplete = () => res(r && r.result); t.onerror = () => rej(t.error); });
-    },
-    all() { return this.tx('readonly', (st) => st.getAll()); },
-    put(rec) { return this.tx('readwrite', (st) => st.put(rec)); },
-    del(id) { return this.tx('readwrite', (st) => st.delete(id)); },
-  };
-  const ANGLES = [['face', 'Face'], ['profil', 'Profil'], ['dos', 'Dos']];
-  let photoURLs = [];
-  const photoURL = (rec) => { const u = URL.createObjectURL(rec.blob); photoURLs.push(u); return u; };
-  async function fillPhotos() {
-    const box = $('#photosView'); if (!box) return;
-    let all = [];
-    try { all = await PhotoDB.all(); } catch (e) { box.innerHTML = '<div class="empty">Le stockage des photos n\'est pas disponible dans ce navigateur.</div>'; return; }
-    photoURLs.forEach((u) => URL.revokeObjectURL(u)); photoURLs = [];
-    const byDate = {}; all.forEach((p) => { (byDate[p.date] = byDate[p.date] || []).push(p); });
-    const dates = Object.keys(byDate).sort().reverse();
-    const c = UI.cmp || (UI.cmp = { angle: 'face' });
-    const dA = dates.filter((d) => byDate[d].some((p) => p.angle === c.angle));
-    const a = c.a && dA.includes(c.a) ? c.a : dA[dA.length - 1]; const b = c.b && dA.includes(c.b) ? c.b : dA[0];
-    const pick = (d) => (byDate[d] || []).find((p) => p.angle === c.angle);
-    const opt = (sel) => dA.map((d) => `<option value="${d}" ${d === sel ? 'selected' : ''}>${esc(fmtDate(d, { day: 'numeric', month: 'short', year: 'numeric' }))}</option>`).join('');
-    const compare = dA.length >= 1 ? `<section class="card stack">
-        <div class="row between"><div class="eyebrow">Comparer</div></div>${seg('cmpAngle', ANGLES, c.angle)}
-        <div class="compare"><div class="stack-sm"><select class="input" data-ch="cmpA">${opt(a)}</select>${pick(a) ? `<img alt="${esc(c.angle)} le ${esc(a)}" src="${photoURL(pick(a))}">` : ''}</div>
-        <div class="stack-sm"><select class="input" data-ch="cmpB">${opt(b)}</select>${pick(b) ? `<img alt="${esc(c.angle)} le ${esc(b)}" src="${photoURL(pick(b))}">` : ''}</div></div>
-        <span class="hint">Pour comparer juste : même miroir, même lumière, même distance, même heure, posture détendue.</span></section>` : '';
-    const groups = dates.map((d) => `<section class="card stack-sm"><div class="eyebrow">${esc(cap(fmtDate(d, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })))}</div><div class="ph-grid">${byDate[d].sort((x, y) => ANGLES.findIndex((q) => q[0] === x.angle) - ANGLES.findIndex((q) => q[0] === y.angle)).map((p) => `<button class="ph" data-act="photoView" data-id="${p.id}" aria-label="Photo ${esc(p.angle)}"><img alt="" src="${photoURL(p)}"><span class="tag">${esc((ANGLES.find((q) => q[0] === p.angle) || ['', p.angle])[1])}</span></button>`).join('')}</div></section>`).join('');
-    box.innerHTML = `${compare}${groups || '<div class="empty">Aucune photo pour l\'instant. Ajoute tes photos depuis ta galerie : elles restent sur ce téléphone.</div>'}`;
-  }
-  function progPhotos() {
-    setTimeout(fillPhotos, 0);
-    return `<section class="card stack-sm"><div class="row between"><div><div class="eyebrow">Photos de physique</div><span class="hint">Stockées sur cet appareil uniquement, jamais envoyées.</span></div><label class="btn sm primary" for="physFiles">${ic('plus')} Ajouter</label></div>
-      <input type="file" id="physFiles" accept="image/*" multiple data-ch="physFiles" hidden></section>
-      <div id="photosView" class="stack"><div class="empty">Chargement…</div></div>`;
-  }
-  function physDraftSheet() {
-    const pd = UI.physDraft;
-    openSheet('phys', `${sheetHead('Nouvelles photos')}
-      <div class="field"><label for="pdDate">Date</label><input class="input" id="pdDate" type="date" value="${pd.date}" data-ch="pdDate"></div>
-      <div class="stack">${pd.items.map((it, i) => `<div class="row" style="align-items:flex-start"><img class="ph-thumb" alt="" src="${it.url}"><div class="grow stack-sm"><span class="small muted">${esc(it.name)}</span><div class="seg">${ANGLES.map(([k, l]) => `<button type="button" aria-pressed="${it.angle === k}" data-act="pdAngle" data-i="${i}" data-v="${k}">${l}</button>`).join('')}</div><button class="link" data-act="pdDrop" data-i="${i}" style="justify-self:start;color:var(--ink-3)">Ne pas ajouter</button></div></div>`).join('')}</div>
-      <p class="hint" style="margin:0">Si une autre personne apparaît sur une photo, ne l'ajoute pas ou recadre-la d'abord.</p>
-      <button class="btn primary block big-btn" data-act="pdSave">${ic('check')} Enregistrer ${pd.items.length} photo${pd.items.length > 1 ? 's' : ''}</button>`);
-  }
-
-  /* ===================== Sommeil et pas (Santé iPhone / Garmin) ===================== */
-  const healthOn = (date) => { const m = S.months[monthKey(date)]; return m && m.health ? m.health[date] : null; };
-  function parseHealth(text) {
-    const t = String(text || '');
-    const pick = (re) => { const m = t.match(re); return m ? m[1] : null; };
-    const date = pick(/(\d{4}-\d{2}-\d{2})/);
-    const steps = pick(/pas\D{0,12}([\d\s.,]+)/i) || pick(/steps\D{0,12}([\d\s.,]+)/i);
-    const sleepHM = t.match(/sommeil\D{0,12}(\d{1,2})\s*h\s*(\d{1,2})?/i) || t.match(/sleep\D{0,12}(\d{1,2})\s*h\s*(\d{1,2})?/i);
-    let sleep = null;
-    if (sleepHM) sleep = +sleepHM[1] + (sleepHM[2] ? +sleepHM[2] / 60 : 0);
-    else { const s = pick(/sommeil\D{0,12}([\d.,]+)/i) || pick(/sleep\D{0,12}([\d.,]+)/i); if (s) { sleep = num(s); if (sleep > 24) sleep /= 60; if (sleep > 24) sleep /= 60; } }
-    const st = steps ? Math.round(num(steps.replace(/[\s.]/g, '').replace(',', '.'))) : null;
-    return { date: date || today(), steps: st && st > 0 ? st : null, sleep: sleep && sleep > 0 && sleep < 24 ? Math.round(sleep * 100) / 100 : null };
-  }
-  function saveHealth(h, src) {
-    if (h.steps == null && h.sleep == null) { toast('Je n\'ai trouvé ni pas ni sommeil dans ce texte.'); return false; }
-    const m = month(h.date); m.health = m.health || {};
-    m.health[h.date] = Object.assign({}, m.health[h.date] || {}, h.steps != null ? { steps: h.steps } : {}, h.sleep != null ? { sleep: h.sleep } : {}, { src });
-    persist([mk(h.date)]); return true;
-  }
-  function progHealth() {
-    const days = []; for (let i = 29; i >= 0; i--) days.push(addDays(today(), -i));
-    const rows = days.map((d) => ({ d, h: healthOn(d) || {} }));
-    const steps = rows.filter((x) => x.h.steps).map((x) => ({ x: x.d, y: x.h.steps }));
-    const sleep = rows.filter((x) => x.h.sleep).map((x) => ({ x: x.d, y: x.h.sleep }));
-    const avg = (arr) => (arr.length ? arr.reduce((a, b) => a + b.y, 0) / arr.length : null);
-    const last7 = (arr) => arr.filter((p) => p.x >= addDays(today(), -6));
-    const aS = avg(last7(steps)); const aZ = avg(last7(sleep));
-    return `<section class="grid2"><div class="card stat"><span class="v">${aZ ? hm(aZ * 60) : '—'}</span><span class="k">sommeil moyen (7 j) · cible 7–9 h</span></div><div class="card stat"><span class="v">${aS ? fmtInt(aS) : '—'}</span><span class="k">pas par jour (7 j) · cible 8 000</span></div></section>
-      <section class="card stack"><div class="row between"><div class="eyebrow">Ajouter</div><button class="btn sm primary" data-act="healthPaste">${ic('copy')} Importer depuis Santé</button></div>
-        <div class="grid3"><div class="field"><label for="hDate">Date</label><input class="input" id="hDate" type="date" value="${today()}"></div><div class="field"><label for="hSleep">Sommeil (h)</label><input class="input" id="hSleep" inputmode="decimal" placeholder="7,5"></div><div class="field"><label for="hSteps">Pas</label><input class="input" id="hSteps" inputmode="numeric" placeholder="9000"></div></div>
-        <button class="btn block" data-act="healthSave">Enregistrer</button>
-        <details><summary class="small"><b>Relier Garmin via Santé (raccourci iPhone)</b></summary><ol class="small stack-sm" style="padding-left:18px;margin:8px 0 0">
-          <li>Dans Garmin Connect : Plus › Paramètres › Applications connectées › Santé, autorise les pas et le sommeil.</li>
-          <li>Dans l'app Raccourcis, crée « Carnet Santé » : action « Rechercher des échantillons de santé » (Pas, aujourd'hui) puis « Calculer des statistiques » (Somme) ; même chose pour « Analyse du sommeil » sur les dernières 24 h (Somme des durées).</li>
-          <li>Termine par « Texte » : <code>Pas: [somme des pas] Sommeil: [durée]</code>, puis « Copier dans le presse-papiers ».</li>
-          <li>Lance le raccourci le matin, puis touche « Importer depuis Santé » ici. Tu peux aussi l'automatiser chaque jour à heure fixe.</li>
-        </ol><p class="hint">Garmin ne donne pas accès à son API aux apps personnelles : Santé sert d'intermédiaire. Je n'ai pas pu tester le raccourci sur ton téléphone : si les chiffres ne passent pas, saisis-les à la main.</p></details>
-        <textarea class="input" id="healthBox" placeholder="Ou colle ici le texte copié par le raccourci (ex. « Pas: 9500 Sommeil: 7h20 »)" hidden></textarea>
-      </section>
-      <section class="card"><div class="eyebrow">Sommeil (h)</div>${lineChart(sleep, { goal: 7.5, label: 'Sommeil', h: 180 })}</section>
-      <section class="card"><div class="eyebrow">Pas par jour</div>${lineChart(steps, { goal: 8000, label: 'Pas', h: 180 })}</section>`;
   }
   function progScores() {
     const logs = allLogs().filter((l) => l.report);
@@ -3575,50 +3381,23 @@ Object.keys(DISHES).forEach((id) => {
       const md = UI.mealDraft; if (!md.items.length) { toast('Ajoute au moins un aliment'); return; }
       const name = (md.name || '').trim() || md.items.map((i) => i.n).slice(0, 2).join(', ');
       S.core.homeDishes = S.core.homeDishes || {};
-      S.core.homeDishes['h-' + uid()] = { n: name, items: md.items.map((i) => ({ n: i.n, g: num(i.g) || 0, k100: i.k100, p100: i.p100, c100: i.c100, f100: i.f100, fid: i.fid || null })) };
-      persist(['core']); toast(`« ${name} » ajouté aux plats maison`);
+      const id = md.dishId || 'h-' + uid();
+      S.core.homeDishes[id] = { n: name, items: md.items.map((i) => ({ n: i.n, g: num(i.g) || 0, k100: i.k100, p100: i.p100, c100: i.c100, f100: i.f100, fid: i.fid || null })) };
+      persist(['core']);
+      if (md.asDish) ACT.mealDishes({ dataset: { date: md.date } });
+      toast(`« ${name} » enregistré dans tes recettes`);
     },
     mealDishes: (el) => {
-      const dishes = S.core.homeDishes || {}; const ids = Object.keys(dishes);
-      openSheet('dishes', `${sheetHead('Plats maison')}
-        ${ids.length ? `<div class="list">${ids.map((id) => { const dd = dishes[id]; const m = mealM(dd); return `<div class="li"><button class="grow" style="all:unset;cursor:pointer;flex:1;min-width:0" data-act="dishUse" data-id="${id}" data-date="${el.dataset.date}"><div class="t">${esc(dd.n)}</div><div class="s">${fmtInt(m.kcal)} kcal · P ${fmtInt(m.p)} g</div></button><button class="icon-btn" data-act="dishDel" data-id="${id}" data-date="${el.dataset.date}" aria-label="Supprimer">${ic('trash')}</button></div>`; }).join('')}</div>` : '<div class="empty">Aucun plat enregistré. Après une photo ou une saisie, touche « Enregistrer comme plat maison » : le hachis de ta mère sera à un clic la prochaine fois.</div>'}`);
+      const dishes = S.core.homeDishes || {}; const ids = Object.keys(dishes); const date = el.dataset.date;
+      openSheet('dishes', `${sheetHead('Mes recettes')}
+        <button class="btn primary block" data-act="dishNew" data-date="${date}">${ic('plus')} Créer une recette</button>
+        ${ids.length ? `<div class="list">${ids.map((id) => { const dd = dishes[id]; const m = mealM(dd); return `<div class="li"><button class="grow" style="all:unset;cursor:pointer;flex:1;min-width:0" data-act="dishUse" data-id="${id}" data-date="${date}"><div class="t">${esc(dd.n)}</div><div class="s">${fmtInt(m.kcal)} kcal · P ${fmtInt(m.p)} g · touche pour l'ajouter à ta journée</div></button><button class="icon-btn" data-act="dishEdit" data-id="${id}" data-date="${date}" aria-label="Modifier">${ic('edit')}</button></div>`; }).join('')}</div>` : '<div class="empty">Aucune recette pour l\'instant. Crée celles que tu manges souvent chez tes parents (hachis, gratin, couscous…) : elles seront à un clic ensuite.</div>'}`);
     },
+    dishNew: (el) => { UI.mealDraft = { date: el.dataset.date, name: '', slot: guessSlot(), items: [], src: 'plat', asDish: true }; mealSheet(); },
+    dishEdit: (el) => { const dd = (S.core.homeDishes || {})[el.dataset.id]; if (!dd) return; UI.mealDraft = { date: el.dataset.date, name: dd.n, slot: guessSlot(), items: clone(dd.items), src: 'plat', asDish: true, dishId: el.dataset.id }; mealSheet(); },
     dishUse: (el) => { const dd = (S.core.homeDishes || {})[el.dataset.id]; if (!dd) return; UI.mealDraft = { date: el.dataset.date, name: dd.n, slot: guessSlot(), items: clone(dd.items), src: 'plat' }; mealSheet(); },
     dishDel: (el) => { delete S.core.homeDishes[el.dataset.id]; persist(['core']); ACT.mealDishes(el); },
-    apiKeySave: () => { const v = ($('#apiKey').value || '').trim(); if (!v) { toast('Colle d\'abord ta clé'); return; } store.set(KEY_STORE, v); settingsSheet(); toast('Clé enregistrée sur ce téléphone'); },
-    apiKeyDel: () => { try { localStorage.removeItem(KEY_STORE); } catch (e) { /* rien */ } settingsSheet(); toast('Clé supprimée'); },
-    photoView: async (el) => {
-      const all = await PhotoDB.all().catch(() => []); const p = all.find((x) => x.id === el.dataset.id); if (!p) return;
-      openSheet('photo', `${sheetHead(cap(fmtDate(p.date, { day: 'numeric', month: 'long', year: 'numeric' })))}<img class="ph-full" alt="" src="${photoURL(p)}">
-        <div class="seg">${ANGLES.map(([k, l]) => `<button type="button" aria-pressed="${p.angle === k}" data-act="photoAngle" data-id="${p.id}" data-v="${k}">${l}</button>`).join('')}</div>
-        ${UI.confirm === 'delPhoto' ? `<div class="row wrap"><span class="grow small">Supprimer définitivement cette photo ?</span><button class="btn sm danger" data-act="photoDel" data-id="${p.id}" data-sure="1">Supprimer</button><button class="btn sm" data-act="confirmOff">Annuler</button></div>` : `<button class="btn ghost danger" data-act="photoDel" data-id="${p.id}">${ic('trash')} Supprimer</button>`}`, () => ACT.photoView(el));
-    },
-    photoAngle: async (el) => { const all = await PhotoDB.all(); const p = all.find((x) => x.id === el.dataset.id); if (!p) return; p.angle = el.dataset.v; await PhotoDB.put(p); ACT.photoView(el); fillPhotos(); },
-    photoDel: async (el) => {
-      if (!el.dataset.sure) { UI.confirm = 'delPhoto'; ACT.photoView(el); return; }
-      await PhotoDB.del(el.dataset.id); UI.confirm = null; closeSheet(); fillPhotos(); toast('Photo supprimée');
-    },
-    pdAngle: (el) => { UI.physDraft.items[+el.dataset.i].angle = el.dataset.v; physDraftSheet(); },
-    pdDrop: (el) => { const it = UI.physDraft.items.splice(+el.dataset.i, 1)[0]; if (it) URL.revokeObjectURL(it.url); if (!UI.physDraft.items.length) closeSheet(); else physDraftSheet(); },
-    pdSave: async () => {
-      const pd = UI.physDraft; const btn = $('[data-act="pdSave"]'); if (btn) { btn.disabled = true; btn.textContent = 'Enregistrement…'; }
-      try {
-        for (const it of pd.items) { const blob = await downscale(it.file, 1400, 0.85); await PhotoDB.put({ id: uid(), date: pd.date, angle: it.angle, blob, created: Date.now() }); URL.revokeObjectURL(it.url); }
-        UI.physDraft = null; closeSheet(); UI.progressTab = 'photos'; render(); toast('Photos enregistrées sur ce téléphone');
-      } catch (e) { toast('Impossible d\'enregistrer ces photos ici.'); if (btn) btn.disabled = false; }
-    },
-    healthSave: () => {
-      const h = { date: $('#hDate').value || today(), sleep: num($('#hSleep').value), steps: num($('#hSteps').value) };
-      if (h.steps != null) h.steps = Math.round(h.steps);
-      if (saveHealth(h, 'manuel')) { render(); toast('Enregistré'); }
-    },
-    healthPaste: async () => {
-      let text = '';
-      try { text = await navigator.clipboard.readText(); } catch (e) { text = ''; }
-      if (!text) { const box = $('#healthBox'); if (box) { box.hidden = false; box.focus(); } toast('Colle le texte du raccourci dans le champ qui vient d\'apparaître'); return; }
-      const h = parseHealth(text);
-      if (saveHealth(h, 'sante')) { render(); toast(`Importé : ${h.sleep != null ? `${hm(h.sleep * 60)} de sommeil` : ''}${h.sleep != null && h.steps != null ? ', ' : ''}${h.steps != null ? `${fmtInt(h.steps)} pas` : ''}`); }
-    },
+
   });
   Object.assign(IN, {
     stepVal: (el) => { const cs = curStep(); if (!cs || !cs.data) return; const f = el.dataset.f; cs.data[f] = f === 't' ? (el.value.trim() || null) : num(el.value); persist(['core'], 500); },
@@ -3635,31 +3414,7 @@ Object.keys(DISHES).forEach((id) => {
   });
   Object.assign(CH, {
     mdSlot: (el) => { UI.mealDraft.slot = el.value; },
-    mealPhoto: async (el) => {
-      const file = el.files && el.files[0]; const date = el.dataset.date; el.value = '';
-      if (!file) return;
-      UI.mealDraft = { date, name: '', slot: guessSlot(), items: [], src: 'photo' };
-      openSheet('analyzing', `${sheetHead('Analyse de ton assiette')}<div class="empty"><div class="spinner" aria-hidden="true"></div>Claude identifie les aliments et estime les quantités…</div>`);
-      try {
-        const blob = await downscale(file, 1024, 0.82);
-        const r = await analyzeFood(blob);
-        UI.mealDraft.items = r.items; UI.mealDraft.note = r.items.length ? `Estimation à vérifier : corrige les grammes si besoin. ${r.note}`.trim() : (r.note || 'Aucun aliment reconnu.');
-        UI.mealDraft.name = r.items.slice(0, 2).map((i) => i.n).join(', ');
-        UI.sheet = null; mealSheet();
-      } catch (e) {
-        UI.mealDraft.note = FOOD_ERR[e && e.code] || 'L\'analyse n\'a pas abouti. Ajoute le repas à la main.';
-        UI.sheet = null; mealSheet();
-      }
-    },
-    physFiles: (el) => {
-      const files = Array.from(el.files || []); el.value = '';
-      if (!files.length) return;
-      UI.physDraft = { date: today(), items: files.map((f, i) => ({ file: f, name: f.name, url: URL.createObjectURL(f), angle: ANGLES[i % 3][0] })) };
-      physDraftSheet();
-    },
-    pdDate: (el) => { UI.physDraft.date = el.value || today(); },
-    cmpA: (el) => { UI.cmp.a = el.value; fillPhotos(); },
-    cmpB: (el) => { UI.cmp.b = el.value; fillPhotos(); },
+
   });
   function uniGapLine(exId) {
     const gs = exHistory(exId).map((h) => uniGap(h.entry)).filter(Boolean).slice(-5);
@@ -3667,19 +3422,6 @@ Object.keys(DISHES).forEach((id) => {
     const avg = gs.reduce((a, g) => a + g.pct, 0) / gs.length;
     const weak = gs.filter((g) => g.weak === 'L').length >= gs.length / 2 ? 'L' : 'R';
     return `<div class="card flat small"><b>Écart gauche / droite</b> : ${fmt(avg, 0)} % en moyenne sur ${gs.length} séance${gs.length > 1 ? 's' : ''}, côté ${SIDE_LABEL[weak]} plus faible.${avg >= 10 ? ' Commence par ce côté et aligne l\'autre dessus.' : ' Écart faible, rien à corriger.'} ${srcChips(['bishop2018'])}</div>`;
-  }
-  const healthLine = (date) => { const h = healthOn(date); return h && (h.sleep || h.steps) ? `<div class="small"><b>Santé :</b> ${h.sleep ? `${hm(h.sleep * 60)} de sommeil` : ''}${h.sleep && h.steps ? ' · ' : ''}${h.steps ? `${fmtInt(h.steps)} pas` : ''}</div>` : ''; };
-  function homeHealth() {
-    const hT = healthOn(today()) || {}; const hY = healthOn(addDays(today(), -1)) || {};
-    const sleep = hT.sleep || null; const steps = hT.steps || hY.steps || null;
-    return `<section class="card row between"><div class="row">${ic('moon')}<div class="stat"><span class="v" style="font-size:22px">${sleep ? hm(sleep * 60) : '—'}</span><span class="k">sommeil cette nuit</span></div></div>
-      <div class="stat"><span class="v" style="font-size:22px">${steps ? fmtInt(steps) : '—'}</span><span class="k">pas ${hT.steps ? 'aujourd\'hui' : 'hier'}</span></div>
-      <button class="btn sm" data-tab="progress" data-sub="sante">${sleep || steps ? 'Détail' : 'Ajouter'}</button></section>`;
-  }
-  function apiKeyRow() {
-    const has = !!store.get(KEY_STORE);
-    return `<div class="li" style="display:grid;gap:8px"><div><div class="t">Photo des repas (clé API Anthropic)</div><div class="s">Optionnel, pour cette version hors claude.ai. Ta clé reste sur ce téléphone et sert uniquement à analyser tes photos d'assiette (environ 2 centimes par photo, facturés sur ton compte API).</div></div>
-      ${has ? '<div class="row wrap"><span class="tag good">clé enregistrée</span><button class="btn sm ghost danger" data-act="apiKeyDel">Supprimer la clé</button></div>' : '<div class="row"><input class="input grow" id="apiKey" type="password" autocomplete="off" placeholder="sk-ant-…" aria-label="Clé API Anthropic"><button class="btn sm" data-act="apiKeySave">Enregistrer</button></div>'}</div>`;
   }
 
   /* ===================== Démarrage ===================== */
