@@ -647,6 +647,11 @@ a.src:hover { color: var(--accent); border-color: var(--accent); }
 .sauce-picks .chip { padding: 6px 10px; font-size: 13px; }
 .sauce-picks .chip .muted { font-weight: 500; font-size: 12px; }
 .sauce-picks .chip[aria-pressed="true"] .muted { color: inherit; opacity: .7; }
+
+/* ---------- Bilan repas ---------- */
+.mini-ring.lg { width: 76px; height: 76px; }
+.macro-details summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-2); }
+.day-report .kp { font-size: 14px; }
 </style>
 </head><body>
 <div class="app">
@@ -1392,7 +1397,7 @@ const DRINKS = {
 const r1 = (v) => Math.round(v * 10) / 10;
 Object.keys(QUICK).forEach((id) => {
   const [brand, n, g, kcal, p, c, f, unit] = QUICK[id]; const k = 100 / g;
-  FOODS[id] = { n, brand, kcal: Math.round(kcal * k), p: r1(p * k), c: r1(c * k), f: r1(f * k), rayon: 'Divers', price: 0, dish: true, quick: true, est: true, unit: [g, unit] };
+  FOODS[id] = { n, brand, kcal: Math.round(kcal * k), p: r1(p * k), c: r1(c * k), f: r1(f * k), rayon: 'Divers', price: 0, dish: true, quick: true, est: true, unit: [g, unit], sauce: /_sauce$/.test(id) };
 });
 Object.keys(DRINKS).forEach((id) => {
   const [brand, n, kcal, p, c, f, ml, unit, label] = DRINKS[id];
@@ -2428,13 +2433,11 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
         <div style="text-align:center;min-width:0"><div class="eyebrow">${DAYTYPES[dp.type].label}${sd ? ` · ${esc(sd.title)}` : ''}</div><b>${esc(cap(fmtDate(date)))}</b>${date !== today() ? ` · <button class="link" data-act="mealsToday">aujourd'hui</button>` : ''}</div>
         <button class="icon-btn" data-act="mealsDay" data-d="1" aria-label="Jour suivant">${ic('chev')}</button>
       </section>
-      <section class="sec">${secHead('Bilan du jour')}<div class="card stack">${macroBars(dp.eaten, dp.t)}
-        <span class="hint">Plan du jour : ${fmtInt(dp.planned.kcal)} kcal · ${fmtInt(dp.planned.p)} g de protéines${S.core.settings.autoPortions ? ` · portions ajustées ×${fmt(dp.factor, 2)} à ta cible` : ''}</span>
-        ${adjustNote(dp)}</div></section>
+      ${dayReportHTML(dp)}
       ${mealsCard(date)}
       <section class="sec">${secHead('Plan suggéré', '<span class="hint">coche ce que tu as mangé</span>')}<div class="card list-card">${dp.slots.map((x) => mealRow(dp, x)).join('')}</div></section>
       <section class="sec">${secHead('Hors plan', `<button class="btn sm" data-act="foodSheet" data-date="${date}">${ic('plus')} Aliment</button>`)}<div class="card list-card">${extras || '<p class="muted small" style="margin:0">Un écart, une collation en plus ? Ajoute-le ici pour garder des macros justes.</p>'}</div></section>
-      ${adviceCard(dp)}`;
+`;
   }
   function mealsWeek() {
     const start = addDays(mondayOf(today()), 7 * UI.mealsWeek);
@@ -2935,7 +2938,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       ${sess || `<p class="muted small" style="margin:0">${sd ? (date < today() ? 'Pas de séance enregistrée ce jour-là.' : 'Séance prévue.') : 'Jour de repos.'}</p>`}
       ${canStart ? `<button class="btn primary" data-act="startSession" data-day="${sd.id}">${ic('play')} Démarrer ${esc(shortTitle(sd).toLowerCase())}</button>` : ''}
       ${sd && !logs.length ? `<button class="btn" data-act="openTrain" data-day="${sd.id}">Voir le programme</button>` : ''}
-      <div class="card stack-sm"><div class="row between"><b>Repas</b><span class="hint">${eatenN}/${dp.withR.length} cochés · ${fmtInt(dp.eaten.kcal)} / ${fmtInt(dp.t.kcal)} kcal</span></div>${dp.withR.map((x) => `<div class="small">${dp.j.eaten[x.slot.id] ? '✓' : '·'} ${esc(x.slot.label)} : ${esc(x.r.n)}</div>`).join('')}<button class="btn sm" data-act="openMealsDate" data-date="${date}" style="justify-self:start">Ouvrir les repas</button></div>
+      <div class="card stack-sm"><div class="row between"><b>Repas</b><span class="hint">${eatenN}/${dp.withR.length} cochés · ${fmtInt(dp.eaten.kcal)} / ${fmtInt(dp.t.kcal)} kcal</span></div>${(() => { const r = dayReport(dp); return r.score != null ? `<div class="small"><b>Bilan repas : ${r.score}/100</b> · ${esc(r.verdict.toLowerCase())}</div>` : ''; })()}${dp.withR.map((x) => `<div class="small">${dp.j.eaten[x.slot.id] ? '✓' : '·'} ${esc(x.slot.label)} : ${esc(x.r.n)}</div>`).join('')}<button class="btn sm" data-act="openMealsDate" data-date="${date}" style="justify-self:start">Ouvrir les repas</button></div>
       ${body ? `<div class="small"><b>Mesure :</b> ${body.weight ? `${fmt(body.weight, 1)} kg` : ''}${MEASURES.filter(([k]) => body[k]).map(([k, l]) => ` · ${l} ${fmt(body[k], 1)} cm`).join('')}</div>` : ''}`, () => dayDetailSheet(date));
   }
 
@@ -3932,20 +3935,89 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     </div></section>`;
   }
   const PROT_IDEAS = [['skyr', 150, 'un skyr (150 g)'], ['oeuf', 165, '3 œufs'], ['fb0', 200, '200 g de fromage blanc'], ['thon', 140, 'une boîte de thon'], ['jambon', 120, '3 tranches de jambon'], ['lait', 300, 'un grand verre de lait']];
-  function adviceCard(dp) {
-    const now = new Date();
-    if (dp.date > today() || (dp.date === today() && now.getHours() < 17 && !dp.off.kcal)) return '';
-    const rp = dp.t.p - dp.eaten.p; const rk = dp.t.kcal - dp.eaten.kcal; const tips = [];
-    if (dp.eaten.kcal < 300) return '';
-    if (rp > 15) {
-      let left = rp; const picks = [];
-      PROT_IDEAS.forEach(([fid, g, label]) => { if (left > 8 && picks.length < 2) { picks.push(label); left -= foodM(fid, g).p; } });
-      tips.push(`Il te manque environ ${fmtInt(rp)} g de protéines : ${picks.join(' ou ')} ${picks.length > 1 ? 'feraient l\'affaire' : 'ferait l\'affaire'}.`);
-    } else tips.push('Protéines : objectif atteint.');
-    if (rk > 350) tips.push(`Il te reste environ ${fmtInt(rk)} kcal : une collation (fruit + laitage, ou tartines) t'aide à prendre du muscle.`);
-    else if (rk < -350) tips.push(`Tu dépasses d'environ ${fmtInt(-rk)} kcal : pas de panique, c'est la moyenne de la semaine qui compte. Garde ta marche inclinée demain.`);
-    return `<section class="card flat stack-sm"><div class="row between"><b>Bilan du jour</b>${srcChips(['morton2018', 'aragon2018'])}</div>${tips.map((t) => `<p class="small" style="margin:0">${esc(t)}</p>`).join('')}</section>`;
+  /* ===================== Bilan repas du jour ===================== */
+  /* Note sur 100 : calories (30), protéines (30), protéines réparties sur la journée (10), part de fast-food, sauces
+     et sucreries (15), lipides (10), fruits et légumes (5). Aujourd'hui, le bilan compte la suite du plan pas encore mangée. */
+  const TREATS = ['chips', 'soda', 'biscuits', 'chocolat_lait', 'gateau', 'cookie', 'glace', 'pate_tartiner', 'croissant', 'pain_choc', 'tiramisu', 'nuggets', 'burger', 'kebab', 'pizza', 'frites', 'poulet_pane', 'poisson_pane'];
+  const FRUIT_VEG = ['banane', 'pomme', 'orange', 'kiwi', 'fruitsr', 'compote', 'brocoli', 'hverts', 'courgette', 'tomate', 'salade', 'champignons', 'poivron', 'oignon', 'legumes_cuits', 'ratatouille', 'soupe', 'avocat', 'salade_compo', 'jus_orange', 'patated'];
+  function foodKind(fid) {
+    const f = FOODS[fid]; if (!f) return '';
+    if (f.supp) return '';
+    if (f.drink) return f.kcal >= 20 && fid !== 'jus_orange' && fid !== 'biere' ? 'drink' : fid === 'biere' ? 'alcool' : '';
+    if (f.sauce && !['sauce_tomate', 'vinaigrette', 'pesto', 'sauce_curry', 'sauce_creme', 'sauce_soja', 'soja_salee'].includes(fid)) return 'sauce';
+    if (f.brand) return 'fast';
+    return TREATS.includes(fid) ? 'treat' : '';
   }
+  function dayReport(dp) {
+    const t = today(); const mode = dp.date < t ? 'past' : dp.date === t ? 'today' : 'future';
+    const j = dp.j; const occ = []; const fv = new Set(); const kinds = { fast: 0, sauce: 0, drink: 0, treat: 0, alcool: 0 };
+    const seenFood = (fid, kcal) => { if (FRUIT_VEG.includes(fid)) fv.add(fid); const k = foodKind(fid); if (k) kinds[k] += kcal; };
+    dp.withR.forEach((x) => { if (j.eaten[x.slot.id]) { occ.push(x.m.p); Object.keys(x.r.items).forEach((fid) => seenFood(fid, foodM(fid, x.r.items[fid] * x.f).kcal)); } });
+    j.extras.forEach((e) => { const m = foodM(e.fid, e.g); if (m.p >= 10) occ.push(m.p); seenFood(e.fid, m.kcal); });
+    (j.meals || []).forEach((ml) => { occ.push(mealM(ml).p); (ml.items || []).forEach((it) => { if (it.fid) seenFood(it.fid, mealItemM(it).kcal); }); });
+    const logged = dp.eaten.kcal > 0;
+    if (mode === 'future' || !logged) return { mode, logged };
+    /* Aujourd'hui : on projette la fin de journée avec le reste du plan. */
+    const proj = Object.assign({}, dp.eaten);
+    if (mode === 'today') dp.rest.forEach((x) => { addM(proj, x.m); occ.push(x.m.p); Object.keys(x.r.items).forEach((fid) => { if (FRUIT_VEG.includes(fid)) fv.add(fid); }); });
+    const tg = dp.t; const rk = proj.kcal / tg.kcal; const rp = proj.p / tg.p; const rf = proj.f / tg.f;
+    const treatK = kinds.fast + kinds.sauce + kinds.drink + kinds.treat + kinds.alcool; const share = dp.eaten.kcal ? treatK / dp.eaten.kcal : 0;
+    const spread = occ.filter((p) => p >= 20).length;
+    const parts = {
+      kcal: Math.abs(rk - 1) <= 0.07 ? 30 : Math.abs(rk - 1) <= 0.15 ? 20 : Math.abs(rk - 1) <= 0.25 ? 10 : 3,
+      prot: rp >= 0.95 ? 30 : rp >= 0.85 ? 24 : rp >= 0.7 ? 15 : 6,
+      spread: spread >= 4 ? 10 : spread === 3 ? 7 : spread === 2 ? 4 : 1,
+      treat: share <= 0.1 ? 15 : share <= 0.25 ? 10 : share <= 0.4 ? 6 : 2,
+      fat: rf >= 0.7 && rf <= 1.2 ? 10 : rf >= 0.5 && rf <= 1.4 ? 6 : 2,
+      fv: fv.size >= 2 ? 5 : fv.size === 1 ? 3 : 0,
+    };
+    const score = Object.values(parts).reduce((a, v) => a + v, 0);
+    const good = []; const fix = [];
+    const missP = Math.round(tg.p - proj.p); const diffK = Math.round(proj.kcal - tg.kcal);
+    if (parts.prot >= 24) good.push({ txt: `Protéines au rendez-vous (${fmtInt(proj.p)} g sur ${fmtInt(tg.p)}).`, src: ['morton2018'] });
+    else {
+      let left = missP; const picks = [];
+      PROT_IDEAS.forEach(([fid, g, label]) => { if (left > 8 && picks.length < 2) { picks.push(label); left -= foodM(fid, g).p; } });
+      fix.push({ txt: `Il manque environ ${missP} g de protéines${mode === 'today' ? ' à caser d\'ici ce soir' : ''} : ${picks.join(' ou ')} ${picks.length > 1 ? 'feraient' : 'ferait'} l'affaire.`, src: ['morton2018'] });
+    }
+    if (parts.kcal >= 20) good.push({ txt: `Calories proches de ta cible (${fmtInt(proj.kcal)} kcal sur ${fmtInt(tg.kcal)}).`, src: [] });
+    else if (diffK > 0) fix.push({ txt: `${fmtInt(diffK)} kcal au-dessus de ta cible${mode === 'today' ? ' en suivant le reste du plan' : ''}. Pas de rattrapage le lendemain : reprends le plan et garde ta marche inclinée.`, src: ['pratique'] });
+    else fix.push({ txt: `${fmtInt(-diffK)} kcal en dessous de ta cible : pour prendre du muscle, ajoute une collation (fruit + laitage, ou tartines).`, src: ['barakat2020'] });
+    if (share > 0.25) {
+      const top = Object.entries(kinds).sort((a, b) => b[1] - a[1])[0][0];
+      const why = { fast: 'du fast-food', sauce: 'des sauces', drink: 'des boissons sucrées', treat: 'des gâteaux, frites et grignotages', alcool: 'de l\'alcool' }[top];
+      const tipTxt = { fast: 'garde-le pour un repas, avec une portion normale plutôt que XL', sauce: 'une seule dose, ou ketchup, harissa ou moutarde qui sont bien moins grasses', drink: 'passe aux versions zéro (Monster Ultra, Coca zéro)', treat: 'remplace par un fruit ou un skyr', alcool: 'limite-toi à un verre' }[top];
+      fix.push({ txt: `${Math.round(share * 100)} % de tes calories viennent d'écarts, surtout ${why} : ${tipTxt}.`, src: ['pratique'] });
+    } else good.push({ txt: share > 0 ? 'Écarts raisonnables par rapport au plan.' : 'Aucun écart fast-food ou sucré.', src: [] });
+    if (kinds.sauce >= 200 && !fix.some((f) => /sauces/.test(f.txt))) fix.push({ txt: `Les sauces représentent ${fmtInt(kinds.sauce)} kcal : une dose suffit, ou prends ketchup, harissa ou moutarde.`, src: ['pratique'] });
+    if (kinds.drink >= 150 && !fix.some((f) => /boissons/.test(f.txt))) fix.push({ txt: `${fmtInt(kinds.drink)} kcal de boissons sucrées : les versions zéro te font gagner ces calories pour du vrai repas.`, src: ['pratique'] });
+    if (parts.spread >= 7) good.push({ txt: `Protéines bien réparties (${spread} prises d'au moins 20 g).`, src: ['aragon2018'] });
+    else fix.push({ txt: `Protéines concentrées sur ${spread || 'aucune'} prise${spread > 1 ? 's' : ''} d'au moins 20 g : vise 20 à 30 g à chaque repas, 4 fois par jour.`, src: ['aragon2018'] });
+    if (parts.fat <= 2 && rf > 1.4) fix.push({ txt: `Lipides élevés (${fmtInt(proj.f)} g sur ${fmtInt(tg.f)}) : surtout la friture et les sauces.`, src: ['pratique'] });
+    if (!fv.size) fix.push({ txt: 'Aucun fruit ni légume : ajoutes-en au moins à un repas (fibres, vitamines, satiété).', src: ['pratique'] });
+    else if (fv.size >= 2) good.push({ txt: 'Fruits et légumes présents.', src: [] });
+    const verdict = score >= 85 ? 'Très bonne journée' : score >= 70 ? 'Bonne journée' : score >= 55 ? 'Journée correcte' : 'Journée à revoir';
+    const head = mode === 'today'
+      ? `Si tu manges le reste du plan, tu finis à ${fmtInt(proj.kcal)} kcal (${Math.round(rk * 100)} % de ta cible) et ${fmtInt(proj.p)} g de protéines.`
+      : `Tu as mangé ${fmtInt(proj.kcal)} kcal (${Math.round(rk * 100)} % de ta cible) et ${fmtInt(proj.p)} g de protéines.`;
+    return { mode, logged, score, verdict, head, good: good.slice(0, 2), fix: fix.slice(0, 3), proj };
+  }
+  function dayReportHTML(dp) {
+    const r = dayReport(dp);
+    const macros = `<details class="macro-details"><summary>Calories et macros</summary><div style="margin-top:10px">${macroBars(dp.eaten, dp.t)}</div>
+      <span class="hint">Plan du jour : ${fmtInt(dp.planned.kcal)} kcal · ${fmtInt(dp.planned.p)} g de protéines${S.core.settings.autoPortions ? ` · portions ajustées ×${fmt(dp.factor, 2)} à ta cible` : ''}</span></details>`;
+    if (r.mode === 'future') return `<section class="sec">${secHead('Bilan repas')}<div class="card stack"><p class="muted small" style="margin:0">Le bilan apparaîtra ce jour-là, quand tu auras coché ou ajouté ce que tu manges.</p>${macros}</div></section>`;
+    if (!r.logged) return `<section class="sec">${secHead('Bilan repas')}<div class="card stack"><p class="muted small" style="margin:0">${r.mode === 'past' ? 'Rien n\'a été noté ce jour-là.' : 'Rien de noté pour l\'instant. Coche tes repas ou ajoute ce que tu manges : le bilan se met à jour tout seul.'}</p>${adjustNote(dp)}${macros}</div></section>`;
+    const kp = (cls, sym, label, items) => (items.length ? `<div class="kp"><span class="ico ${cls}">${sym}</span><div><b>${label} :</b> ${items.map((x) => `${esc(x.txt)} ${srcChips(x.src)}`).join('<br>')}</div></div>` : '');
+    const tone2 = r.score >= 85 ? 'good' : r.score >= 60 ? 'warn' : 'bad';
+    return `<section class="sec">${secHead(r.mode === 'today' ? 'Bilan repas · en cours' : 'Bilan repas')}<div class="card stack day-report">
+      <div class="row" style="gap:14px">${miniRing(r.score).replace('class="mini-ring"', 'class="mini-ring lg"')}<div class="grow"><div class="verdict" style="font-size:20px;color:var(--${tone2 === 'warn' ? 'c-orange' : tone2})">${r.verdict}</div><p class="small" style="margin:2px 0 0">${esc(r.head)}</p></div></div>
+      <div class="keypoints">${kp('good', '✓', 'Bien', r.good)}${kp('warn', '!', 'À améliorer', r.fix)}</div>
+      ${adjustNote(dp)}
+      ${macros}
+    </div></section>`;
+  }
+
   /* ===================== Plat inconnu : calcul à partir du nom ===================== */
   const parseComp = (str) => str.trim().split(/\s+/).map((t) => { const [fid, g] = t.split(':'); return { fid, g: +g }; }).filter((x) => FOODS[x.fid] && x.g > 0);
   const round5 = (g) => Math.max(5, Math.round(g / 5) * 5);
