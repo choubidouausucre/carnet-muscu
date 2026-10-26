@@ -652,6 +652,19 @@ a.src:hover { color: var(--accent); border-color: var(--accent); }
 .mini-ring.lg { width: 76px; height: 76px; }
 .macro-details summary { cursor: pointer; font-weight: 600; font-size: 14px; color: var(--ink-2); }
 .day-report .kp { font-size: 14px; }
+
+/* ---------- Bandeau calories et macros (page Repas) ---------- */
+.macro-strip {
+  position: sticky; top: calc(env(safe-area-inset-top, 0px) + var(--top-h, 62px)); z-index: 15;
+  display: grid; gap: 9px; padding: 10px 14px 12px; border-radius: var(--r);
+  background: var(--surface); border: 1px solid var(--line); box-shadow: 0 6px 16px -10px rgba(16, 22, 30, .3);
+}
+.ms-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.ms-top b { font-family: var(--f-display); font-size: 18px; font-weight: 600; color: var(--ink); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ms-top small { font-family: var(--f-body); font-size: 11.5px; font-weight: 600; color: var(--ink-3); }
+.ms-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.ms-cell .ms-top { flex-direction: column; align-items: flex-start; gap: 0; }
+.macro-strip .bar { height: 7px; }
 </style>
 </head><body>
 <div class="app">
@@ -2414,6 +2427,15 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <button class="icon-btn" data-act="pickRecipe" data-date="${date}" data-slot="${x.slot.id}" aria-label="Changer ${esc(x.slot.label)}">${ic('edit')}</button>
     </div>`;
   }
+  /* Calories et macros du jour : bandeau qui reste collé sous l'en-tête quand tu fais défiler la page Repas. */
+  function macroStrip(dp) {
+    const cell = (lbl, cls, v, max) => `<div class="ms-cell"><div class="ms-top"><span>${lbl}</span><b>${fmtInt(v)}<small> / ${fmtInt(max)} g</small></b></div>${bar(cls, v, max)}</div>`;
+    const when = dp.date === today() ? 'aujourd\'hui' : esc(fmtDate(dp.date, { weekday: 'short', day: 'numeric', month: 'short' }));
+    return `<div class="macro-strip" role="region" aria-label="Calories et macros du jour">
+      <div class="ms-kcal"><div class="ms-top"><span>Calories · ${when}</span><b>${fmtInt(dp.eaten.kcal)}<small> / ${fmtInt(dp.t.kcal)} kcal</small></b></div>${bar('kcal', dp.eaten.kcal, dp.t.kcal, true)}</div>
+      <div class="ms-grid">${cell('Protéines', 'p', dp.eaten.p, dp.t.p)}${cell('Glucides', 'c', dp.eaten.c, dp.t.c)}${cell('Lipides', 'f', dp.eaten.f, dp.t.f)}</div>
+    </div>`;
+  }
   /* Explique en une phrase comment les ajouts hors plan ont changé le reste de la journée. */
   function adjustNote(dp) {
     if (!dp.off.kcal && !dp.withR.some((x) => x.replaced)) return '';
@@ -2433,12 +2455,12 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
         <div style="text-align:center;min-width:0"><div class="eyebrow">${DAYTYPES[dp.type].label}${sd ? ` · ${esc(sd.title)}` : ''}</div><b>${esc(cap(fmtDate(date)))}</b>${date !== today() ? ` · <button class="link" data-act="mealsToday">aujourd'hui</button>` : ''}</div>
         <button class="icon-btn" data-act="mealsDay" data-d="1" aria-label="Jour suivant">${ic('chev')}</button>
       </section>
-      <section class="sec">${secHead('Suivi du jour')}<div class="card stack">${macroBars(dp.eaten, dp.t)}
-        <span class="hint">Plan du jour : ${fmtInt(dp.planned.kcal)} kcal · ${fmtInt(dp.planned.p)} g de protéines${S.core.settings.autoPortions ? ` · portions ajustées ×${fmt(dp.factor, 2)} à ta cible` : ''}</span>
-        ${adjustNote(dp)}</div></section>
+      ${macroStrip(dp)}
+      ${adjustNote(dp)}
       ${dayReportHTML(dp)}
       ${mealsCard(date, extras)}
-      <section class="sec">${secHead('Plan suggéré', '<span class="hint">coche ce que tu as mangé</span>')}<div class="card list-card">${dp.slots.map((x) => mealRow(dp, x)).join('')}</div></section>
+      <section class="sec">${secHead('Plan suggéré', '<span class="hint">coche ce que tu as mangé</span>')}<div class="card list-card">${dp.slots.map((x) => mealRow(dp, x)).join('')}
+        <p class="hint" style="margin:8px 0 6px">Plan du jour : ${fmtInt(dp.planned.kcal)} kcal · ${fmtInt(dp.planned.p)} g de protéines${S.core.settings.autoPortions ? ` · portions ajustées ×${fmt(dp.factor, 2)} à ta cible` : ''}</p></div></section>
       `;
   }
   function mealsWeek() {
@@ -4430,6 +4452,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   ensureCycle();
   autoCalories();
   render();
+  const topEl = $('.top');
+  if (topEl && window.ResizeObserver) new ResizeObserver(() => document.documentElement.style.setProperty('--top-h', `${topEl.offsetHeight}px`)).observe(topEl);
   setInterval(tick, 250);
   initRemote();
 })();
