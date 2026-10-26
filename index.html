@@ -1138,6 +1138,7 @@ const SOURCES = {
   aragon2018: { kind: 'etude', short: 'Schoenfeld & Aragon 2018', label: 'Schoenfeld & Aragon, 2018, J Int Soc Sports Nutr', note: '20 à 25 g de protéines rapides maximisent la synthèse sur un repas isolé, davantage dans un vrai repas ; viser ~0,4 g/kg sur au moins 4 repas.', url: 'https://pubmed.ncbi.nlm.nih.gov/29497353/' },
   kreider2017: { kind: 'etude', short: 'Kreider 2017', label: 'Kreider et al., 2017, J Int Soc Sports Nutr (position de l\'ISSN)', note: 'La créatine monohydrate est efficace et sûre ; 3 à 5 g par jour en entretien.', url: 'https://doi.org/10.1186/s12970-017-0173-z' },
   schumann2021: { kind: 'etude', short: 'Schumann 2021', label: 'Schumann et al., 2021, Sports Med (méta-analyse)', note: 'Ajouter du cardio à la musculation ne freine pas l\'hypertrophie dans l\'ensemble ; l\'effet se voit surtout sur l\'explosivité.', url: 'https://doi.org/10.1007/s40279-021-01587-7' },
+  oikawa2020: { kind: 'etude', short: 'Oikawa 2020', label: 'Oikawa et al., 2020, Am J Clin Nutr 111(3):708-718 (essai randomisé)', note: '30 g de whey deux fois par jour ont stimulé la synthèse musculaire, pas 30 g de collagène, avec ou sans musculation (femmes de 69 ans en moyenne).', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC7049534/' },
   schoenfeld2018focus: { kind: 'etude', short: 'Schoenfeld 2018', label: 'Schoenfeld et al., 2018, Eur J Sport Sci', note: 'Se concentrer sur le muscle qui travaille a donné plus de croissance des fléchisseurs du coude qu\'un focus externe.', url: 'https://doi.org/10.1080/17461391.2018.1447020' },
   barakat2020: { kind: 'etude', short: 'Barakat 2020', label: 'Barakat et al., 2020, Strength Cond J 42(5)', note: 'Prendre du muscle et perdre du gras en même temps est possible chez des pratiquants entraînés, avec un entraînement progressif et des protéines élevées.', url: 'https://doi.org/10.1519/SSC.0000000000000584' },
   foster2001: { kind: 'etude', short: 'Foster 2001', label: 'Foster et al., 2001, J Strength Cond Res 15(1):109-115', note: 'Méthode de la difficulté de séance : une note sur 10 multipliée par la durée donne une charge d\'entraînement fiable, validée contre la fréquence cardiaque.' },
@@ -1341,18 +1342,30 @@ const QUICK = {
   ot_m: ['O\'Tacos', 'Tacos M (1 viande)', 420, 1000, 45, 95, 48, 'tacos'],
   ot_l: ['O\'Tacos', 'Tacos L (2 viandes)', 620, 1450, 70, 130, 70, 'tacos'],
 };
-/* Compléments ESN, pour 100 g, d'après les étiquettes publiées par les distributeurs (les valeurs bougent un peu selon le parfum) :
+/* Compléments, pour 100 g. ESN d'après les étiquettes publiées par les distributeurs (les valeurs bougent un peu selon le parfum) :
    Designer Whey ≈ 381 kcal, 73 g de protéines ; Isoclear 344 kcal, 83 g ; Designer Bar de 45 g ≈ 188 kcal, 14 g de protéines,
-   10,4 g de lipides (glucides déduits). La créatine n'apporte pas de calories. [nom, kcal, P, G, L, portion g, nom de portion] */
+   10,4 g de lipides (glucides déduits). Fruity Whey Isolate et Collagen Peptides viennent de bases collaboratives (estimés) ;
+   la dose de 15 g du collagène est celle de la page ESN. La créatine n'apporte pas de calories.
+   [marque, nom, kcal, P, G, L, portion g, nom de portion, estimé] */
 const SUPPS = {
-  esn_whey: ['Designer Whey', 381, 73, 7, 5.6, 30, 'dose'],
-  esn_isoclear: ['Isoclear Whey Isolate', 344, 83, 1.9, 0.2, 30, 'dose'],
-  esn_bar: ['Designer Protein Bar', 418, 31, 22, 23, 45, 'barre'],
-  esn_creatine: ['Créatine monohydrate', 0, 0, 0, 0, 5, 'dose'],
+  esn_whey: ['ESN', 'Designer Whey', 381, 73, 7, 5.6, 30, 'dose'],
+  esn_isoclear: ['ESN', 'Isoclear Whey Isolate', 344, 83, 1.9, 0.2, 30, 'dose'],
+  esn_fruity: ['ESN', 'Fruity Whey Isolate', 358, 89, 2, 0.1, 30, 'dose', true],
+  esn_bar: ['ESN', 'Designer Protein Bar', 418, 31, 22, 23, 45, 'barre'],
+  esn_collagen: ['ESN', 'Collagen Peptides', 352, 75, 7, 0, 15, 'dose', true],
+  esn_creatine: ['ESN', 'Créatine monohydrate', 0, 0, 0, 0, 5, 'dose'],
+  creatine: ['', 'Créatine monohydrate (autre marque)', 0, 0, 0, 0, 5, 'dose'],
+  collagene: ['', 'Collagène hydrolysé nature (autre marque)', 360, 90, 0, 0, 10, 'dose', true],
+};
+/* Repères affichés quand tu choisis le complément. */
+const SUPP_TIPS = {
+  creatine: ['3 à 5 g par jour, tous les jours, jours de repos compris.', ['kreider2017']],
+  collagene: ['Le collagène compte dans tes calories et tes protéines, mais pour le muscle la whey a fait nettement mieux dans un essai contrôlé : garde la whey pour tes apports principaux.', ['oikawa2020']],
 };
 Object.keys(SUPPS).forEach((id) => {
-  const [n, kcal, p, c, f, g, unit] = SUPPS[id];
-  FOODS[id] = { n, brand: 'ESN', kcal, p, c, f, rayon: 'Compléments', price: 0, dish: true, supp: true, unit: [g, unit] };
+  const [brand, n, kcal, p, c, f, g, unit, est] = SUPPS[id];
+  const tip = SUPP_TIPS[/creatine/.test(id) ? 'creatine' : /collag/.test(id) ? 'collagene' : ''];
+  FOODS[id] = { n, brand, kcal, p, c, f, rayon: 'Compléments', price: 0, dish: true, supp: true, est: !!est, unit: [g, unit], tip: tip && tip[0], src: tip && tip[1] };
 });
 /* Sauces proposées quand tu ajoutes un plat à emporter, celle de l'enseigne en premier. */
 const SAUCE_PICKS = ['algerienne', 'samourai', 'sauce_blanche', 'mayonnaise', 'ketchup', 'barbecue', 'biggy', 'andalouse', 'curry_ff', 'harissa', 'fromagere'];
@@ -2807,6 +2820,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <div class="row between"><b>${f.brand ? `<span class="fbrand">${esc(f.brand)}</span> ` : ''}${esc(f.n)}</b>${f.fixed ? '<span class="tag good">corrigé</span>' : f.est ? '<span class="tag">estimé</span>' : ''}</div>
       ${u ? `<div class="row wrap">${[0.5, 1, 2, 3].map((k) => `<button class="chip" aria-pressed="${Math.abs(g - u[0] * k) < 1}" data-act="foodPortion" data-k="${k}" data-date="${date}">${k === 0.5 ? '½' : k} ${esc(unitName(u[1], k))}</button>`).join('')}</div>` : ''}
       <div class="row"><input class="input num" id="foodG" inputmode="numeric" value="${Math.round(g)}" style="width:96px" data-in="foodQty" data-date="${date}" aria-label="Quantité"><span class="muted">${f.drink ? 'ml' : 'g'}</span><span class="grow"></span><b id="foodMac">${fmtInt(m.kcal)} kcal · P ${fmtInt(m.p)} g</b></div>
+      ${f.tip ? `<p class="hint" style="margin:0">${esc(f.tip)} ${srcChips(f.src)}</p>` : ''}
       ${repl}
       ${sauceRow}
       <button class="btn primary block" data-act="foodAdd" data-date="${date}">${ic('plus')} Ajouter${Object.keys(UI.foodSauces).length ? ` avec ${Object.values(UI.foodSauces).reduce((a, n) => a + n, 0)} sauce${Object.values(UI.foodSauces).reduce((a, n) => a + n, 0) > 1 ? 's' : ''}` : ''}</button>
