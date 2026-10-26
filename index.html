@@ -2433,11 +2433,13 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
         <div style="text-align:center;min-width:0"><div class="eyebrow">${DAYTYPES[dp.type].label}${sd ? ` · ${esc(sd.title)}` : ''}</div><b>${esc(cap(fmtDate(date)))}</b>${date !== today() ? ` · <button class="link" data-act="mealsToday">aujourd'hui</button>` : ''}</div>
         <button class="icon-btn" data-act="mealsDay" data-d="1" aria-label="Jour suivant">${ic('chev')}</button>
       </section>
+      <section class="sec">${secHead('Suivi du jour')}<div class="card stack">${macroBars(dp.eaten, dp.t)}
+        <span class="hint">Plan du jour : ${fmtInt(dp.planned.kcal)} kcal · ${fmtInt(dp.planned.p)} g de protéines${S.core.settings.autoPortions ? ` · portions ajustées ×${fmt(dp.factor, 2)} à ta cible` : ''}</span>
+        ${adjustNote(dp)}</div></section>
       ${dayReportHTML(dp)}
-      ${mealsCard(date)}
+      ${mealsCard(date, extras)}
       <section class="sec">${secHead('Plan suggéré', '<span class="hint">coche ce que tu as mangé</span>')}<div class="card list-card">${dp.slots.map((x) => mealRow(dp, x)).join('')}</div></section>
-      <section class="sec">${secHead('Hors plan', `<button class="btn sm" data-act="foodSheet" data-date="${date}">${ic('plus')} Aliment</button>`)}<div class="card list-card">${extras || '<p class="muted small" style="margin:0">Un écart, une collation en plus ? Ajoute-le ici pour garder des macros justes.</p>'}</div></section>
-`;
+      `;
   }
   function mealsWeek() {
     const start = addDays(mondayOf(today()), 7 * UI.mealsWeek);
@@ -3926,12 +3928,14 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const h = (d || new Date()).getHours();
     return h < 10 ? 'matin' : h < 15 ? 'midi' : h < 18.5 ? 'collation' : 'soir';
   }
-  function mealsCard(date) {
+  function mealsCard(date, extrasHTML) {
     const j = journal(date);
-    const rows = (j.meals || []).map((m) => { const mm = mealM(m); const sl = SLOTS.find((s) => s.id === m.slot); return `<div class="li"><button class="grow" style="all:unset;cursor:pointer;flex:1;min-width:0" data-act="mealEdit" data-date="${date}" data-id="${m.id}"><div class="t">${esc(m.name || 'Repas')}${m.src === 'photo' ? ' <span class="tag">photo</span>' : m.src === 'plat' ? ' <span class="tag">recette</span>' : ''}</div><div class="s">${esc(sl ? sl.label : '')} · ${fmtInt(mm.kcal)} kcal · P ${fmtInt(mm.p)} g · G ${fmtInt(mm.c)} · L ${fmtInt(mm.f)}</div></button><button class="icon-btn" data-act="mealDel" data-date="${date}" data-id="${m.id}" aria-label="Supprimer">${ic('trash')}</button></div>`; }).join('');
-    return `<section class="sec">${secHead('Ce que j\'ai vraiment mangé')}<div class="card stack-sm">
-      <div class="btn-row"><button class="btn" data-act="mealManual" data-date="${date}">${ic('plus')} Ajouter un repas</button><button class="btn" data-act="mealDishes" data-date="${date}">${ic('book')} Mes recettes</button></div>
-      ${rows || '<p class="muted small" style="margin:0">Chez tes parents ? Ajoute ce que tu as mangé à la main, ou enregistre les plats de la maison dans « Mes recettes » pour les retrouver en un clic.</p>'}
+    const rows = (j.meals || []).map((m) => { const mm = mealM(m); const sl = SLOTS.find((s) => s.id === m.slot); return `<div class="li"><button class="grow" style="all:unset;cursor:pointer;flex:1;min-width:0" data-act="mealEdit" data-date="${date}" data-id="${m.id}"><div class="t">${esc(m.name || 'Repas')}${m.src === 'photo' ? ' <span class="tag">photo</span>' : m.src === 'plat' ? ' <span class="tag">recette</span>' : m.src === 'calcul' ? ' <span class="tag">calculé</span>' : ''}</div><div class="s">${esc(sl ? sl.label : '')} · ${fmtInt(mm.kcal)} kcal · P ${fmtInt(mm.p)} g · G ${fmtInt(mm.c)} · L ${fmtInt(mm.f)}</div></button><button class="icon-btn" data-act="mealDel" data-date="${date}" data-id="${m.id}" aria-label="Supprimer">${ic('trash')}</button></div>`; }).join('');
+    const list = rows + (extrasHTML || '');
+    return `<section class="sec">${secHead('Ajouter ce que tu manges')}<div class="card stack-sm">
+      <button class="btn primary block" data-act="foodSheet" data-date="${date}">${ic('plus')} Aliment, plat, boisson, sauce…</button>
+      <div class="btn-row"><button class="btn" data-act="mealManual" data-date="${date}">${ic('plus')} Repas complet</button><button class="btn" data-act="mealDishes" data-date="${date}">${ic('book')} Mes recettes</button></div>
+      ${list ? `<div class="list">${list}</div>` : '<p class="muted small" style="margin:0">Fast-food, Crousty, boisson, sauce ou plat de chez tes parents : ajoute-le ici, le reste de la journée s\'ajuste.</p>'}
     </div></section>`;
   }
   const PROT_IDEAS = [['skyr', 150, 'un skyr (150 g)'], ['oeuf', 165, '3 œufs'], ['fb0', 200, '200 g de fromage blanc'], ['thon', 140, 'une boîte de thon'], ['jambon', 120, '3 tranches de jambon'], ['lait', 300, 'un grand verre de lait']];
@@ -4004,17 +4008,13 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   }
   function dayReportHTML(dp) {
     const r = dayReport(dp);
-    const macros = `<details class="macro-details"><summary>Calories et macros</summary><div style="margin-top:10px">${macroBars(dp.eaten, dp.t)}</div>
-      <span class="hint">Plan du jour : ${fmtInt(dp.planned.kcal)} kcal · ${fmtInt(dp.planned.p)} g de protéines${S.core.settings.autoPortions ? ` · portions ajustées ×${fmt(dp.factor, 2)} à ta cible` : ''}</span></details>`;
-    if (r.mode === 'future') return `<section class="sec">${secHead('Bilan repas')}<div class="card stack"><p class="muted small" style="margin:0">Le bilan apparaîtra ce jour-là, quand tu auras coché ou ajouté ce que tu manges.</p>${macros}</div></section>`;
-    if (!r.logged) return `<section class="sec">${secHead('Bilan repas')}<div class="card stack"><p class="muted small" style="margin:0">${r.mode === 'past' ? 'Rien n\'a été noté ce jour-là.' : 'Rien de noté pour l\'instant. Coche tes repas ou ajoute ce que tu manges : le bilan se met à jour tout seul.'}</p>${adjustNote(dp)}${macros}</div></section>`;
+    if (r.mode === 'future') return `<section class="sec">${secHead('Bilan repas')}<div class="card"><p class="muted small" style="margin:0">Le bilan apparaîtra ce jour-là, quand tu auras coché ou ajouté ce que tu manges.</p></div></section>`;
+    if (!r.logged) return `<section class="sec">${secHead('Bilan repas')}<div class="card"><p class="muted small" style="margin:0">${r.mode === 'past' ? 'Rien n\'a été noté ce jour-là.' : 'Rien de noté pour l\'instant. Coche tes repas ou ajoute ce que tu manges : le bilan se met à jour tout seul.'}</p></div></section>`;
     const kp = (cls, sym, label, items) => (items.length ? `<div class="kp"><span class="ico ${cls}">${sym}</span><div><b>${label} :</b> ${items.map((x) => `${esc(x.txt)} ${srcChips(x.src)}`).join('<br>')}</div></div>` : '');
     const tone2 = r.score >= 85 ? 'good' : r.score >= 60 ? 'warn' : 'bad';
     return `<section class="sec">${secHead(r.mode === 'today' ? 'Bilan repas · en cours' : 'Bilan repas')}<div class="card stack day-report">
       <div class="row" style="gap:14px">${miniRing(r.score).replace('class="mini-ring"', 'class="mini-ring lg"')}<div class="grow"><div class="verdict" style="font-size:20px;color:var(--${tone2 === 'warn' ? 'c-orange' : tone2})">${r.verdict}</div><p class="small" style="margin:2px 0 0">${esc(r.head)}</p></div></div>
       <div class="keypoints">${kp('good', '✓', 'Bien', r.good)}${kp('warn', '!', 'À améliorer', r.fix)}</div>
-      ${adjustNote(dp)}
-      ${macros}
     </div></section>`;
   }
 
