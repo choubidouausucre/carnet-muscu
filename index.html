@@ -2301,7 +2301,6 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const alerts = homeAlerts();
     return `${pageHead('Aujourd\'hui', esc(cap(fmtDate(t))))}
       ${hero}
-      ${alerts ? `<section class="sec">${secHead('À voir')}<div class="card alerts">${alerts}</div></section>` : ''}
       <section class="sec">${secHead('Ma semaine', '<button class="link" data-act="openCalendar">Calendrier ›</button>')}<div class="week">${week}</div></section>
       <section class="sec">${secHead('Nutrition', '<button class="link" data-tab="meals">Tous les repas ›</button>')}${nutri}</section>
       <section class="sec">${secHead('Suivi')}<div class="grid2">
@@ -2310,6 +2309,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       </div></section>
       <section class="sec">${secHead('Objectifs', '<button class="link" data-tab="progress" data-sub="goals">Tout voir ›</button>')}<div class="card stack">${goals || '<p class="muted small">Aucun objectif.</p>'}</div></section>
       <section class="sec">${secHead('Conseil Delavier du jour')}<div class="card tip-card stack-sm"><p style="margin:0">${esc(tip)}</p><button class="link" data-act="openMethod" style="justify-self:start">Ouvrir la méthode ›</button></div></section>
+      ${alerts ? `<section class="sec">${secHead('À voir')}<div class="card alerts">${alerts}</div></section>` : ''}
       <nav class="shortcuts" aria-label="Raccourcis">
         <button data-act="openMethod">${ic('book')}<span>Méthode</span></button>
         <button data-act="openProfile">${ic('user')}<span>Profil</span></button>
