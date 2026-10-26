@@ -637,6 +637,12 @@ a.src:hover { color: var(--accent); border-color: var(--accent); }
 .meal.replaced .name-btn { opacity: .55; }
 .meal.replaced .name { text-decoration: line-through; text-decoration-thickness: 1px; }
 .repl-note { font-size: 12.5px; font-weight: 600; color: var(--ink-2); }
+.calc-row { border-bottom: 0; margin-top: 4px; padding: 12px; border-radius: 12px; background: var(--accent-soft); }
+.calc-row .t { color: var(--accent); }
+.calc-ico { width: 32px; height: 32px; border-radius: 10px; display: grid; place-items: center; background: var(--surface); color: var(--accent); flex: none; }
+.quick-adds { gap: 6px; }
+.quick-adds .chip { padding: 5px 10px 5px 7px; font-size: 13px; }
+.quick-adds .chip svg { width: 14px; height: 14px; }
 </style>
 </head><body>
 <div class="app">
@@ -1239,6 +1245,33 @@ const DISHES = {
   sushis: ['Sushis / makis', 150, 6, 26, 2],
   riz_cantonais: ['Riz cantonais', 160, 5, 25, 4.5],
 };
+/* Composants pour calculer un plat inconnu (pour 100 g, valeurs moyennes de tables de composition). */
+Object.assign(DISHES, {
+  nouilles_cuites: ['Nouilles / vermicelles cuits', 135, 4.5, 27, 1],
+  poulet_pane: ['Poulet pané ou frit', 250, 17, 14, 14],
+  viande_kebab: ['Viande kebab / shawarma', 215, 18, 3, 14.5],
+  poisson_cuit: ['Poisson blanc cuit', 105, 23, 0, 1.5],
+  moules: ['Moules cuites', 120, 20, 4, 3],
+  lardons: ['Lardons / bacon cuits', 300, 17, 1, 25.5],
+  falafel: ['Falafels', 330, 13, 32, 17],
+  nems: ['Nems / samoussas / gyozas', 250, 8, 25, 13],
+  sauce_creme: ['Crème fraîche / sauce à la crème', 290, 2.5, 3.5, 30],
+  mayo: ['Sauce mayo, blanche, algérienne, samouraï…', 600, 1, 4, 64],
+  sauce_tomate: ['Sauce tomate', 55, 1.5, 8, 1.8],
+  sauce_curry: ['Sauce curry au lait de coco', 140, 2, 6, 12],
+  pesto: ['Pesto', 450, 5, 5, 45],
+  sauce_soja: ['Sauce soja / teriyaki / aigre-douce', 110, 4, 22, 0.5],
+  beurre: ['Beurre', 745, 0.7, 0.6, 82],
+  pain_burger: ['Pain burger', 270, 9, 48, 4.5],
+  pain_pita: ['Pain pita / galette', 275, 9, 55, 1.5],
+  gateau: ['Gâteau au chocolat / brownie', 420, 5.5, 50, 22],
+  cookie: ['Cookie', 480, 5.5, 63, 23],
+  tiramisu: ['Tiramisu', 280, 5, 28, 16.5],
+  glace: ['Glace', 200, 3.5, 25, 9.5],
+  pate_tartiner: ['Pâte à tartiner au chocolat', 540, 6, 57, 31],
+  croissant: ['Croissant', 410, 8, 45, 21.5],
+  pain_choc: ['Pain au chocolat', 420, 7.5, 47, 22],
+});
 Object.keys(DISHES).forEach((id) => {
   const [n, kcal, p, c, f] = DISHES[id];
   FOODS[id] = { n, kcal, p, c, f, rayon: 'Divers', price: 0, dish: true };
@@ -1314,6 +1347,110 @@ Object.keys(DRINKS).forEach((id) => {
 const BRAND_ORDER = ['Crousty', 'Master Poulet', 'McDonald\'s', 'KFC', 'Burger King', 'O\'Tacos', 'Monster', 'Red Bull', 'Coca-Cola'];
 /* Autres noms tapés dans la recherche. */
 const BRAND_ALIAS = { 'McDonald\'s': 'mcdo macdo mcdonalds', 'O\'Tacos': 'otacos tacos', Crousty: 'crousty one', 'Coca-Cola': 'coca coke', 'Burger King': 'bk', KFC: 'kfc poulet', 'Master Poulet': 'master' };
+
+/* Calcul d'un plat qui n'est pas dans la liste, à partir de son nom (texte sans accents).
+   1. Plats connus par leur nom : composition « aliment:grammes » pour une portion normale.
+   2. Sinon, chaque mot reconnu ajoute un composant ; « excl » évite deux versions du même composant (poulet pané ou grillé).
+   Tout est une estimation : l'app montre la décomposition pour que tu ajustes les quantités. */
+const CALC_DISHES = {
+  'bo bun': 'nouilles_cuites:200 steak:100 nems:100 salade:60 sauce_soja:40',
+  'pad thai': 'nouilles_cuites:250 poulet_cuit:100 oeuf:55 sauce_soja:40 huile:15',
+  'poke': 'riz_cuit:200 saumon:120 avocat:50 legumes_cuits:60 sauce_soja:30',
+  'ramen': 'nouilles_cuites:250 roti_porc:80 oeuf:55 soupe:300',
+  'pho': 'nouilles_cuites:200 steak:100 soupe:400',
+  'mafe': 'riz_cuit:250 poulet_cuit:150 sauce_curry:150',
+  'yassa': 'riz_cuit:250 poulet_cuit:180 oignon:100 huile:15',
+  'thieb': 'riz_cuit:300 poisson_cuit:150 legumes_cuits:150 huile:20',
+  'tajine': 'semoule_cuite:200 poulet_cuit:150 legumes_cuits:150 huile:10',
+  'paella': 'riz_cuit:300 poulet_cuit:80 crevettes:80 huile:15',
+  'risotto': 'riz_cuit:280 emmental:30 sauce_creme:30 beurre:10',
+  'carbonara': 'pates_cuites:280 lardons:60 sauce_creme:50 emmental:20',
+  'bolognaise': 'pates_cuites:280 steak:100 sauce_tomate:120 emmental:15',
+  'tartiflette': 'pdt:250 lardons:60 raclette:100 sauce_creme:40',
+  'raclette': 'pdt:300 raclette:150 jambon:80',
+  'croque monsieur': 'painc:80 jambon:40 emmental:40 beurre:10',
+  'croque': 'painc:80 jambon:40 emmental:40 beurre:10',
+  'burrito': 'tortilla:100 riz_cuit:120 steak:100 hrouges:60 emmental:30 sauce_creme:20',
+  'fajitas': 'tortilla:120 poulet_cuit:120 poivron:80 huile:10 sauce_creme:20',
+  'chili con carne': 'steak:150 hrouges:150 sauce_tomate:120 riz_cuit:200',
+  'tikka masala': 'riz_cuit:250 poulet_cuit:150 sauce_curry:120',
+  'butter chicken': 'riz_cuit:250 poulet_cuit:150 sauce_curry:120 beurre:10',
+  'biryani': 'riz_cuit:300 poulet_cuit:150 huile:15',
+  'fish and chips': 'poisson_pane:200 frites:200 mayo:20',
+  'hot dog': 'pain_burger:70 saucisse:100 mayo:15',
+  'cordon bleu': 'poulet_pane:150 jambon:20 emmental:20',
+  'salade cesar': 'salade:100 poulet_cuit:120 emmental:20 baguette:30 mayo:25',
+  'salade nicoise': 'salade:100 thon:80 oeuf:55 pdt:100 tomate:80 vinaigrette:20',
+  'galette complete': 'crepe:120 jambon:50 oeuf:55 emmental:30',
+  'shakshuka': 'oeuf:165 sauce_tomate:200 baguette:60',
+  'steak frites': 'steak:180 frites:200',
+  'poulet frites': 'poulet_roti:200 frites:150',
+  'moules frites': 'moules:300 frites:200',
+  'assiette kebab': 'viande_kebab:200 frites:200 salade:60 mayo:40',
+  'assiette grecque': 'viande_kebab:200 frites:200 salade:60 mayo:40',
+  'tacos': 'tortilla:110 poulet_pane:130 frites:80 mayo:30 emmental:25',
+  'gratin dauphinois': 'gratin:300',
+  'gyoza': 'nems:150',
+  'dim sum': 'nems:150',
+  'plateau sushi': 'sushis:250',
+};
+/* [motif, aliment, grammes pour une portion normale, groupe exclusif, protéine doublée par « double »] */
+const CALC_RULES = [
+  ['pizza', 'pizza', 350, 'plat'], ['lasagne', 'lasagnes', 350, 'plat'], ['hachis', 'hachis', 350, 'plat'], ['quiche', 'quiche', 200, 'plat'],
+  ['blanquette', 'blanquette', 350, 'plat'], ['bourguignon', 'bourguignon', 350, 'plat'], ['couscous', 'couscous', 450, 'plat'],
+  ['sushi|maki|california', 'sushis', 200, 'plat'], ['riz cantonais', 'riz_cantonais', 300, 'plat'], ['omelette', 'omelette', 200, 'plat'], ['soupe|veloute', 'soupe', 300, 'plat'],
+  ['riz|risotto|paella|biryani', 'riz_cuit', 250, 'riz'],
+  ['pate|spaghetti|tagliatelle|penne|macaroni|fusilli|linguine|ravioli|gnocchi', 'pates_cuites', 280, 'pates'],
+  ['nouille|vermicelle|ramen|udon|soba|chow mein|yakisoba|wok', 'nouilles_cuites', 250, 'nouilles'],
+  ['semoule|boulgour|taboule|quinoa', 'semoule_cuite', 220, 'semoule'],
+  ['frite', 'frites', 150, 'frites'], ['puree|ecrase', 'puree', 250, 'pdt'],
+  ['patate douce', 'patated', 250, 'pdt'], ['pomme de terre|patate|potatoes|pdt', 'pdt', 250, 'pdt'],
+  ['burger|smash', 'pain_burger', 80, 'pain'], ['wrap|burrito|fajita|quesadilla|tortilla', 'tortilla', 120, 'pain'],
+  ['kebab|shawarma|doner|gyros|pita|grec', 'pain_pita', 90, 'pain'], ['crepe|galette', 'crepe', 120, 'pain'],
+  ['sandwich|baguette|jambon beurre|panini', 'baguette', 120, 'pain'], ['pain|tartine|toast|bruschetta', 'baguette', 60, 'pain'],
+  ['(poulet|chicken|volaille|dinde)( \\w+)* (pane|frit\\b|frits\\b|crispy|croustillant)|(pane|frit\\b|frits\\b|crispy|croustillant)( \\w+)* (poulet|chicken)|tenders|crousty|wings|nugget|escalope milanaise|schnitzel', 'poulet_pane', 180, 'poulet', 1],
+  ['poulet|chicken|volaille|dinde|tikka|tandoori', 'poulet_cuit', 150, 'poulet', 1],
+  ['kebab|shawarma|doner|gyros|grec', 'viande_kebab', 150, 'viande', 1],
+  ['burger|smash', 'steak', 100, 'boeuf', 1],
+  ['boeuf|steak|bavette|entrecote|hache|boulette|chili', 'steak', 150, 'boeuf', 1],
+  ['porc|cote de porc|travers|pulled pork|carnitas', 'roti_porc', 150, 'porc', 1],
+  ['saucisse|merguez|chipolata|knack|chorizo', 'saucisse', 120, 'saucisse', 1],
+  ['jambon', 'jambon', 60, 'jambon'], ['lardon|bacon', 'lardons', 50, 'lardons'],
+  ['saumon', 'saumon_cuit', 130, 'saumon', 1], ['thon', 'thon', 100, 'thon', 1],
+  ['poisson|cabillaud|colin|merlu|tilapia|dorade|bar', 'poisson_cuit', 150, 'poisson', 1],
+  ['crevette|gambas|scampi', 'crevettes', 120, 'crevettes', 1], ['oeuf|egg', 'oeuf', 110, 'oeuf', 1],
+  ['tofu', 'tofu', 150, 'tofu', 1], ['falafel', 'falafel', 150, 'falafel', 1], ['nem|samoussa|samosa|rouleau de printemps|spring roll', 'nems', 120, 'nems'],
+  ['haricot rouge|chili', 'hrouges', 150, 'hrouges'], ['pois chiche|houmous|hummus|lentille|dahl', 'poischiches', 150, 'poischiches'],
+  ['legume|brocoli|haricot vert|courgette|poelee|ratatouille|wok', 'legumes_cuits', 150, 'legumes'],
+  ['salade|crudite', 'salade', 80, 'salade'], ['burger|kebab|tacos', 'salade', 20, 'salade'],
+  ['avocat|guacamole', 'avocat', 60, 'avocat'], ['champignon', 'champignons', 80, 'champignons'],
+  ['creme|cremeuse|forestiere|normande|alfredo|boursin|gratin|bechamel', 'sauce_creme', 50, 'creme'],
+  ['fromage|cheese|gratin|quesadilla|mozza|parmesan|chevre|emmental|comte', 'emmental', 40, 'fromage'],
+  ['mayo|sauce blanche|algerienne|samourai|andalouse|biggy|barbecue|bbq|burger|kebab|tacos|shawarma', 'mayo', 30, 'mayo'],
+  ['curry|coco|korma|massaman|cacahuete', 'sauce_curry', 120, 'curry'],
+  ['tomate|arrabbiata|napolitaine|marinara', 'sauce_tomate', 100, 'tomate'], ['pesto', 'pesto', 30, 'pesto'],
+  ['soja|teriyaki|aigre douce|sucre sale|yakitori|wok', 'sauce_soja', 30, 'soja'],
+  ['salade|vinaigrette', 'vinaigrette', 20, 'vinaigrette'], ['poele|saute|wok', 'huile', 10, 'huile'],
+  ['gateau|fondant|brownie|moelleux', 'gateau', 100, 'gateau'], ['cookie', 'cookie', 60, 'cookie'], ['tiramisu', 'tiramisu', 150, 'tiramisu'],
+  ['glace|sundae|mcflurry', 'glace', 120, 'glace'], ['nutella|pate a tartiner', 'pate_tartiner', 30, 'nutella'],
+  ['croissant', 'croissant', 60, 'croissant'], ['pain au chocolat|chocolatine', 'pain_choc', 70, 'painchoc'], ['tarte', 'tarte_pommes', 120, 'tarte'],
+];
+/* Composants d'un plat connu qui comptent pour un groupe (évite saumon cru + saumon cuit dans un poké). */
+const CALC_SAME = { saumon: 'saumon', poulet_roti: 'poulet', poisson_pane: 'poisson', raclette: 'fromage', painc: 'pain', gratin: 'pdt' };
+/* Mots ignorés par la recherche d'aliments. */
+const SEARCH_STOP = ['maison', 'de', 'du', 'des', 'la', 'le', 'les', 'au', 'aux', 'a', 'avec', 'et', 'en', 'un', 'une', 'fait', 'perso', 'plat'];
+/* Si le nom ne dit rien : modèles proches, à ajuster. */
+const CALC_TEMPLATES = [
+  ['Viande + féculent', 'steak:150 riz_cuit:200 legumes_cuits:100 huile:10'],
+  ['Plat en sauce + riz', 'poulet_cuit:150 sauce_curry:120 riz_cuit:200'],
+  ['Pâtes ou nouilles', 'pates_cuites:280 sauce_tomate:100 emmental:20'],
+  ['Sandwich ou burger', 'pain_burger:80 steak:120 emmental:20 mayo:20 salade:20'],
+  ['Salade composée', 'salade:100 poulet_cuit:100 oeuf:55 vinaigrette:20 baguette:30'],
+  ['Fast-food frit', 'poulet_pane:180 frites:150 mayo:30'],
+  ['Dessert', 'gateau:100'],
+];
+/* Ajouts rapides dans un repas : [nom, aliment, grammes]. */
+const QUICK_ADDS = [['Riz', 'riz_cuit', 200], ['Pâtes', 'pates_cuites', 250], ['Frites', 'frites', 150], ['Pain', 'baguette', 60], ['Légumes', 'legumes_cuits', 150], ['Sauce', 'mayo', 20], ['Fromage', 'emmental', 30]];
 
 /* Variantes par exercice : [nom, matériel, polyarticulaire]. Servent à remplacer un exercice si la machine est prise
    et à la rotation proposée à chaque nouveau cycle. Chaque variante garde son propre historique et son propre PR. */
@@ -2562,7 +2699,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   function foodHits(q, cat) {
     const use = S.core.foodUse || {};
     let ids = Object.keys(FOODS);
-    if (q) { const nq = normTxt(q); ids = ids.filter((id) => normTxt(`${FOODS[id].brand || ''} ${BRAND_ALIAS[FOODS[id].brand] || ''} ${FOODS[id].n}`).includes(nq)); }
+    if (q) { const words = normTxt(q).split(/[^a-z0-9]+/).filter((w) => w && !SEARCH_STOP.includes(w)); ids = ids.filter((id) => { const txt = normTxt(`${FOODS[id].brand || ''} ${BRAND_ALIAS[FOODS[id].brand] || ''} ${FOODS[id].n}`); return words.every((w) => txt.includes(w)); }); }
     else if (cat === 'often') ids = ids.filter((id) => use[id]);
     else ids = ids.filter((id) => foodCat(FOODS[id]) === cat);
     const rank = (id) => { const i = BRAND_ORDER.indexOf(FOODS[id].brand); return i < 0 ? 99 : i; };
@@ -2588,9 +2725,24 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   function foodCatsHTML(date) {
     return FOOD_CATS.filter(([k]) => k !== 'often' || useCount()).map(([k, l]) => `<button class="chip" aria-pressed="${!UI.foodQuery && UI.foodCat === k}" data-act="foodCat" data-c="${k}" data-date="${date}">${l}</button>`).join('');
   }
+  /* Tes recettes enregistrées, retrouvées par leur nom. */
+  function myDishHits(q) {
+    const dd = S.core.homeDishes || {}; const words = normTxt(q || '').split(/[^a-z0-9]+/).filter((w) => w && !SEARCH_STOP.includes(w));
+    return Object.keys(dd).filter((id) => words.length && words.every((w) => normTxt(dd[id].n).includes(w)));
+  }
+  function myDishRow(id, date) {
+    const dd = S.core.homeDishes[id]; const m = mealM(dd);
+    return `<button class="food-row" data-act="dishUse" data-id="${id}" data-date="${date}"><div class="grow"><div class="t">${esc(dd.n)} <span class="tag good">ma recette</span></div><div class="s">${fmtInt(m.kcal)} kcal · P ${fmtInt(m.p)} g</div></div>${ic('plus')}</button>`;
+  }
+  function calcRow(q, act, date) {
+    return `<button class="food-row calc-row" data-act="${act}" data-q="${esc(q)}" ${date ? `data-date="${date}"` : ''}><span class="calc-ico">${ic('flame')}</span><div class="grow"><div class="t">Calculer « ${esc(q)} »</div><div class="s">Je le décompose en ingrédients, tu ajustes les quantités</div></div>${ic('chev')}</button>`;
+  }
   function foodList(q, date) {
     const ids = foodHits(q, UI.foodCat).slice(0, 80);
-    return ids.map((fid) => foodRow(fid, 'foodPick', `data-date="${date}"`)).join('') || '<div class="empty">Rien trouvé. Essaie un autre mot, ou crée le plat dans « Mes recettes ».</div>';
+    const mine = q ? myDishHits(q).map((id) => myDishRow(id, date)).join('') : '';
+    const rows = mine + ids.map((fid) => foodRow(fid, 'foodPick', `data-date="${date}"`)).join('');
+    const calc = q && q.trim().length >= 3 ? calcRow(q.trim(), 'calcDish', date) : '';
+    return rows ? rows + calc : (calc || '<div class="empty">Rien trouvé. Essaie un autre mot.</div>');
   }
   /* Carte de l'aliment choisi : quantité, repas qu'il remplace, correction des valeurs. */
   function foodSelHTML(date) {
@@ -3720,6 +3872,42 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     else if (rk < -350) tips.push(`Tu dépasses d'environ ${fmtInt(-rk)} kcal : pas de panique, c'est la moyenne de la semaine qui compte. Garde ta marche inclinée demain.`);
     return `<section class="card flat stack-sm"><div class="row between"><b>Bilan du jour</b>${srcChips(['morton2018', 'aragon2018'])}</div>${tips.map((t) => `<p class="small" style="margin:0">${esc(t)}</p>`).join('')}</section>`;
   }
+  /* ===================== Plat inconnu : calcul à partir du nom ===================== */
+  const parseComp = (str) => str.trim().split(/\s+/).map((t) => { const [fid, g] = t.split(':'); return { fid, g: +g }; }).filter((x) => FOODS[x.fid] && x.g > 0);
+  const round5 = (g) => Math.max(5, Math.round(g / 5) * 5);
+  function estimateDish(name) {
+    let t = ` ${normTxt(name).replace(/[^a-z0-9]+/g, ' ').replace(/\s+/g, ' ').trim()} `;
+    const size = /\b(petit|petite|mini)\b/.test(t) ? 0.75 : /\b(grand(?! (mere|pere))|grande(?! (mere|pere))|xl|xxl|maxi|geant|gros|grosse)\b/.test(t) ? 1.35 : 1;
+    const dbl = /\bdouble\b/.test(t);
+    const parts = []; const seen = new Set(); const excl = new Set(); const named = [];
+    const groupOf = (fid) => CALC_SAME[fid] || (CALC_RULES.find((r) => r[1] === fid) || [])[3];
+    const add = (fid, g) => { if (FOODS[fid] && !seen.has(fid)) { seen.add(fid); parts.push({ fid, g }); const gr = groupOf(fid); if (gr) excl.add(gr); } };
+    Object.keys(CALC_DISHES).sort((a, b) => b.length - a.length).forEach((k) => {
+      const re = new RegExp(`\\b${k}s?\\b`);
+      if (re.test(t)) { named.push(k); parseComp(CALC_DISHES[k]).forEach((x) => add(x.fid, x.g)); t = t.replace(re, ' '); }
+    });
+    CALC_RULES.forEach(([pat, fid, g, grp, prot]) => {
+      if (grp && excl.has(grp)) return;
+      if (!new RegExp(`\\b(${pat})`).test(t)) return;
+      add(fid, g * (prot && dbl ? 2 : 1)); if (grp) excl.add(grp);
+    });
+    return { size, named, items: parts.map((x) => Object.assign(itemFromFood(x.fid, round5(x.g * size)), { calc: true })) };
+  }
+  function calcNote(est, name) {
+    if (!est.items.length) return `Je ne reconnais pas « ${name} ». Choisis le modèle qui s'en rapproche, puis ajuste les quantités.`;
+    return `Calcul estimé de « ${name} » : ${est.items.map((i) => i.n.split(' (')[0].toLowerCase()).join(', ')}. Ajuste les quantités ou ajoute ce qui manque, puis enregistre-le dans tes recettes : la prochaine fois, il sera dans la liste.`;
+  }
+  function calcControls(md) {
+    const sz = [[0.75, 'Petite'], [1, 'Normale'], [1.35, 'Grande']];
+    return `<div class="stack-sm">
+      <div class="row wrap"><span class="eyebrow">Portion</span>${sz.map(([k, l]) => `<button class="chip" aria-pressed="${md.calc.size === k}" data-act="calcSize" data-k="${k}">${l}</button>`).join('')}</div>
+      ${md.items.length ? '' : `<div class="row wrap">${CALC_TEMPLATES.map(([l], i) => `<button class="chip" data-act="calcTpl" data-i="${i}">${esc(l)}</button>`).join('')}</div>`}
+    </div>`;
+  }
+  function calcDraft(date, q) {
+    const est = estimateDish(q); const name = cap(q.trim());
+    UI.mealDraft = { date, name, slot: guessSlot(), items: est.items, src: 'calcul', note: calcNote(est, name), calc: { size: est.size } };
+  }
   function mealSheet() {
     const md = UI.mealDraft; const tot = mealM(md);
     const conf = { 'élevé': 'good', moyen: 'warn', faible: 'bad' };
@@ -3730,9 +3918,11 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <button class="icon-btn" data-act="miDel" data-i="${i}" aria-label="Retirer">${ic('trash')}</button></div>`; }).join('');
     const html = `${sheetHead(md.asDish ? (md.dishId ? 'Modifier la recette' : 'Nouvelle recette') : (md.id ? 'Modifier le repas' : 'Nouveau repas'))}
       ${md.note ? `<div class="notice">${esc(md.note)}</div>` : ''}
+      ${md.calc ? calcControls(md) : ''}
       <div class="grid2"><div class="field"><label for="mdName">Nom</label><input class="input" id="mdName" value="${esc(md.name || '')}" data-in="mdName" placeholder="${md.asDish ? 'ex. Hachis de maman' : 'ex. Repas du soir'}"></div>
       ${md.asDish ? '<p class="hint" style="align-self:end;margin:0">Mets les quantités de ta portion habituelle.</p>' : `<div class="field"><label for="mdSlot">Moment</label><select class="input" id="mdSlot" data-ch="mdSlot">${SLOTS.map((s) => `<option value="${s.id}" ${md.slot === s.id ? 'selected' : ''}>${esc(s.label)}</option>`).join('')}</select></div>`}</div>
       <div class="stack-sm">${rows || '<p class="muted small" style="margin:0">Aucun aliment pour l\'instant.</p>'}</div>
+      <div class="row wrap quick-adds"><span class="eyebrow">Ajouter vite</span>${QUICK_ADDS.map(([l, fid, g]) => `<button class="chip" data-act="miQuick" data-fid="${fid}" data-g="${g}">${ic('plus')} ${esc(l)}</button>`).join('')}</div>
       <div class="search">${ic('search')}<input class="input" id="miSearch" type="search" placeholder="Ajouter un aliment ou un plat" data-in="miSearch" autocomplete="off"></div>
       <div class="list" id="miResults"></div>
       <div class="card flat"><b id="md-total">${fmtInt(tot.kcal)} kcal · P ${fmtInt(tot.p)} g · G ${fmtInt(tot.c)} g · L ${fmtInt(tot.f)} g</b></div>
@@ -3858,6 +4048,22 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     mealEdit: (el) => { const j = journal(el.dataset.date); const m = (j.meals || []).find((x) => x.id === el.dataset.id); if (!m) return; UI.mealDraft = Object.assign(clone(m), { date: el.dataset.date }); mealSheet(); },
     mealDel: (el) => { const j = journal(el.dataset.date, true); j.meals = (j.meals || []).filter((m) => m.id !== el.dataset.id); persist([mk(el.dataset.date)]); if (UI.sheet) closeSheet(); render(); toast('Repas supprimé'); },
     miDel: (el) => { UI.mealDraft.items.splice(+el.dataset.i, 1); mealSheet(); },
+    miQuick: (el) => { UI.mealDraft.items.push(itemFromFood(el.dataset.fid, +el.dataset.g)); mealSheet(); },
+    calcDish: (el) => { calcDraft(el.dataset.date, el.dataset.q); mealSheet(); },
+    calcInto: (el) => {
+      const md = UI.mealDraft; const est = estimateDish(el.dataset.q);
+      if (!est.items.length) { toast('Plat non reconnu : utilise « Ajouter vite » ou cherche les ingrédients'); return; }
+      md.items.push(...est.items); if (!md.name) md.name = cap(el.dataset.q); mealSheet();
+    },
+    calcSize: (el) => {
+      const md = UI.mealDraft; const k = +el.dataset.k; const r = k / (md.calc.size || 1);
+      md.items.forEach((it) => { it.g = round5((num(it.g) || 0) * r); }); md.calc.size = k; mealSheet();
+    },
+    calcTpl: (el) => {
+      const md = UI.mealDraft; const sz = md.calc ? md.calc.size : 1;
+      md.items = parseComp(CALC_TEMPLATES[+el.dataset.i][1]).map((x) => Object.assign(itemFromFood(x.fid, round5(x.g * sz)), { calc: true }));
+      md.note = calcNote({ items: md.items }, md.name); mealSheet();
+    },
     miAdd: (el) => { const fid = el.dataset.fid; UI.mealDraft.items.push(itemFromFood(fid)); S.core.foodUse[fid] = (S.core.foodUse[fid] || 0) + 1; persist(['core'], 800); mealSheet(); },
     mealSave: () => {
       const md = UI.mealDraft; if (!md.items.length) { toast('Ajoute au moins un aliment'); return; }
@@ -3895,7 +4101,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     miG: (el) => { UI.mealDraft.items[+el.dataset.i].g = num(el.value) || 0; updateMealTotals(); },
     miSearch: (el) => {
       const q = el.value.trim(); const box = $('#miResults'); if (!box) return;
-      box.innerHTML = q.length < 2 ? '' : foodHits(q).slice(0, 10).map((fid) => foodRow(fid, 'miAdd')).join('');
+      box.innerHTML = q.length < 2 ? '' : foodHits(q).slice(0, 10).map((fid) => foodRow(fid, 'miAdd')).join('') + (q.length >= 3 ? calcRow(q, 'calcInto') : '');
     },
   });
   Object.assign(CH, {
