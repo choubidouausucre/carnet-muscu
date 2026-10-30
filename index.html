@@ -612,6 +612,10 @@ a.src:hover { color: var(--accent); border-color: var(--accent); }
 .day-title { font-family: var(--f-display); font-weight: 700; font-size: 30px; line-height: .98; text-transform: uppercase; }
 .facts { display: flex; flex-wrap: wrap; gap: 6px; }
 .facts span { background: var(--surface-2); border-radius: 10px; padding: 6px 10px; font-size: 13px; color: var(--ink-2); }
+.facts span.over { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+.steps-card { grid-column: 1 / -1; }
+.dayrow { display: flex; align-items: center; gap: 10px; font-size: 13.5px; }
+.dayrow .tag { white-space: nowrap; }
 .facts b { font-family: var(--f-display); font-size: 18px; font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
 .day-note { margin: 0; font-size: 14.5px; color: var(--ink-2); }
 .sub-block { display: grid; gap: 4px; padding: 12px; border-radius: 12px; background: var(--surface-2); }
@@ -744,10 +748,11 @@ function EX(id, name, muscle, sets, reps, type, pr, extra) {
 }
 
 /* Version du programme : à incrémenter quand le programme par défaut change (migration des données déjà enregistrées). */
-const PROGRAM_VERSION = 3;
+const PROGRAM_VERSION = 4;
 
 /* Objectif : recomposition jusqu'à 74 kg sec + progression des charges.
-   Chaque séance : ~55 min de muscu + 20 à 30 min de marche inclinée, pour tenir dans 1 h 30.
+   Chaque séance : ~60 min de muscu (chauffe et changements de poste compris) + 20 min de marche inclinée, pour tenir dans 1 h 30.
+   v4 : pecs répartis 10 séries lundi / 1 mercredi / 11 vendredi, chaque muscle dans sa zone hebdo, aucune séance au-delà du créneau.
    rest = repos conseillé en secondes, inc = palier de progression en kg, minutes/speed = cardio. */
 const WALK = (id, minutes, tip) => EX(id, `Marche inclinée · ${minutes} min · inclinaison 12 · 5 km/h`, 'cardio', 1, `${minutes} min`, 'time', null, { minutes, speed: 5, rest: 0, tip: tip || 'Après la muscu, jamais avant : tu gardes ta force pour les charges. Ne tiens pas les barres du tapis, sinon la dépense chute. Environ 250 à 300 kcal pour 30 min à ton poids (estimation).' });
 
@@ -761,7 +766,6 @@ const DEFAULT_PROGRAM = [
       EX('p-incline', 'Développé incliné Smith ou barre (banc 20–30°)', 'pecs', 4, '6-8', 'wr', 60, { rest: 180, tip: '<b>Ton mouvement de force pour le haut des pecs.</b> Étude citée par Delavier (Barnett 1995) : à 40°, l\'incliné réduit l\'activation du grand pectoral d\'environ 30 % et augmente celle de l\'avant d\'épaule de 75 %. Donc banc bas (20–30°), omoplates serrées et basses, banc élargi avec 3–5 tapis (clavicules larges). Quand tes 4 séries atteignent 8 reps, +2,5 kg.' }),
       EX('p-xover', 'Vis-à-vis poulie basse → haute, unilatéral', 'pecs', 3, '12-15', 'wr', null, { src: 'delavier', perSide: true, rest: 60, tip: '<b>Ton exercice haut de pecs n°1.</b> Pour Delavier, le haut des pecs répond surtout à la poulie vis-à-vis, et l\'unilatéral empêche l\'épaule de partir vers l\'avant. Poulie basse, une main à la fois : monte en diagonale jusque devant le menton en croisant légèrement la ligne médiane, tiens 2 s.' }),
       EX('p-conv', 'Développé machine convergente unilatéral', 'pecs', 3, '8-12', 'wr', 35, { perSide: true, rest: 90, tip: 'Tourne buste et genoux de 30 à 45° du côté du bras qui pousse : la convergence augmente et le centre des pecs travaille. Assis, les omoplates restent mieux en place que sur un banc.' }),
-      EX('p-dips', 'Dips lestés ou machine', 'pecs', 3, '8-10', 'wr', 70, { rest: 120, tip: 'Buste penché en avant pour les pecs. Réduis l\'amplitude si l\'avant d\'épaule tire. Variante relance : superlent, 4 reps en montant en 10 s.' }),
       EX('e-lat', 'Élévation latérale à la poulie', 'epaules', 3, '12-15', 'wr', 17.5, { perSide: true, rest: 60, tip: 'Seul exercice d\'épaules de la séance : l\'avant d\'épaule a déjà travaillé sur tous les développés. La poulie garde la tension en bas.' }),
       EX('d-ext', 'Extensions triceps à la poulie', 'triceps', 3, '10-12', 'wr', 35, { rest: 60, tip: 'Coudes fixes contre le buste. Les triceps ont déjà travaillé à l\'incliné et aux dips : vise la qualité.' }),
       WALK('w-lun', 20),
@@ -795,20 +799,21 @@ const DEFAULT_PROGRAM = [
       EX('e-y', 'Élévation en Y', 'epaules', 2, '12-15', 'wr', 14, { perSide: true, rest: 60, tip: 'Bas des trapèzes : stabilise les omoplates, ce qui aide directement tes pecs.' }),
       EX('e-pupitre', 'Curl pupitre unilatéral', 'biceps', 3, '8-12', 'wr', 20, { perSide: true, rest: 75, tip: 'Commence par le bras faible. Ne tends pas complètement en bas : protège le tendon distal du biceps.' }),
       EX('e-marteau', 'Curl marteau', 'biceps', 3, '10-12', 'wr', 24, { rest: 60, tip: 'Prise neutre = brachial et brachio-radial, l\'épaisseur du bras.' }),
-      WALK('w-jeu', 30),
+      WALK('w-jeu', 20),
     ],
   },
   {
-    id: 'pecs2', title: 'Pecs volume + épaules + bras', dow: [5], plate: 'pink', kind: 'muscu',
+    id: 'pecs2', title: 'Pecs volume + bras', dow: [5], plate: 'pink', kind: 'muscu',
     warmup: 'Relevés de jambes en échauffement global, rotations à l\'élastique, curl marteau léger, puis 2 séries légères de développé haltères.',
     note: 'Séance volume : charges moyennes, contraction et sensations, 4 jours après la séance de force.',
     exercises: [
       EX('e-abs', 'Relevés de jambes suspendu (bas des abdos)', 'abdos', 3, '12-20', 'reps', null, { src: 'delavier', rest: 45, tip: 'Enroule le bassin vers le haut, ne balance pas les jambes.' }),
       EX('v-incl', 'Développé incliné haltères (30°)', 'pecs', 3, '10-12', 'wr', null, { src: 'delavier', rest: 120, tip: 'Charge moyenne, mains qui se rapprochent en haut. Arrête à l\'échec sensitif. Ne descends pas les haltères au maximum : le haut des pecs est le plus exposé aux déchirures.' }),
+      EX('p-dips', 'Dips lestés ou machine', 'pecs', 3, '8-10', 'wr', 70, { rest: 120, tip: 'Déplacés du lundi au vendredi : le lundi passe à 10 séries de pecs et ta séance tient dans le créneau. Buste penché en avant pour les pecs. Réduis l\'amplitude si l\'avant d\'épaule tire. Variante relance : superlent, 4 reps en montant en 10 s.' }),
       EX('p-ecartes', 'Écartés machine', 'pecs', 3, '12-15', 'wr', 60, { rest: 60, tip: 'Postfatigue juste après le développé : croise presque les bras et tiens 2 s la contraction.' }),
       EX('v-xover', 'Vis-à-vis mains croisées (intérieur des pecs)', 'pecs', 2, '15-20', 'wr', null, { src: 'delavier', rest: 60, tip: 'Plus les mains se rapprochent et se croisent, plus le centre des pecs travaille (Méthode 3). Léger, contraction maximale.' }),
-      EX('p-decline', 'Développé décliné haltères ou Smith', 'pecs', 2, '10-12', 'wr', 40, { rest: 90, tip: 'Bas des pecs : pas ta priorité, d\'où 2 séries seulement.' }),
-      EX('e-smith', 'Smith développé militaire', 'epaules', 3, '6-10', 'wr', 50, { rest: 150, tip: 'Mouvement de force des épaules, en entretien. Barre au niveau du menton. Développé épaules = 14 % des blessures : pas d\'ego sur la charge.' }),
+      EX('p-decline', 'Développé décliné haltères ou Smith', 'pecs', 2, '10-12', 'wr', 40, { enabled: false, rest: 90, tip: 'Désactivé : les dips du vendredi travaillent déjà le bas des pecs, qui n\'est pas ta priorité. Réactive-le à la place des dips si tu préfères.' }),
+      EX('e-smith', 'Smith développé militaire', 'epaules', 3, '6-10', 'wr', 50, { enabled: false, rest: 150, tip: 'Désactivé : l\'avant d\'épaule travaille déjà sur tes 22 séries de développés et tes épaules dominent tes pecs. Il te fait gagner 15 min le vendredi. Mouvement de force des épaules, en entretien. Barre au niveau du menton. Développé épaules = 14 % des blessures : pas d\'ego sur la charge.' }),
       EX('e-front', 'Élévation frontale à la poulie', 'epaules', 3, '12-15', 'wr', 15, { enabled: false, rest: 60, tip: 'Désactivée : l\'avant d\'épaule travaille déjà sur tous tes développés. Réactive-la si tu y tiens.' }),
       EX('d-overhead', 'Extension triceps au-dessus de la tête (poulie)', 'triceps', 3, '10-12', 'wr', 25, { rest: 60, tip: 'Bras au-dessus de la tête : étire le long chef, celui qui fait le volume du bras.' }),
       EX('e-curlm', 'Biceps curl machine', 'biceps', 2, '10-12', 'wr', 45, { rest: 60, tip: 'Tension continue : ne redescends pas jusqu\'au relâchement complet.' }),
@@ -824,12 +829,12 @@ const DEFAULT_PROGRAM = [
     exercises: [
       EX('j2-presse', 'Presse à cuisses', 'quadris', 4, '10-15', 'wr', null, { rest: 120, inc: 5, tip: 'Pieds plus bas = plus de quadriceps, plus haut = plus de fessiers. Tension continue : ne verrouille pas les genoux en haut.' }),
       EX('j2-hip', 'Hip thrust (machine ou barre)', 'fessiers', 3, '8-12', 'wr', null, { src: 'delavier', rest: 120, inc: 5, tip: 'Menton rentré, bassin en rétroversion en haut, tiens 1 s. Gros levier pour la silhouette et la force du squat.' }),
-      EX('j2-fentes', 'Fentes marchées haltères', 'quadris', 3, '10/jambe', 'wr', null, { perSide: true, rest: 90, tip: 'Reprises de ton CrossFit, en version chargée. Genou avant dans l\'axe du pied, buste droit.' }),
+      EX('j2-fentes', 'Fentes marchées haltères', 'quadris', 2, '10/jambe', 'wr', null, { perSide: true, rest: 90, tip: 'Reprises de ton CrossFit, en version chargée. Genou avant dans l\'axe du pied, buste droit.' }),
       EX('j2-curl', 'Leg curl allongé', 'ischios', 3, '10-15', 'wr', null, { rest: 60, tip: 'Hanches plaquées au banc. Variante relance : superlent, 4 reps en montant en 10 s.' }),
       EX('j-add', 'Adducteurs machine', 'adducteurs', 3, '12-15', 'wr', 30, { rest: 60, tip: 'Amplitude contrôlée, pas d\'à-coups en position d\'écart maximal.' }),
       EX('j2-mollets', 'Mollets assis', 'mollets', 3, '15-20', 'wr', null, { rest: 45, tip: 'Assis, jambes pliées : c\'est le soléaire qui travaille. Delavier conseille d\'alterner avec les mollets jambes tendues.' }),
       EX('p-crunch', 'Crunch machine (haut des abdos)', 'abdos', 3, '15-20', 'wr', null, { rest: 45, tip: 'Souffle en t\'enroulant, tête penchée en avant, regarde tes abdos. Ne tire pas avec les bras.' }),
-      EX('c-planche', 'Gainage planche', 'abdos', 3, '45 s', 'time', null, { src: 'delavier', rest: 45, tip: 'Méthode 3 : la planche et ses variantes pour le gainage statique. Bassin aligné, abdos et fessiers serrés. Note la durée.' }),
+      EX('c-planche', 'Gainage planche', 'abdos', 3, '45 s', 'time', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé pour tenir dans le créneau : tes abdos ont déjà 12 séries sur 4 jours. Réactive-le si tu as du temps. Méthode 3 : la planche et ses variantes pour le gainage statique. Bassin aligné, abdos et fessiers serrés. Note la durée.' }),
       WALK('w-sam', 20),
     ],
   },
@@ -959,12 +964,12 @@ const KB = [
     body: `
 <p>Chaque séance = environ 55 min de muscu + 20 à 30 min de marche inclinée, pour tenir dans un créneau de 1 h 30.</p>
 <ul>
-<li><b>Lundi · Pecs force + épaules + triceps.</b> Pecs frais après le dimanche : c'est là que les charges montent (incliné 4 × 6–8, 3 min de repos). Haut des pecs en priorité.</li>
+<li><b>Lundi · Pecs force + épaules + triceps.</b> Pecs frais après le dimanche : c'est là que les charges montent (incliné 4 × 6–8, 3 min de repos). Haut des pecs en priorité, 10 séries de pecs.</li>
 <li><b>Mardi · Repos</b>. Récupération active : marche dehors si tu veux.</li>
 <li><b>Mercredi · Jambes force + rappel pecs.</b> Squat, semi soulevé de terre, leg extension, leg curl, mollets, puis la série de 100 du haut des pecs.</li>
-<li><b>Jeudi · Dos + biceps.</b> Dos en entretien, arrière d'épaule pour la posture ; séance plus courte, donc 30 min de marche.</li>
-<li><b>Vendredi · Pecs volume + épaules + bras.</b> charges moyennes, sensations, 4 jours après la séance de force.</li>
-<li><b>Samedi · Jambes volume + fessiers + abdos.</b> Remplace le CrossFit : presse, hip thrust, fentes, ischios, adducteurs, mollets assis. 72 h après le squat.</li>
+<li><b>Jeudi · Dos + biceps.</b> Dos en entretien une fois par semaine avec des charges lourdes, arrière d'épaule pour la posture.</li>
+<li><b>Vendredi · Pecs volume + bras.</b> charges moyennes, sensations, 4 jours après la séance de force. 11 séries de pecs avec les dips.</li>
+<li><b>Samedi · Jambes volume + fessiers + abdos.</b> Remplace le CrossFit : presse, hip thrust, fentes, ischios, adducteurs, mollets assis, crunch. 72 h après le squat.</li>
 <li><b>Dimanche · Repos.</b></li>
 </ul>
 <p><b>Progression :</b> double progression. Reste sur la même charge tant que toutes les séries n'atteignent pas le haut de la fourchette ; ensuite l'app propose +2,5 kg (haut du corps) ou +5 kg (squat, soulevé de terre, presse, hip thrust). <b>Repos :</b> 3 min sur les gros mouvements, 45 s à 1 min 30 sur l'isolation ; le chrono se règle tout seul.</p>
@@ -977,8 +982,8 @@ const KB = [
 <ul>
 <li><b>Calories en vagues :</b> un peu plus les jours d'entraînement, un peu moins les jours de repos, environ +150 kcal par jour en moyenne. L'app calcule chaque jour tout seul (Repas).</li>
 <li><b>Protéines 2,2 g/kg :</b> au-dessus des 1,6–1,7 g/kg retenus par le guide Delavier pour la force, parce que tu cherches aussi à perdre du gras : les protéines protègent le muscle et calent.</li>
-<li><b>Ce qui compte :</b> la moyenne de tes pesées (2 à 3 par semaine, le matin à jeun) et ton tour de taille (1 fois par semaine, au nombril). Le poids monte et la taille reste stable : c'est du muscle.</li>
-<li><b>Ajustements automatiques :</b> toutes les 2 semaines, l'app compare ta moyenne de poids à celle d'il y a 2 semaines. Plus de 0,6 kg par mois avec une taille qui monte : −150 kcal. Poids stable sans baisse de taille : +150 kcal. Tu peux annuler un ajustement depuis l'accueil. Il faut 2 pesées par semaine au minimum.</li>
+<li><b>Ce qui compte :</b> la moyenne de tes pesées (2 à 3 par semaine, le matin à jeun). Le poids monte lentement, autour de +0,5 kg par mois, sans prendre de ventre : c'est du muscle.</li>
+<li><b>Ajustements automatiques :</b> toutes les 2 semaines, l'app compare ta moyenne de poids à celle d'il y a 2 semaines. Plus de 0,6 kg par mois : −150 kcal. Poids stable : +150 kcal. Tu peux annuler un ajustement depuis l'accueil. Il faut 2 pesées par semaine au minimum.</li>
 <li><b>Marche inclinée :</b> 20 à 30 min après chaque séance (inclinaison 12, 5 km/h), soit environ 1 200 à 1 400 kcal de plus par semaine. Elle est intégrée au calcul (niveau d'activité ×1,6), mais pas entièrement « remangée » : c'est elle qui fait fondre le gras pendant que la muscu construit.</li>
 <li><b>Hors salle :</b> 8 000 pas par jour et 7 à 9 h de sommeil font le reste.</li>
 <li><b>Rythme réaliste :</b> +0,4 à +0,6 kg par mois, soit 74 kg vers l'été 2027 en restant sec.</li>
@@ -1148,6 +1153,11 @@ const SOURCES = {
   zourdos2016: { kind: 'etude', short: 'Zourdos 2016', label: 'Zourdos et al., 2016, J Strength Cond Res', note: 'Échelle RPE fondée sur les reps en réserve : RPE 10 = 0 rep en réserve, RPE 9 = 1, etc.', url: 'https://pubmed.ncbi.nlm.nih.gov/26049792/' },
   schoenfeld2017: { kind: 'etude', short: 'Schoenfeld 2017', label: 'Schoenfeld, Ogborn, Krieger, 2017, J Sports Sci (méta-analyse)', note: 'Plus de séries par semaine pour un muscle = plus d\'hypertrophie, avec des rendements décroissants.', url: 'https://pubmed.ncbi.nlm.nih.gov/27433992/' },
   schoenfeld2019: { kind: 'etude', short: 'Schoenfeld 2019', label: 'Schoenfeld, Grgic, Krieger, 2019, J Sports Sci (méta-analyse)', note: 'À volume hebdomadaire égal, la fréquence change peu l\'hypertrophie ; elle sert surtout à répartir le volume.', url: 'https://pubmed.ncbi.nlm.nih.gov/30558493/' },
+  schoenfeld2016freq: { kind: 'etude', short: 'Schoenfeld 2016 (fréquence)', label: 'Schoenfeld, Ogborn, Krieger, 2016, Sports Med 46(11):1689-1697 (méta-analyse)', note: 'Travailler un muscle au moins 2 fois par semaine a donné un peu plus de croissance qu\'une seule fois ; les volumes n\'étaient pas toujours égaux entre les groupes.', url: 'https://pubmed.ncbi.nlm.nih.gov/27102172/' },
+  pelland2026: { kind: 'etude', short: 'Pelland 2026', label: 'Pelland et al., 2026, Sports Med 56(2):481-505 (méta-régressions, 67 études)', note: 'Plus de séries par semaine = plus de muscle, avec un gain qui ralentit à haut volume. Une fois le volume pris en compte, la fréquence joue surtout sur la force, peu sur le muscle. Les séries où le muscle n\'est qu\'assistant comptent en partie.' },
+  iversen2021: { kind: 'etude', short: 'Iversen 2021', label: 'Iversen, Norum, Schoenfeld, Fimland, 2021, Sports Med 51:2079-2095 (revue)', note: 'Pour s\'entraîner en peu de temps : le volume par semaine compte plus que la fréquence, les polyarticulaires d\'abord, les supersets font gagner du temps, et une chauffe ciblée sur l\'exercice suffit.', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC8449772/' },
+  spiering2021: { kind: 'etude', short: 'Spiering 2021', label: 'Spiering, Mujika, Sharp, Foulis, 2021, J Strength Cond Res 35(5):1449-1458 (revue)', note: 'Pour garder un muscle ou sa force, c\'est l\'intensité qui compte : on peut beaucoup réduire la fréquence et le volume si les charges restent lourdes.', url: 'https://pubmed.ncbi.nlm.nih.gov/33629972/' },
+  paluch2022: { kind: 'etude', short: 'Paluch 2022', label: 'Paluch et al., 2022, Lancet Public Health 7(3):e219-e228 (méta-analyse, 15 cohortes)', note: 'Plus de pas par jour va avec une mortalité plus basse, jusqu\'à un plateau vers 8 000 à 10 000 pas avant 60 ans (6 000 à 8 000 après).', url: 'https://pubmed.ncbi.nlm.nih.gov/35247352/' },
   rodriguez2020: { kind: 'etude', short: 'Rodríguez-Ridao 2020', label: 'Rodríguez-Ridao et al., 2020, Int J Environ Res Public Health', note: 'Le haut du grand pectoral est le plus actif vers 30° d\'inclinaison ; au-delà de 45°, l\'avant d\'épaule prend le dessus.', url: 'https://pubmed.ncbi.nlm.nih.gov/33049982/' },
   mccrary2015: { kind: 'etude', short: 'McCrary 2015', label: 'McCrary, Ackermann, Halaki, 2015, Br J Sports Med (revue systématique)', note: 'Un échauffement dynamique avec charges améliore la force et la puissance du haut du corps.', url: 'https://pubmed.ncbi.nlm.nih.gov/25694615/' },
   fradkin2010: { kind: 'etude', short: 'Fradkin 2010', label: 'Fradkin, Zazryn, Smoliga, 2010, J Strength Cond Res (méta-analyse)', note: 'S\'échauffer a amélioré la performance dans 79 % des critères étudiés.', url: 'https://pubmed.ncbi.nlm.nih.gov/19996770/' },
@@ -1595,7 +1605,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   const fmtDate = (s, o) => parseISO(s).toLocaleDateString('fr-FR', o || { weekday: 'long', day: 'numeric', month: 'long' });
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   const clock = (sec) => { sec = Math.max(0, Math.round(sec)); const h = Math.floor(sec / 3600); const m = Math.floor((sec % 3600) / 60); return h ? `${h}:${pad(m)}:${pad(sec % 60)}` : `${m}:${pad(sec % 60)}`; };
-  const hm = (min) => { min = Math.round(min); const h = Math.floor(min / 60); return h ? `${h} h ${pad(min % 60)}` : `${min} min`; };
+  const hm = (min) => { min = Math.round(min); const h = Math.floor(min / 60); return h ? `${h}\u00a0h\u00a0${pad(min % 60)}` : `${min}\u00a0min`; };
   const repsMax = (r) => { const m = String(r || '').match(/(\d+)\s*$/); return m ? +m[1] : null; };
   const repsMin = (r) => { const m = String(r || '').match(/^\s*(\d+)/); return m ? +m[1] : null; };
   const e1rm = (w, r) => (!w || !r) ? 0 : (r === 1 ? w : w * (1 + r / 30));
@@ -1641,6 +1651,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     scale: '<rect x="3.5" y="3.5" width="17" height="17" rx="4"/><path d="M8 9a5.5 5.5 0 0 1 8 0l-2.5 2.5a2 2 0 0 0-3 0z"/>',
     flame: '<path d="M12 3c1 4 5 5.5 5 10a5 5 0 0 1-10 0c0-2.5 1.5-3.5 2-5 1 1.5 2 2 2 2s-1-4 1-7z"/>',
     moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
+    swap: '<path d="M5 8h13l-3.5-3.5M19 16H6l3.5 3.5"/>',
+    foot: '<path d="M8.5 3C6.6 3 5.5 5.3 5.5 8c0 2.2.9 3.7 2.7 3.7S11 10.3 11 8c0-2.7-.9-5-2.5-5zM6 14.5h5v1.7a2.5 2.5 0 0 1-5 0zM15.5 6.5c-1.9 0-3 2.3-3 5 0 2.2.9 3.7 2.7 3.7S18 13.8 18 11.5c0-2.7-.9-5-2.5-5zM13 18h5v.5a2.5 2.5 0 0 1-5 0z"/>',
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -1701,7 +1713,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     if (!out.quiz || typeof out.quiz !== 'object') out.quiz = { box: {}, wrong: {} };
     out.quiz.box = out.quiz.box || {}; out.quiz.wrong = out.quiz.wrong || {};
     if (out.active && !out.active.v) { out.active.v = 2; (out.active.entries || []).forEach((e) => { e.warm = e.warm || []; e.uni = false; }); out.active.at = null; out.active.rest = null; }
-    if ((c.programVersion || 1) < PROGRAM_VERSION) {
+    if ((c.programVersion || 1) < 3) {
       /* Nouveau programme par défaut : on garde les charges déjà saisies sur les exercices conservés. */
       const prs = {};
       (Array.isArray(c.program) ? c.program : []).forEach((d) => (d.exercises || []).forEach((e) => { if (e.pr != null) prs[e.id] = e.pr; }));
@@ -1716,12 +1728,35 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       out.programVersion = PROGRAM_VERSION;
       out.updatedAt = Date.now();
     }
+    if ((out.programVersion || 1) < 4) {
+      rebalanceV4(out.program);
+      out.rebalance = { v: 4, date: today() };
+      out.programVersion = 4;
+      out.updatedAt = Date.now();
+    }
     /* Une couleur par séance : 2e séance pecs en rose, 2e séance jambes en orange. */
     out.program.forEach((d) => { if (d.id === 'pecs2' && d.plate === 'red') d.plate = 'pink'; if (d.id === 'jambes2' && d.plate === 'yellow') d.plate = 'orange'; });
     /* Fiches exercices (muscles, matériel, consignes, sources) : on complète sans écraser ce que tu as modifié. */
     out.program.forEach((d) => (d.exercises || []).forEach((e) => { const meta = EXMETA[e.id]; if (meta) Object.keys(meta).forEach((k) => { if (e[k] == null) e[k] = clone(meta[k]); }); }));
     applyFoodFix(out.foodFix);
     return out;
+  }
+  /* v4 : semaine rééquilibrée pour tenir dans les créneaux. On déplace et on désactive, on ne supprime rien :
+     charges, variantes, PR et exercices ajoutés restent ; tout se réactive d'un geste dans Séance › Modifier. */
+  function rebalanceV4(prog) {
+    const at = (id) => { for (const d of prog) { const i = (d.exercises || []).findIndex((e) => e.id === id); if (i >= 0) return { d, i, e: d.exercises[i] }; } return null; };
+    const pecs2 = prog.find((d) => d.id === 'pecs2');
+    const dips = at('p-dips');
+    if (dips && dips.d.id === 'push' && pecs2) {
+      dips.d.exercises.splice(dips.i, 1);
+      const j = pecs2.exercises.findIndex((e) => e.id === 'v-incl');
+      pecs2.exercises.splice(j >= 0 ? j + 1 : 0, 0, dips.e);
+    }
+    if (pecs2 && pecs2.title === 'Pecs volume + épaules + bras') pecs2.title = 'Pecs volume + bras';
+    ['p-decline', 'e-smith', 'c-planche'].forEach((id) => { const x = at(id); if (x) x.e.enabled = false; });
+    const fentes = at('j2-fentes'); if (fentes && fentes.e.sets === 3) fentes.e.sets = 2;
+    const walk = at('w-jeu');
+    if (walk && walk.e.minutes === 30) Object.assign(walk.e, { minutes: 20, reps: '20 min', name: String(walk.e.name).replace('30 min', '20 min') });
   }
   /* Valeurs d'aliments corrigées par toi (pour 100 g ou 100 ml), appliquées par-dessus la base. */
   const FOODS_BASE = JSON.parse(JSON.stringify(FOODS));
@@ -1774,6 +1809,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     if (delay) saveTimer = setTimeout(() => { saveLocal(); scheduleSync(); }, delay);
     else { saveLocal(); scheduleSync(); }
   }
+  /* Programme mis à jour au chargement : on l'enregistre tout de suite pour que la migration ne se rejoue pas à chaque ouverture. */
+  try { const r = JSON.parse(store.get(LS_KEY) || 'null'); if (r && r.core && (r.core.programVersion || 1) < PROGRAM_VERSION) saveLocal(); } catch (e) { /* stockage illisible : rien à réenregistrer */ }
 
   /* ===================== Synchronisation (base de l'artefact) ===================== */
   const Remote = { ready: false, coreRef: null, monthsCol: null, flushing: false, timer: null, status: 'local' };
@@ -1927,7 +1964,6 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   const allBody = () => Object.values(S.months).flatMap((m) => m.body || []).sort((a, b) => a.date.localeCompare(b.date));
   const latestWeight = () => { const b = allBody().filter((x) => x.weight); return b.length ? b[b.length - 1].weight : null; };
   const latestMeasure = (f) => { const b = allBody().filter((x) => x[f]); return b.length ? b[b.length - 1][f] : null; };
-  const MEASURES = [['bras', 'Tour de bras'], ['poitrine', 'Tour de poitrine'], ['epaules', 'Tour d\'épaules'], ['taille', 'Tour de taille'], ['cuisse', 'Tour de cuisse']];
   function sessionsThisWeek(muscle) {
     const start = mondayOf(today());
     return allLogs().filter((l) => l.date >= start && l.entries.some((e) => e.muscle === muscle && e.sets.some((s) => s.done))).length;
@@ -1950,6 +1986,15 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     }
     return { cur, pct, target };
   }
+  /* Nombre de jours par semaine où chaque muscle a au moins un exercice actif. */
+  function weeklyPlannedFreq() {
+    const out = {};
+    P().filter((d) => (d.dow || []).length).forEach((d) => {
+      const seen = new Set(d.exercises.filter((e) => e.enabled && (e.sets || 0) > 0 && e.muscle).map((e) => e.muscle));
+      seen.forEach((m) => { out[m] = (out[m] || 0) + 1; });
+    });
+    return out;
+  }
   function weeklyPlannedSets() {
     const out = {};
     P().forEach((d) => d.exercises.forEach((e) => { if (e.enabled) out[e.muscle] = (out[e.muscle] || 0) + (e.sets || 0); }));
@@ -1965,7 +2010,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
 
   /* ===================== Domaine : nutrition ===================== */
   const GOALS = {
-    recompo74: { label: '74 kg sec (recomposition)', short: '74 kg sec', adj: 150, hint: 'Environ +150 kcal par jour en moyenne, marche inclinée comprise : plus les jours d\'entraînement, moins les jours de repos. Vise +0,4 à +0,6 kg par mois avec un tour de taille stable.' },
+    recompo74: { label: '74 kg sec (recomposition)', short: '74 kg sec', adj: 150, hint: 'Environ +150 kcal par jour en moyenne, marche inclinée comprise : plus les jours d\'entraînement, moins les jours de repos. Vise +0,4 à +0,6 kg par mois.' },
     prise: { label: 'Prise de muscle sèche', short: 'Prise sèche', adj: 300, hint: 'Environ +300 kcal : vise +0,25 à +0,5 kg par mois pour limiter le gras.' },
     recompo: { label: 'Recomposition stricte', short: 'Maintien', adj: 0, hint: 'Maintenance : perdre un peu de gras en prenant du muscle, plus lentement.' },
     seche: { label: 'Sèche', short: 'Sèche', adj: -400, hint: 'Environ −400 kcal : garde les protéines et les charges pour préserver le muscle.' },
@@ -2063,7 +2108,32 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   const T = { state: 'idle', end: 0, dur: 180, left: 180, doneAt: 0 };
   const restDefault = () => S.core.settings.restSec || 180;
   const restFor = (ex) => (S.core.settings.perExerciseRest && ex && ex.rest != null ? ex.rest : restDefault());
-  const dayMinutes = (d) => d.exercises.filter((e) => e.enabled).reduce((a, e) => a + (e.minutes != null ? e.minutes * 60 : (e.sets || 0) * ((e.perSide ? 90 : 45) + restFor(e))), 0) / 60;
+  /* Durée estimée : séries + repos, séries de chauffe (≈ 75 s chacune), ≈ 1 min pour changer de poste, et la marche. */
+  function dayMinutes(d) {
+    const warmed = new Set(); let sec = 0;
+    d.exercises.filter((e) => e.enabled).forEach((e0) => {
+      if (e0.minutes != null) { sec += e0.minutes * 60; return; }
+      const e = effEx(e0);
+      sec += (e.sets || 0) * ((e.perSide ? 90 : 45) + restFor(e)) + 60;
+      if (e.type === 'wr') { sec += warmupsFor(e, targetWeight(e), warmed.has(e.muscle)).length * 75; if (e.muscle) warmed.add(e.muscle); }
+    });
+    return sec / 60;
+  }
+  /* Créneau en minutes à partir de « 19 h – 20 h 30 ». */
+  function slotMinutes(d) {
+    const t = [...String(d.time || '').matchAll(/(\d{1,2})\s*h\s*(\d{2})?/g)].map((m) => +m[1] * 60 + (+m[2] || 0));
+    return t.length >= 2 && t[1] > t[0] ? t[1] - t[0] : null;
+  }
+  /* Durée réelle moyenne des 6 dernières séances de ce jour (les séances oubliées ouvertes sont ignorées). */
+  function realMinutes(dayId) {
+    const m = allLogs().filter((l) => l.dayId === dayId).slice(-6).map(logMinutes).filter((x) => x && x >= 15 && x <= 240);
+    return m.length ? { avg: m.reduce((a, x) => a + x, 0) / m.length, n: m.length } : null;
+  }
+  function durationFacts(d) {
+    const est = dayMinutes(d); const slot = slotMinutes(d); const real = realMinutes(d.id);
+    const over = slot && est > slot;
+    return `<span${over ? ' class="over"' : ''}><b>≈ ${hm(est)}</b>${slot ? ` / ${hm(slot)}` : ''}</span>${real ? `<span>réel <b>${hm(real.avg)}</b></span>` : ''}`;
+  }
   const saveTimerState = () => store.set(TIMER_KEY, JSON.stringify(T));
   (function loadTimer() {
     T.dur = restDefault(); T.left = T.dur;
@@ -2294,18 +2364,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
         <span class="plate p-${sd ? sd.plate : 'grey'}" ${sd ? '' : 'style="opacity:.3"'}></span><span class="lbl">${sd ? esc(shortTitle(sd)) : 'Repos'}</span></button>`;
     }
 
-    const dp = dayPlan(t);
-    const next = dp.withR.find((x) => !dp.j.eaten[x.slot.id] && !x.replaced);
-    const nutri = `<div class="card stack">
-      <div class="card-h"><span class="eyebrow">Aujourd'hui</span><span class="tag">${DAYTYPES[dp.type].label}</span></div>
-      ${macroBars(dp.eaten, dp.t)}
-      ${next ? `<div class="meal" style="border-bottom:0;padding-bottom:0">
-        <button class="check" role="checkbox" aria-checked="false" data-act="toggleMeal" data-date="${t}" data-slot="${next.slot.id}" aria-label="Marquer comme mangé">${ic('check')}</button>
-        <button class="name-btn" data-act="recipeSheet" data-date="${t}" data-slot="${next.slot.id}"><span class="slot">Prochain : ${esc(next.slot.label)} · ${esc(next.slot.time)}</span><span class="name">${esc(next.r.n)}</span><span class="mac">${fmtInt(next.m.kcal)} kcal · ${fmtInt(next.m.p)} g de protéines</span></button>
-        <span></span></div>` : '<p class="muted small" style="margin:0">Tous les repas prévus aujourd\'hui sont cochés.</p>'}
-    </div>`;
-
-    const goals = S.core.goals.slice(0, 3).map((g) => goalRow(g)).join('');
+    const goals = shownGoals().slice(0, 3).map((g) => goalRow(g)).join('');
     const w = latestWeight(); const body = allBody().filter((x) => x.weight);
     const wk = body.filter((x) => x.date >= addDays(t, -7));
     const delta = body.length > 1 ? body[body.length - 1].weight - body[0].weight : null;
@@ -2315,8 +2374,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     return `${pageHead('Aujourd\'hui', esc(cap(fmtDate(t))))}
       ${hero}
       <section class="sec">${secHead('Ma semaine', '<button class="link" data-act="openCalendar">Calendrier ›</button>')}<div class="week">${week}</div></section>
-      <section class="sec">${secHead('Nutrition', '<button class="link" data-tab="meals">Tous les repas ›</button>')}${nutri}</section>
       <section class="sec">${secHead('Suivi')}<div class="grid2">
+        ${stepsCard()}
         <div class="card stack-sm"><div class="eyebrow">Poids</div><div class="stat"><span class="v">${w ? fmt(w, 1) : '—'}<small>kg</small></span><span class="k">${delta != null ? `${delta >= 0 ? '+' : ''}${fmt(delta, 1)} kg depuis le début` : `${wk.length} pesée(s) cette semaine`}</span></div><button class="btn sm" data-act="bodySheet">${ic('plus')} Pesée</button></div>
         <div class="card stack-sm"><div class="eyebrow">Abdos cette semaine</div><div class="stat"><span class="v">${absSessionsThisWeek()}<small>/ ${(S.core.goals.find((g) => g.type === 'habit' && (g.muscle || 'abdos') === 'abdos') || { target: 4 }).target}</small></span><span class="k">séances (minimum Delavier : 2)</span></div><button class="btn sm" data-tab="progress" data-sub="balance">Équilibre</button></div>
       </div></section>
@@ -2336,7 +2395,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <div class="row between"><span class="t" style="font-weight:600">${esc(g.label)}${g.suggested ? ' <span class="tag">proposé</span>' : ''}</span>
       <span class="num" style="font-size:17px;font-weight:600">${cur != null ? fmt(cur, 1) : '—'} ${g.lower ? '≤' : '→'} ${target != null ? fmt(target, 1) : '?'} ${esc(g.unit || '')}</span></div>
       ${bar('', pct != null ? pct : 0, 1)}
-      <span class="hint">${pct != null ? `${Math.round(pct * 100)} %` : (g.lower && g.type === 'mesure' ? 'Mesure-toi une première fois : ce sera ta référence' : 'Définis une cible')}${dl != null ? ` · ${dl > 0 ? `${dl} semaine${dl > 1 ? 's' : ''} restante${dl > 1 ? 's' : ''}` : 'échéance passée'}` : ''}</span>
+      <span class="hint">${pct != null ? `${Math.round(pct * 100)} %` : 'Définis une cible'}${dl != null ? ` · ${dl > 0 ? `${dl} semaine${dl > 1 ? 's' : ''} restante${dl > 1 ? 's' : ''}` : 'échéance passée'}` : ''}</span>
     </div>`;
   }
 
@@ -2361,8 +2420,9 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       : `<button class="btn primary block big-btn" data-act="startSession" data-day="${d.id}">${ic('play')} Démarrer la séance</button>`;
     return `<section class="card day-card stack">
       <div class="row"><span class="plate lg p-${d.plate}"></span><div class="grow"><div class="eyebrow">${esc(dayLabel(d))}${d.time ? ` · ${esc(d.time)}` : ''}</div><h2 class="day-title">${esc(d.title)}</h2></div></div>
-      <div class="facts"><span><b>${enabled.length}</b> exercices</span><span><b>${sets}</b> séries</span><span><b>≈ ${hm(dayMinutes(d))}</b></span></div>
-      <span class="hint">${S.core.settings.perExerciseRest ? 'Repos adaptés à chaque exercice' : `${clock(restDefault())} de repos entre les séries`} · ${esc(S.core.profile.gym)}</span>
+      <div class="facts"><span><b>${enabled.length}</b> exercices</span><span><b>${sets}</b> séries</span>${durationFacts(d)}</div>
+      ${slotMinutes(d) && dayMinutes(d) > slotMinutes(d) ? `<div class="notice">Estimée à ${hm(dayMinutes(d))} pour un créneau de ${hm(slotMinutes(d))} : désactive un exercice d'isolation ou baisse une série pour finir à l'heure.</div>` : ''}
+      <span class="hint">Estimation chauffe et changements de poste compris${realMinutes(d.id) ? `, « réel » = moyenne de tes ${realMinutes(d.id).n} dernières` : ''} · ${S.core.settings.perExerciseRest ? 'Repos adaptés à chaque exercice' : `${clock(restDefault())} de repos entre les séries`} · ${esc(S.core.profile.gym)}</span>
       ${flex}
       ${deloadNotice()}
       ${d.note ? `<p class="day-note">${esc(d.note)}</p>` : ''}
@@ -2386,13 +2446,12 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   function progCard(d, ex) {
     const view = effEx(ex);
     const last = lastEntryFor(view.id); const up = progressionHint(view); const open = UI.openTips[ex.id];
-    const canToggle = ex.src === 'delavier' || UI.editProgram;
     const tags = `${prBtn(view)}${ex.src === 'delavier' ? '<span class="tag delavier">Delavier</span>' : ''}${ex.enabled ? '' : '<span class="tag">désactivé</span>'}`;
     return `<article class="card ex ${ex.enabled ? '' : 'off'}">
       <div class="ex-head"><span class="plate p-${plateOf(ex.muscle)}" title="${esc((MUSCLES[ex.muscle] || {}).label || '')}"></span>
         <div class="grow stack-xs"><h3>${esc(view.name)}</h3>${view !== ex ? `<div class="hint">Variante de ce cycle · remplace ${esc(ex.name)}</div>` : ''}
           <div class="ex-tags"><span class="ex-presc">${exMeta(ex)}</span>${tags}</div></div>
-        ${canToggle ? sw(ex.enabled, 'toggleEx', `data-ex="${ex.id}"`, `Activer ${ex.name}`) : ''}
+        ${sw(ex.enabled, 'toggleEx', `data-ex="${ex.id}"`, `Activer ${ex.name}`)}
       </div>
       ${last || up ? `<div class="ex-last">${last ? `<span><span class="muted">Dernière fois</span> ${esc(setsSummary(last.entry))}</span>` : ''}${up ? `<span class="hint up">↑ Tente ${fmt(up, 2)} kg</span>` : ''}</div>` : ''}
       ${open && ex.tip ? `<div class="tip">${ex.tip}</div>` : ''}
@@ -2524,9 +2583,9 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
 
   /* ===================== Vue : Progrès ===================== */
   function renderProgress() {
-    const tabs = seg('progressTab', [['history', 'Historique'], ['calendar', 'Calendrier'], ['records', 'Records'], ['body', 'Corps'], ['goals', 'Objectifs'], ['balance', 'Équilibre']], UI.progressTab);
+    const tabs = seg('progressTab', [['history', 'Historique'], ['calendar', 'Calendrier'], ['records', 'Records'], ['body', 'Poids'], ['goals', 'Objectifs'], ['balance', 'Équilibre']], UI.progressTab);
     const fn = { records: progRecords, body: progBody, goals: progGoals, balance: progBalance, history: progHistory, calendar: progCalendar }[UI.progressTab] || progHistory;
-    return `${pageHead('Progrès', 'Séances, records, corps et objectifs')}${tabs}${fn()}`;
+    return `${pageHead('Progrès', 'Séances, records, poids et objectifs')}${tabs}${fn()}`;
   }
   function progRecords() {
     let out = '';
@@ -2545,39 +2604,53 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     return `${out}<p class="hint">Le PR est ta charge de référence : modifie-la à la main, ou elle se met à jour toute seule quand tu valides une série plus lourde.</p>`;
   }
   function progBody() {
-    const b = allBody(); const ws = b.filter((x) => x.weight);
+    const ws = allBody().filter((x) => x.weight);
     const w = latestWeight(); const goal = S.core.goals.find((g) => g.type === 'poids');
-    const first = (f) => { const x = b.find((y) => y[f]); return x ? x[f] : null; };
-    const e = energy();
-    const meas = MEASURES.map(([f, l]) => { const a = first(f); const z = latestMeasure(f); return `<tr><td>${l}</td><td class="n">${a != null ? fmt(a, 1) : '—'}</td><td class="n">${z != null ? fmt(z, 1) : '—'}</td><td class="n">${a != null && z != null ? `${z - a >= 0 ? '+' : ''}${fmt(z - a, 1)}` : ''}</td></tr>`; }).join('');
-    const list = b.slice(-12).reverse().map((x) => `<div class="li"><div class="grow"><div class="t">${esc(cap(fmtDate(x.date, { weekday: 'short', day: 'numeric', month: 'short' })))}</div><div class="s">${[x.weight ? `${fmt(x.weight, 1)} kg` : '', ...MEASURES.filter(([f]) => x[f]).map(([f, l]) => `${l.replace('Tour de ', '').replace('Tour d\'', '')} ${fmt(x[f], 1)} cm`)].filter(Boolean).join(' · ')}</div></div><button class="icon-btn" data-act="bodySheet" data-date="${x.date}" aria-label="Modifier">${ic('edit')}</button></div>`).join('');
+    const list = ws.slice(-12).reverse().map((x) => `<div class="li"><div class="grow"><div class="t">${esc(cap(fmtDate(x.date, { weekday: 'short', day: 'numeric', month: 'short' })))}</div><div class="s">${fmt(x.weight, 1)} kg</div></div><button class="icon-btn" data-act="bodySheet" data-date="${x.date}" aria-label="Modifier">${ic('edit')}</button></div>`).join('');
     return `<section class="card stack">
-        <div class="row between"><div class="stat"><span class="v">${w ? fmt(w, 1) : '—'}<small>kg</small></span><span class="k">Poids actuel · IMC ${w ? fmt(w / ((S.core.profile.heightCm / 100) ** 2), 1) : '—'}</span></div><button class="btn sm primary" data-act="bodySheet">${ic('plus')} Mesure</button></div>
+        <div class="row between"><div class="stat"><span class="v">${w ? fmt(w, 1) : '—'}<small>kg</small></span><span class="k">Poids actuel · IMC ${w ? fmt(w / ((S.core.profile.heightCm / 100) ** 2), 1) : '—'}</span></div><button class="btn sm primary" data-act="bodySheet">${ic('plus')} Pesée</button></div>
         ${lineChart(ws.map((x) => ({ x: x.date, y: x.weight })), { goal: goal ? goal.target : null, avg: true, label: 'Poids de corps' })}
-        <span class="hint">Ligne pointillée : moyenne sur 7 jours. Pèse-toi le matin à jeun, 2 à 3 fois par semaine. Dépense estimée : ${fmtInt(e.tdee)} kcal/j.</span>
+        <span class="hint">Ligne pointillée : moyenne sur 7 jours. Pèse-toi le matin à jeun, 2 à 3 fois par semaine.</span>
       </section>
-      <section class="card"><div class="eyebrow">Mensurations (cm)</div><div class="table-wrap"><table class="t"><thead><tr><th>Zone</th><th>Début</th><th>Actuel</th><th>Écart</th></tr></thead><tbody>${meas}</tbody></table></div><p class="hint">Le tour de poitrine est l'indicateur n°1 de ton rattrapage pecs ; mesure-le une fois par mois, bras relâchés.</p></section>
-      <section class="card"><div class="eyebrow">Historique</div>${list || '<div class="empty">Aucune mesure.</div>'}</section>`;
+      <section class="card"><div class="eyebrow">Historique</div>${list || '<div class="empty">Aucune pesée.</div>'}</section>`;
   }
+  /* Les objectifs de mensuration déjà créés restent dans tes données, ils ne sont simplement plus affichés. */
+  const shownGoals = () => S.core.goals.filter((g) => g.type !== 'mesure');
   function progGoals() {
-    return `${S.core.goals.map((g) => `<section class="card stack-sm"><div class="row between"><span class="eyebrow">${esc({ poids: 'Poids', pr: 'Charge', mesure: 'Mensuration', habit: 'Habitude', libre: 'Libre' }[g.type] || '')}${g.deadline ? ` · avant le ${esc(fmtDate(g.deadline, { day: 'numeric', month: 'long', year: 'numeric' }))}` : ''}</span><button class="icon-btn" data-act="goalSheet" data-id="${g.id}" aria-label="Modifier">${ic('edit')}</button></div>${goalRow(g)}</section>`).join('')}
+    return `${shownGoals().map((g) => `<section class="card stack-sm"><div class="row between"><span class="eyebrow">${esc({ poids: 'Poids', pr: 'Charge', habit: 'Habitude', libre: 'Libre' }[g.type] || '')}${g.deadline ? ` · avant le ${esc(fmtDate(g.deadline, { day: 'numeric', month: 'long', year: 'numeric' }))}` : ''}</span><button class="icon-btn" data-act="goalSheet" data-id="${g.id}" aria-label="Modifier">${ic('edit')}</button></div>${goalRow(g)}</section>`).join('')}
       <button class="btn block" data-act="goalSheet">${ic('plus')} Nouvel objectif</button>
-      <p class="hint">« 74 kg sec » = le poids monte pendant que le tour de taille reste stable. Rythme réaliste : +0,4 à +0,6 kg par mois. Les objectifs « proposé » sont des points de départ, ajuste-les.</p>`;
+      <p class="hint">« 74 kg sec » = le poids monte lentement sans prendre de ventre. Rythme réaliste : +0,4 à +0,6 kg par mois. Les objectifs « proposé » sont des points de départ, ajuste-les.</p>`;
   }
   function progBalance() {
-    const done = doneSetsSince(addDays(today(), -6)); const plan = weeklyPlannedSets();
+    const done = doneSetsSince(addDays(today(), -6)); const plan = weeklyPlannedSets(); const freq = weeklyPlannedFreq();
     const keys = Object.keys(MUSCLES).filter((k) => MUSCLES[k].target).sort((a, b) => (MUSCLES[b].prio ? 1 : 0) - (MUSCLES[a].prio ? 1 : 0));
     const scale = 24;
     const rows = keys.map((k) => {
       const m = MUSCLES[k]; const v = done[k] || 0; const p = plan[k] || 0;
       const [a, b] = m.target;
-      return `<div class="bal"><span>${esc(m.label)}${m.prio ? ' <span class="tag delavier">priorité</span>' : ''}<br><span class="hint">prévu ${p}/sem.</span></span>
+      return `<div class="bal"><span>${esc(m.label)}${m.prio ? ' <span class="tag delavier">priorité</span>' : ''}<br><span class="hint">prévu ${p}/sem.${freq[k] ? ` · ${freq[k]}×` : ''}</span></span>
         <div class="track"><span class="zone" style="left:${(a / scale) * 100}%;width:${((b - a) / scale) * 100}%"></span><span class="fill ${m.prio ? 'prio' : ''}" style="width:${clamp((v / scale) * 100, 0, 100)}%"></span></div>
         <span class="v">${v}</span></div>`;
     }).join('');
     return `<section class="card stack"><div class="eyebrow">Séries validées sur 7 jours glissants</div>${rows}
       <div class="legend"><span><i class="bar" style="width:18px;height:8px;display:inline-block;background:color-mix(in srgb,var(--good) 22%,transparent);border:1.5px solid var(--good)"></i> zone cible hebdo</span><span><i style="width:18px;height:6px;border-radius:3px;display:inline-block;background:var(--accent)"></i> point faible</span></div></section>
-      <section class="card flat small stack-sm"><b>Pourquoi ces cibles ?</b><span>Pecs et abdos ont une zone plus haute : ce sont tes points faibles (rattrapage Delavier). Dos et épaules restent en entretien car ils dominent déjà ; s'ils dépassent largement leur zone, ils continuent à voler le travail des pecs. Les cibles en séries/semaine sont des repères d'hypertrophie courants, pas des chiffres tirés des livres.</span></section>`;
+      ${progDays()}
+      <section class="card flat small stack-sm"><b>Pourquoi ces cibles ?</b><span>Pecs et abdos ont une zone plus haute : ce sont tes points faibles (rattrapage Delavier). Dos et épaules restent en entretien car ils dominent déjà ; s'ils dépassent largement leur zone, ils continuent à voler le travail des pecs.</span>
+        <span>Ce que disent les études : c'est surtout le nombre de séries par semaine qui fait grossir un muscle, avec un rendement qui diminue au-delà d'un certain volume. Travailler un muscle 2 fois par semaine plutôt qu'une aide un peu, surtout parce que ça permet de répartir le volume : à volume égal, la fréquence compte peu pour le muscle et davantage pour la force. D'où tes pecs coupés en 10 séries le lundi et 11 le vendredi, plutôt que 20 d'un coup en fin de séance quand tu es fatigué.</span>
+        <span>Pour un muscle en entretien comme ton dos, une seule séance lourde par semaine suffit si les charges restent hautes : c'est l'intensité qui garde le muscle, pas le nombre de séances. Les zones en séries/semaine sont des repères courants en hypertrophie, pas des chiffres des livres.</span>
+        ${srcChips(['schoenfeld2017', 'pelland2026', 'schoenfeld2016freq', 'schoenfeld2019', 'spiering2021', 'iversen2021'])}</section>`;
+  }
+  /* Une ligne par séance : exercices, séries, durée estimée face au créneau, durée réelle moyenne. */
+  function progDays() {
+    const days = P().filter((d) => (d.dow || []).length && d.exercises.some((e) => e.enabled));
+    if (!days.length) return '';
+    const rows = days.map((d) => {
+      const en = d.exercises.filter((e) => e.enabled); const est = dayMinutes(d); const slot = slotMinutes(d); const real = realMinutes(d.id);
+      const nEx = en.filter((e) => e.minutes == null).length; const sets = en.reduce((a, e) => a + (e.minutes == null ? e.sets || 0 : 0), 0);
+      const tone = !slot ? '' : est > slot ? 'bad' : est > slot - 5 ? 'warn' : 'good';
+      return `<div class="dayrow"><span class="plate p-${d.plate}"></span><span class="grow"><b>${esc(DOW_S[dayDows(d)[0]] || '')} · ${esc(shortTitle(d))}</b><br><span class="hint">${nEx} exos · ${sets} séries${en.some((e) => e.minutes != null) ? ' + marche' : ''}${real ? ` · réel ${hm(real.avg)}` : ''}</span></span><span class="tag ${tone}">≈ ${hm(est)}${slot ? ` / ${hm(slot)}` : ''}</span></div>`;
+    }).join('');
+    return `<section class="card stack-sm"><div class="eyebrow">Durée des séances face au créneau</div>${rows}<span class="hint">Estimation : séries, repos, séries de chauffe et ≈ 1 min par changement de poste, marche comprise. Vise 5 à 8 exercices de muscu et finis avant la fin du créneau ; si une séance déborde, coupe d'abord une isolation, pas un polyarticulaire du début. Regrouper deux exercices en superset fait aussi gagner du temps.</span></section>`;
   }
   function progCalendar() {
     const [y, mo] = UI.calMonth.split('-').map(Number);
@@ -2691,7 +2764,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       ${row('Chrono automatique', 'Démarre quand tu valides une série', sw(st.autoRest, 'setToggle', 'data-k="autoRest"', 'Chrono automatique'))}
       ${row('Son et vibration', 'Bip à la fin du repos (la vibration ne marche pas sur iPhone)', sw(st.sound, 'setToggle', 'data-k="sound"', 'Son'))}
       ${row('Semaine légère', 'Moitié des séries, mêmes charges, en fin de cycle (alternance TNT)', `<select class="input" style="width:130px" id="stDeload" data-ch="deloadEvery">${[[0, 'Jamais'], [5, 'Toutes les 5 sem.'], [6, 'Toutes les 6 sem.'], [7, 'Toutes les 7 sem.'], [8, 'Toutes les 8 sem.'], [9, 'Toutes les 9 sem.']].map(([v, l]) => `<option value="${v}" ${(S.core.cycle && S.core.cycle.every || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
-      ${row('Calories ajustées toutes seules', `Toutes les 2 semaines selon ta moyenne de poids et ton tour de taille${S.core.cal && S.core.cal.adj ? ` · actuellement ${S.core.cal.adj > 0 ? '+' : ''}${S.core.cal.adj} kcal` : ''}`, sw(st.autoCal !== false, 'setToggle', 'data-k="autoCal"', 'Calories automatiques'))}
+      ${row('Calories ajustées toutes seules', `Toutes les 2 semaines selon ta moyenne de poids${S.core.cal && S.core.cal.adj ? ` · actuellement ${S.core.cal.adj > 0 ? '+' : ''}${S.core.cal.adj} kcal` : ''}`, sw(st.autoCal !== false, 'setToggle', 'data-k="autoCal"', 'Calories automatiques'))}
       ${row('Portions automatiques', 'Ajuste les quantités des recettes à ta cible du jour', sw(st.autoPortions, 'setToggle', 'data-k="autoPortions"', 'Portions automatiques'))}
     </div>
     <div class="field"><span class="lbl">Thème</span>${seg('theme', [['auto', 'Système'], ['light', 'Clair'], ['dark', 'Sombre']], st.theme)}</div>
@@ -2710,7 +2783,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <div class="field"><label for="importBox">Restaurer une sauvegarde</label><textarea class="input" id="importBox" placeholder="Colle ici le texte de la sauvegarde"></textarea></div>
       <div class="row wrap"><label class="btn sm" for="importFile">Choisir un fichier</label><input type="file" id="importFile" accept=".json,application/json,text/plain" data-ch="importFile" hidden>
       ${UI.confirm === 'import' ? '<button class="btn sm danger" data-act="importBackup" data-sure="1">Remplacer mes données</button><button class="btn sm" data-act="confirmOff">Annuler</button>' : '<button class="btn sm primary" data-act="importBackup">Restaurer</button>'}</div>
-      <p class="hint" style="margin:0">${allLogs().length} séance(s), ${allBody().length} mesure(s) enregistrée(s).</p>`, backupSheet);
+      <p class="hint" style="margin:0">${allLogs().length} séance(s), ${allBody().filter((x) => x.weight).length} pesée(s) enregistrée(s).</p>`, backupSheet);
   }
   function installSheet() {
     openSheet('install', `${sheetHead('Sur ton iPhone')}
@@ -2859,22 +2932,20 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     date = date || today();
     const m = S.months[monthKey(date)]; const e = (m && m.body.find((x) => x.date === date)) || {};
     const f = (id, label, val) => `<div class="field"><label for="${id}">${label}</label><input class="input" id="${id}" inputmode="decimal" value="${val != null ? String(val).replace('.', ',') : ''}" placeholder="—"></div>`;
-    openSheet('body', `${sheetHead('Pesée & mesures')}
+    openSheet('body', `${sheetHead('Pesée')}
       <div class="field"><label for="bdDate">Date</label><input class="input" id="bdDate" type="date" value="${date}"></div>
       ${f('bdW', 'Poids (kg)', e.weight)}
-      <div class="grid2">${MEASURES.map(([k, l]) => f('bd-' + k, `${l} (cm)`, e[k])).join('')}</div>
       <button class="btn primary block" data-act="saveBody">Enregistrer</button>
-      ${e.date ? `<button class="btn ghost danger" data-act="deleteBody" data-date="${date}">${ic('trash')} Supprimer cette mesure</button>` : ''}`);
+      ${e.weight ? `<button class="btn ghost danger" data-act="deleteBody" data-date="${date}">${ic('trash')} Supprimer cette pesée</button>` : ''}`);
   }
   function goalSheet(id) {
     const g = S.core.goals.find((x) => x.id === id) || { id: '', type: 'poids', label: '', target: null, start: null, unit: 'kg', deadline: '' };
     const exOpts = P().flatMap((d) => d.exercises.filter((e) => e.type === 'wr').map((e) => `<option value="${e.id}" ${g.exId === e.id ? 'selected' : ''}>${esc(e.name)}</option>`)).join('');
     const v = (x) => (x == null ? '' : String(x).replace('.', ','));
     openSheet('goal', `${sheetHead(id ? 'Modifier l\'objectif' : 'Nouvel objectif')}
-      <div class="field"><label for="glType">Type</label><select class="input" id="glType" data-ch="goalType">${[['poids', 'Poids de corps'], ['pr', 'Charge sur un exercice'], ['mesure', 'Mensuration'], ['habit', 'Séances par semaine (abdos ou marche)'], ['libre', 'Libre']].map(([k, l]) => `<option value="${k}" ${g.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label for="glType">Type</label><select class="input" id="glType" data-ch="goalType">${[['poids', 'Poids de corps'], ['pr', 'Charge sur un exercice'], ['habit', 'Séances par semaine (abdos ou marche)'], ['libre', 'Libre']].map(([k, l]) => `<option value="${k}" ${g.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="field" ${g.type === 'pr' ? '' : 'hidden'} id="glExWrap"><label for="glEx">Exercice</label><select class="input" id="glEx">${exOpts}</select></div>
       <div class="field" ${g.type === 'habit' ? '' : 'hidden'} id="glHabitWrap"><label for="glHabit">Compter les séances avec</label><select class="input" id="glHabit">${[['abdos', 'Abdos'], ['cardio', 'Marche inclinée / cardio']].map(([k, l]) => `<option value="${k}" ${(g.muscle || 'abdos') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
-      <div class="field" ${g.type === 'mesure' ? '' : 'hidden'} id="glFieldWrap"><label for="glField">Zone</label><select class="input" id="glField">${MEASURES.map(([k, l]) => `<option value="${k}" ${g.field === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label for="glLabel">Intitulé</label><input class="input" id="glLabel" value="${esc(g.label)}" placeholder="ex. Développé incliné à 70 kg"></div>
       <div class="grid3">
         <div class="field"><label for="glStart">Départ</label><input class="input" id="glStart" inputmode="decimal" value="${v(g.start)}"></div>
@@ -2963,7 +3034,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       ${canStart ? `<button class="btn primary" data-act="startSession" data-day="${sd.id}">${ic('play')} Démarrer ${esc(shortTitle(sd).toLowerCase())}</button>` : ''}
       ${sd && !logs.length ? `<button class="btn" data-act="openTrain" data-day="${sd.id}">Voir le programme</button>` : ''}
       <div class="card stack-sm"><div class="row between"><b>Repas</b><span class="hint">${eatenN}/${dp.withR.length} cochés · ${fmtInt(dp.eaten.kcal)} / ${fmtInt(dp.t.kcal)} kcal</span></div>${(() => { const r = dayReport(dp); return r.score != null ? `<div class="small"><b>Bilan repas : ${r.score}/100</b> · ${esc(r.verdict.toLowerCase())}</div>` : ''; })()}${dp.withR.map((x) => `<div class="small">${dp.j.eaten[x.slot.id] ? '✓' : '·'} ${esc(x.slot.label)} : ${esc(x.r.n)}</div>`).join('')}<button class="btn sm" data-act="openMealsDate" data-date="${date}" style="justify-self:start">Ouvrir les repas</button></div>
-      ${body ? `<div class="small"><b>Mesure :</b> ${body.weight ? `${fmt(body.weight, 1)} kg` : ''}${MEASURES.filter(([k]) => body[k]).map(([k, l]) => ` · ${l} ${fmt(body[k], 1)} cm`).join('')}</div>` : ''}`, () => dayDetailSheet(date));
+      ${body && body.weight ? `<div class="small"><b>Pesée :</b> ${fmt(body.weight, 1)} kg</div>` : ''}`, () => dayDetailSheet(date));
   }
 
   /* ===================== Rendu principal ===================== */
@@ -3229,20 +3300,18 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     bodySheet: (el) => bodySheet(el.dataset.date),
     saveBody: () => {
       const date = $('#bdDate').value || today();
-      const entry = { date };
-      const w = num($('#bdW').value); if (w) entry.weight = w;
-      MEASURES.forEach(([k]) => { const v = num($('#bd-' + k).value); if (v) entry[k] = v; });
-      if (Object.keys(entry).length === 1) { toast('Renseigne au moins une valeur'); return; }
-      const m = month(date); m.body = m.body.filter((x) => x.date !== date); m.body.push(entry);
-      persist([mk(date)]); closeSheet(); render(); toast('Mesure enregistrée');
+      const w = num($('#bdW').value); if (!w) { toast('Renseigne ton poids'); return; }
+      const m = month(date); const old = m.body.find((x) => x.date === date);
+      m.body = m.body.filter((x) => x.date !== date); m.body.push(Object.assign({}, old, { date, weight: w }));
+      persist([mk(date)]); closeSheet(); render(); toast('Pesée enregistrée');
     },
-    deleteBody: (el) => { const m = month(el.dataset.date); m.body = m.body.filter((x) => x.date !== el.dataset.date); persist([mk(el.dataset.date)]); closeSheet(); render(); },
+    /* On retire le poids ; une ancienne mensuration du même jour reste enregistrée. */
+    deleteBody: (el) => { const m = month(el.dataset.date); m.body = m.body.map((x) => { if (x.date !== el.dataset.date) return x; const y = Object.assign({}, x); delete y.weight; return y; }).filter((x) => Object.keys(x).length > 1); persist([mk(el.dataset.date)]); closeSheet(); render(); },
     goalSheet: (el) => { UI.confirm = null; goalSheet(el.dataset.id); },
     saveGoal: (el) => {
       const type = $('#glType').value;
       const g = { id: el.dataset.id || 'g-' + uid(), type, label: $('#glLabel').value.trim(), start: num($('#glStart').value), target: num($('#glTarget').value), unit: $('#glUnit').value.trim(), deadline: $('#glDeadline').value };
       if (type === 'pr') { g.exId = $('#glEx').value; if (!g.label) g.label = (findEx(g.exId) || { ex: { name: '' } }).ex.name; }
-      if (type === 'mesure') { g.field = $('#glField').value; if (!g.label) g.label = (MEASURES.find(([k]) => k === g.field) || ['', ''])[1]; }
       if (type === 'libre') g.current = num($('#glCur').value);
       if (type === 'habit') g.muscle = $('#glHabit').value;
       if (!g.label) { toast('Donne un intitulé à l\'objectif'); return; }
@@ -3298,8 +3367,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     restSec: (el) => { S.core.settings.restSec = +el.value; if (T.state === 'idle') { T.dur = +el.value; T.left = T.dur; saveTimerState(); } persist(['core']); updateTimerUI(); toast(`Repos par défaut : ${clock(+el.value)}`); },
     goalType: (el) => {
       const t = el.value;
-      $('#glExWrap').hidden = t !== 'pr'; $('#glFieldWrap').hidden = t !== 'mesure'; $('#glCurWrap').hidden = t !== 'libre'; $('#glHabitWrap').hidden = t !== 'habit';
-      const u = $('#glUnit'); if (t === 'poids' || t === 'pr') u.value = 'kg'; else if (t === 'mesure') u.value = 'cm'; else if (t === 'habit') u.value = 'séances';
+      $('#glExWrap').hidden = t !== 'pr'; $('#glCurWrap').hidden = t !== 'libre'; $('#glHabitWrap').hidden = t !== 'habit';
+      const u = $('#glUnit'); if (t === 'poids' || t === 'pr') u.value = 'kg'; else if (t === 'habit') u.value = 'séances';
     },
     rcFood: (el) => { UI.recipeDraft.items[+el.dataset.i].fid = el.value; renderRecipeEditor(); },
     storeName: (el) => { const s = S.core.shopping.stores.find((x) => x.id === el.dataset.id); if (s) { s.name = el.value.trim() || 'Magasin'; persist(['core']); render(); } },
@@ -3455,22 +3524,34 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     if (st.side && nx.k === 'set' && nx.ei === st.ei && nx.si === st.si) return 0;
     return restFor(ex);
   }
+  /* Ligne de séance pour un exercice du programme (variante du cycle comprise). */
+  function makeEntry(ex0, warmed, deload) {
+    const ex = effEx(ex0);
+    const uni = !!ex.perSide && ex.type !== 'time';
+    const tw = ex.type === 'wr' ? targetWeight(ex) : null;
+    const warm = warmupsFor(ex, tw, warmed.has(ex.muscle));
+    if (ex.type === 'wr' && ex.muscle) warmed.add(ex.muscle);
+    const nx = (S.core.next || {})[ex.id];
+    const mk = () => ({ w: tw, r: null, rir: null, done: false });
+    const nSets = deload ? Math.max(1, Math.ceil((ex.sets || 1) / 2)) : Math.max(1, ex.sets || 1);
+    const sets = Array.from({ length: nSets }, () => (uni ? { L: mk(), R: mk(), done: false } : Object.assign(mk(), { t: null, d: null })));
+    return { exId: ex.id, name: ex.name, muscle: ex.muscle, type: ex.type, uni, first: uni ? firstSideFor(ex.id) : null, tw, treps: ex.reps, tr: nx && nx.r ? nx.r : null, warm, sets };
+  }
+  const entryStarted = (e) => e.sets.some((s) => s.done || (s.L && (s.L.done || s.R.done))) || (e.warm || []).some((w) => w.done);
+  /* Après un changement d'ordre, la chauffe suit : un muscle déjà chaud n'en refait qu'une courte. */
+  function rewarm(act) {
+    const warmed = new Set();
+    act.entries.forEach((x) => {
+      const fx = findEx(x.exId);
+      if (fx && !entryStarted(x)) x.warm = warmupsFor(fx.ex, x.tw, warmed.has(x.muscle));
+      if (x.type === 'wr' && x.muscle) warmed.add(x.muscle);
+    });
+  }
   function startSession(dayId) {
     const d = dayById(dayId); if (!d) return;
     if (S.core.active) { UI.tab = 'train'; UI.trainDay = S.core.active.dayId; UI.view = null; render(); toast('Une séance est déjà en cours'); return; }
     const warmed = new Set(); const deload = isDeload(today());
-    const entries = d.exercises.filter((e) => e.enabled).map((ex0) => {
-      const ex = effEx(ex0);
-      const uni = !!ex.perSide && ex.type !== 'time';
-      const tw = ex.type === 'wr' ? targetWeight(ex) : null;
-      const warm = warmupsFor(ex, tw, warmed.has(ex.muscle));
-      if (ex.type === 'wr' && ex.muscle) warmed.add(ex.muscle);
-      const nx = (S.core.next || {})[ex.id];
-      const mk = () => ({ w: tw, r: null, rir: null, done: false });
-      const nSets = deload ? Math.max(1, Math.ceil((ex.sets || 1) / 2)) : Math.max(1, ex.sets || 1);
-      const sets = Array.from({ length: nSets }, () => (uni ? { L: mk(), R: mk(), done: false } : Object.assign(mk(), { t: null, d: null })));
-      return { exId: ex.id, name: ex.name, muscle: ex.muscle, type: ex.type, uni, first: uni ? firstSideFor(ex.id) : null, tw, treps: ex.reps, tr: nx && nx.r ? nx.r : null, warm, sets };
-    });
+    const entries = d.exercises.filter((e) => e.enabled).map((ex0) => makeEntry(ex0, warmed, deload));
     const act = { v: 2, id: uid(), dayId: d.id, title: d.title, date: today(), startedAt: Date.now(), entries, note: '', at: null, rest: null, deload };
     act.at = stepKey(buildSteps(act)[0]);
     S.core.active = act;
@@ -3558,7 +3639,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       </div>
       <button class="btn primary block big-btn" data-act="stepDone">${ic('check')} ${btn}</button>
       ${cues ? `<section class="card flat stack-sm"><div class="row between"><b>Consignes</b>${srcChips(ex.refs)}</div>${cues}${ex.tip ? `<details><summary class="small muted">Conseil Delavier détaillé</summary><div class="small" style="margin-top:6px">${ex.tip}</div></details>` : ''}</section>` : ''}
-      <div class="row wrap"><button class="btn sm ghost" data-act="stepSwap">${ic('reset')} Machine prise ? Remplacer</button><button class="btn sm ghost" data-act="stepAddSet">${ic('plus')} Série en plus</button><button class="btn sm ghost" data-act="stepSkipEx">Passer l'exercice</button></div>
+      <div class="row wrap"><button class="btn sm ghost" data-act="stepSwap">${ic('reset')} Machine prise ? Remplacer</button><button class="btn sm ghost" data-act="exSwap">${ic('swap')} Échanger avec un autre exercice</button><button class="btn sm ghost" data-act="stepAddSet">${ic('plus')} Série en plus</button><button class="btn sm ghost" data-act="stepSkipEx">Passer l'exercice</button></div>
     </section>`;
   }
   function nextLabel(act, st) {
@@ -3603,8 +3684,12 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       const key = stepKey(buildSteps(act).find((s) => s.ei === ei && s.k !== 'end') || { k: 'end' });
       return `<button class="li" style="all:unset;cursor:pointer;display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)" data-act="stepJump" data-key="${esc(key)}"><span class="plate p-${plateOf(e.muscle)}"></span><div class="grow"><div class="t">${esc(e.name)}</div><div class="s">${done}/${tot} séries${e.uni ? ' · gauche/droite' : ''}${(e.warm || []).length ? ` · ${e.warm.filter((w) => w.done).length}/${e.warm.length} chauffe` : ''}</div></div>${done >= tot ? `<span class="tag good">${ic('check')}</span>` : ic('chev')}</button>`;
     }).join('');
+    const d = dayById(act.dayId); const inSession = new Set(act.entries.map((e) => String(e.exId).split('@')[0]));
+    const extra = d ? d.exercises.filter((x) => !inSession.has(x.id)) : [];
+    const add = extra.map((x) => { const v = effEx(x); return `<div class="li" style="display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)"><span class="plate p-${plateOf(v.muscle)}"></span><div class="grow"><div class="t">${esc(v.name)}</div><div class="s">${exMeta(v)}${x.enabled ? '' : ' · désactivé'}</div></div><button class="btn sm" data-act="sessAddEx" data-ex="${x.id}">${ic('plus')} Ajouter</button></div>`; }).join('');
     openSheet('sessionMenu', `${sheetHead('Ma séance')}
       <div class="list">${rows}</div>
+      ${add ? `<div class="eyebrow">Ajouter à la séance</div><div class="list">${add}</div>` : ''}
       <div class="field"><label for="sessNote">Notes de séance</label><textarea class="input" id="sessNote" data-in="sessNote" placeholder="Sensations, machine utilisée…">${esc(act.note || '')}</textarea></div>
       ${UI.confirm === 'cancelSession' ? `<div class="row wrap"><span class="grow small">Abandonner ? Rien ne sera enregistré.</span><button class="btn sm danger" data-act="cancelSession" data-sure="1">Abandonner</button><button class="btn sm" data-act="confirmOff">Continuer</button></div>` : `<button class="btn ghost danger" data-act="cancelSession">Abandonner la séance</button>`}`, sessionMenuSheet);
   }
@@ -4111,10 +4196,6 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const logs = f === 'all' ? all : all.filter((l) => l.dayId === f);
     const chips = [`<button class="chip" aria-pressed="${f === 'all'}" data-act="histFilter" data-v="all">Toutes</button>`].concat(P().map((d) => `<button class="chip" aria-pressed="${f === d.id}" data-act="histFilter" data-v="${d.id}"><span class="plate p-${d.plate}"></span>${esc(shortTitle(d))}</button>`)).join('');
     const scored = logs.filter((l) => l.report).slice(0, 4);
-    const avg = scored.length ? Math.round(scored.reduce((a, l) => a + l.report.score, 0) / scored.length) : null;
-    const thisMonth = all.filter((l) => monthKey(l.date) === monthKey(today())).length;
-    const felt = logs.filter((l) => l.feel && l.feel.rpe).slice(0, 4);
-    const rpeAvg = felt.length ? felt.reduce((a, l) => a + l.feel.rpe, 0) / felt.length : null;
     let html = ''; let curM = '';
     logs.forEach((l) => {
       const m = monthKey(l.date);
@@ -4131,9 +4212,45 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
         <button class="icon-btn quiet" data-act="delLogAsk" data-id="${l.id}" aria-label="Supprimer la séance du ${esc(fmtDate(l.date, { day: 'numeric', month: 'long' }))}">${ic('trash')}</button></div>`;
     });
     return `<div class="chips">${chips}</div>
-      <section class="card row" style="gap:14px">${avg != null ? miniRing(avg) : ''}<p class="grow" style="margin:0;font-size:15px;line-height:1.4">${thisMonth ? `<b>${thisMonth} séance${thisMonth > 1 ? 's' : ''}</b> ce mois-ci` : 'Aucune séance ce mois-ci'}${avg != null ? `, score moyen de <b>${avg}/100</b> sur les dernières : ${avg >= 85 ? 'très bonne forme' : avg >= 70 ? 'bonne forme' : avg >= 55 ? 'forme correcte' : 'en dessous de ton niveau, pense au repos'}.` : '.'}${rpeAvg != null ? ` Difficulté ressentie : <b>${fmt(rpeAvg, 1)}/10</b> en moyenne.` : ''}</p></section>
+      ${histGlobal(logs, f)}
       ${scored.length >= 2 ? `<section class="card"><div class="eyebrow">Évolution du score</div>${lineChart(logs.filter((l) => l.report).slice().reverse().map((l) => ({ x: l.date, y: l.report.score })), { label: 'Score des séances', h: 160 })}</section>` : ''}
       <section class="card list-card">${html || '<div class="empty">Aucune séance enregistrée pour l\'instant.</div>'}</section>`;
+  }
+
+  /* Bilan de toutes les séances du filtre : score global (moyenne de tous les bilans), régularité face au programme,
+     record, tendance des 4 dernières face à la moyenne, temps et tonnage cumulés. */
+  function histGlobal(logs, f) {
+    if (!logs.length) return '';
+    const t = today(); const mean = (a) => Math.round(a.reduce((x, l) => x + l.report.score, 0) / a.length);
+    const scored = logs.filter((l) => l.report);
+    const global = scored.length ? mean(scored) : null;
+    const recent = scored.slice(0, 4); const trend = scored.length > 4 ? mean(recent) - global : null;
+    const best = scored.reduce((b, l) => (!b || l.report.score > b.report.score ? l : b), null);
+    const perWeek = f === 'all' ? P().filter((d) => (d.dow || []).length && d.exercises.some((e) => e.enabled)).length || 1 : 1;
+    const weeks = Math.max(1, (daysBetween(logs[logs.length - 1].date, t) + 1) / 7);
+    const rate = logs.length / weeks;
+    const last28 = logs.filter((l) => daysBetween(l.date, t) < 28).length;
+    const reg = clamp(Math.round((last28 / Math.max(1, Math.round(perWeek * Math.min(4, weeks)))) * 100), 0, 100);
+    const thisMonth = logs.filter((l) => monthKey(l.date) === monthKey(t)).length;
+    const mins = logs.map(logMinutes).filter((x) => x && x <= 240).reduce((a, x) => a + x, 0);
+    const tonnes = logs.reduce((a, l) => a + l.entries.reduce((b, e) => b + entryVolume(e), 0), 0) / 1000;
+    const felt = logs.filter((l) => l.feel && l.feel.rpe).slice(0, 4);
+    const rpeAvg = felt.length ? felt.reduce((a, l) => a + l.feel.rpe, 0) / felt.length : null;
+    const form = global == null ? '' : global >= 85 ? 'très bon niveau' : global >= 70 ? 'bon niveau' : global >= 55 ? 'niveau correct' : 'en dessous de ce que tu peux faire';
+    const trendTxt = trend == null ? '' : trend >= 3 ? ` Tes 4 dernières sont <b>au-dessus</b> de ta moyenne (+${trend}) : tu progresses.` : trend <= -3 ? ` Tes 4 dernières sont <b>en dessous</b> de ta moyenne (${trend}) : regarde ton sommeil et pense à une semaine légère.` : ' Tes dernières séances sont dans ta moyenne.';
+    const regTxt = reg >= 90 ? 'tu suis le programme' : reg >= 70 ? 'quelques séances manquées' : 'des trous dans la semaine : mieux vaut une séance courte qu\'une séance sautée';
+    const stat = (v, k) => `<div class="stat"><span class="v">${v}</span><span class="k">${k}</span></div>`;
+    return `<section class="card stack">
+      <div class="row" style="gap:14px">${global != null ? miniRing(global) : ''}<div class="grow stack-xs"><div class="eyebrow">Score global · ${scored.length} séance${scored.length > 1 ? 's' : ''} notée${scored.length > 1 ? 's' : ''}</div>
+        <p style="margin:0;font-size:15px;line-height:1.4">${global != null ? `<b>${global}/100</b> en moyenne sur toutes tes séances : ${form}.${trendTxt}` : 'Les scores apparaîtront après tes prochaines séances.'} Régularité sur 4 semaines : <b>${reg} %</b>, ${regTxt}.${rpeAvg != null ? ` Difficulté ressentie récente : <b>${fmt(rpeAvg, 1)}/10</b>.` : ''}</p></div></div>
+      <div class="grid3">
+        ${stat(logs.length, `séance${logs.length > 1 ? 's' : ''} au total`)}
+        ${stat(`${fmt(rate, 1)}<small>/ ${perWeek}</small>`, 'par semaine')}
+        ${stat(thisMonth, 'ce mois-ci')}
+        ${stat(best ? best.report.score : '–', best ? `record · ${esc(fmtDate(best.date, { day: 'numeric', month: 'short' }))}` : 'record')}
+        ${stat(mins ? hm(mins) : '–', 'temps total')}
+        ${stat(`${fmt(tonnes, tonnes < 10 ? 1 : 0)}<small>t</small>`, 'soulevées')}
+      </div></section>`;
   }
 
   /* ===================== Actions des nouveautés ===================== */
@@ -4311,6 +4428,30 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       ${started ? '<div class="notice">Tu as déjà commencé cet exercice : finis-le ou passe-le, puis remplace le suivant.</div>' : `<div class="list">${opts.map((o) => { const h = lastEntryFor(o.key); return `<button class="li" style="all:unset;cursor:pointer;display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)" data-act="swapPick" data-key="${esc(o.key)}"><div class="grow"><div class="t">${esc(o.name)}</div><div class="s">${h ? `Dernière fois : ${esc(setsSummary(h.entry))}` : 'Pas encore d\'historique : choisis ta charge à la première série'}</div></div>${ic('chev')}</button>`; }).join('') || '<div class="empty">Pas de variante prévue pour cet exercice.</div>'}</div>`}`);
   }
 
+  /* Échanger avec un autre exercice du programme, pour cette séance seulement. */
+  function exSwapSheet() {
+    const cs = curStep(); if (!cs || !cs.e) return;
+    const { act, e } = cs; const ei = act.entries.indexOf(e);
+    const li = (attrs, plate, t, sub, right) => `<button class="li" style="all:unset;cursor:pointer;display:flex;gap:12px;align-items:center;padding:11px 0;border-bottom:1px solid var(--line)" ${attrs}><span class="plate p-${plate}"></span><div class="grow"><div class="t">${t}</div><div class="s">${sub}</div></div>${right || ic('chev')}</button>`;
+    const same = (m) => (m === e.muscle ? ' <span class="tag good">même muscle</span>' : '');
+    const here = act.entries.map((x, i) => ({ x, i })).filter(({ x, i }) => i > ei && !entryStarted(x) && x.sets.some((s) => !s.skip));
+    const inSession = new Set(act.entries.map((x) => String(x.exId).split('@')[0]));
+    const isTime = e.type === 'time'; const others = [];
+    P().forEach((d) => d.exercises.forEach((x) => { if (!inSession.has(x.id) && (x.type === 'time') === isTime) others.push({ d, x, v: effEx(x) }); }));
+    others.sort((a, b) => (b.v.muscle === e.muscle) - (a.v.muscle === e.muscle));
+    openSheet('exSwap', `${sheetHead('Échanger l\'exercice')}
+      <p class="small muted" style="margin:0">Remplace <b>${esc(e.name)}</b> pour cette séance seulement : ton programme ne change pas.</p>
+      ${entryStarted(e) ? '<div class="notice">Tu as déjà commencé cet exercice : finis-le ou passe-le, puis échange le suivant.</div>' : `
+      ${here.length ? `<div class="eyebrow">Faire avant, dans cette séance</div><div class="list">${here.map(({ x, i }) => li(`data-act="exSwapOrder" data-i="${i}"`, plateOf(x.muscle), `${esc(x.name)}${same(x.muscle)}`, `${x.sets.filter((s) => !s.skip).length} séries · ${esc(e.name)} prend sa place plus tard`)).join('')}</div>` : ''}
+      <div class="eyebrow">Depuis le programme</div><div class="list">${others.map(({ d, x, v }) => li(`data-act="exSwapProg" data-ex="${x.id}"`, plateOf(v.muscle), `${esc(v.name)}${same(v.muscle)}`, `${esc(shortTitle(d))}${d.id === act.dayId ? ' · désactivé aujourd\'hui' : ''} · ${exMeta(v)}`)).join('') || '<div class="empty">Aucun autre exercice dans le programme.</div>'}</div>`}`);
+  }
+  function afterEntryChange(act, ei, msg) {
+    rewarm(act);
+    act.rest = null; if (T.state !== 'idle') resetTimer();
+    act.at = stepKey(buildSteps(act).find((s) => s.ei === ei) || { k: 'end' });
+    persist(['core']); closeSheet(); render(); window.scrollTo(0, 0); toast(msg);
+  }
+
   /* ===================== Cycles : semaine légère et rotation ===================== */
   const daysBetween = (a, b) => Math.round((parseISO(b) - parseISO(a)) / 864e5);
   function cycleNow(date) {
@@ -4396,6 +4537,44 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     } catch (e) { copyText(text, 'Sauvegarde copiée : colle-la dans Notes'); return false; }
   }
 
+  /* ===================== Pas du jour ===================== */
+  /* Une web app ne peut pas lire l'app Santé : les pas se saisissent à la main ou se collent depuis un raccourci iOS
+     qui copie le total du jour. Rangés dans months[mois].health[date].steps, à côté des autres données du jour. */
+  const stepsOf = (date) => { const m = S.months[monthKey(date)]; const h = m && m.health && m.health[date]; return h && h.steps != null ? h.steps : null; };
+  const stepGoal = () => S.core.settings.stepGoal || 10000;
+  function stepsAvg7() {
+    const v = []; for (let i = 1; i <= 7; i++) { const x = stepsOf(addDays(today(), -i)); if (x != null) v.push(x); }
+    return v.length ? { avg: v.reduce((a, x) => a + x, 0) / v.length, n: v.length } : null;
+  }
+  function putSteps(date, n) {
+    const m = month(date); if (!m.health || typeof m.health !== 'object') m.health = {};
+    m.health[date] = Object.assign({}, m.health[date], { steps: n });
+    persist([mk(date)]);
+  }
+  /* « 8 432 », « 8432.0 » ou « 8,432 » → 8432 ; null si ce n'est pas un nombre de pas plausible. */
+  function parseSteps(txt) {
+    const m = String(txt || '').match(/\d[\d\s\u00a0\u202f.,]*/); if (!m) return null;
+    const n = +m[0].trim().replace(/[.,]\d{1,2}$/, '').replace(/\D/g, '');
+    return Number.isFinite(n) && n >= 0 && n <= 150000 ? n : null;
+  }
+  function stepsCard() {
+    const n = stepsOf(today()); const g = stepGoal(); const a = stepsAvg7();
+    return `<div class="card stack-sm steps-card"><div class="row between"><span class="eyebrow">Pas aujourd'hui</span>${n != null && n >= g ? '<span class="tag good">objectif atteint</span>' : ''}</div>
+      <div class="stat"><span class="v">${n != null ? fmtInt(n) : '—'}<small>/ ${fmtInt(g)}</small></span><span class="k">${a ? `moyenne des 7 derniers jours : ${fmtInt(Math.round(a.avg))}` : 'saisis tes pas pour voir ta moyenne sur 7 jours'}</span></div>
+      <div class="bar"><i style="width:${n != null ? Math.round(clamp(n / g, 0, 1) * 100) : 0}%;background:var(--good)"></i></div>
+      <div class="row wrap"><button class="btn sm" data-act="stepsPaste">${ic('copy')} Coller depuis Santé</button><button class="btn sm" data-act="stepsSheet">${ic('foot')} Saisir</button></div></div>`;
+  }
+  function stepsSheet(date) {
+    date = date || today(); const n = stepsOf(date);
+    openSheet('steps', `${sheetHead('Pas du jour')}
+      <div class="field"><label for="stDate">Date</label><input class="input" id="stDate" type="date" value="${date}" max="${today()}"></div>
+      <div class="field"><label for="stN">Nombre de pas</label><input class="input" id="stN" inputmode="numeric" value="${n != null ? n : ''}" placeholder="ex. 8 400"></div>
+      <div class="field"><label for="stGoal">Objectif par jour</label><input class="input" id="stGoal" inputmode="numeric" value="${stepGoal()}"></div>
+      <button class="btn primary block" data-act="saveSteps">Enregistrer</button>
+      <div class="card flat small stack-sm"><b>Pourquoi je dois les entrer ?</b><span>Une app installée depuis Safari n'a pas accès à l'app Santé d'Apple. Le plus rapide : crée un raccourci dans l'app Raccourcis qui cherche les échantillons Santé « Nombre de pas » d'aujourd'hui, en fait la somme et copie le résultat. Lance-le, reviens ici et touche « Coller depuis Santé ».</span>
+        <span>Pourquoi 10 000 : chez les moins de 60 ans, le bénéfice sur la santé continue de monter jusque vers 8 000 à 10 000 pas par jour, puis plafonne. Ta marche inclinée après la muscu compte dedans.</span>${srcChips(['paluch2022'])}</div>`);
+  }
+
   /* ===================== Cartes de l'accueil ===================== */
   /* Alertes de l'accueil : une ligne par alerte dans une seule carte « À voir ». */
   const alertRow = (tone, icon, title, text, action) => `<div class="alert-row"><span class="alert-ico ${tone}">${ic(icon)}</span><div class="grow stack-xs"><b>${title}</b><p>${text}</p>${action ? `<div class="row wrap">${action}</div>` : ''}</div></div>`;
@@ -4404,6 +4583,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const cy = cycleNow(t);
     if (cy && cy.deload) out.push(alertRow('blue', 'moon', 'Semaine légère · fin du cycle', `Moitié des séries, mêmes charges : tendons et articulations récupèrent avant de repartir plus fort. L'app réduit les séries toute seule. ${srcChips(['delavier2', 'pratique'])}`, '<button class="link" data-act="deloadSkip">Pas cette semaine</button>'));
     if (rotationPending()) out.push(alertRow('accent', 'reset', 'Nouveau cycle', 'Je te propose de changer de variante sur quelques exercices pour relancer les sensations.', '<button class="btn sm" data-act="rotOpen">Voir les propositions</button>'));
+    const rb = S.core.rebalance;
+    if (rb && rb.date && daysBetween(rb.date, t) <= 7) out.push(alertRow('accent', 'reset', 'Programme rééquilibré', 'Chaque séance tient maintenant dans ton créneau et chaque muscle est dans sa zone hebdo : les dips passent du lundi au vendredi, le développé décliné, le développé épaules et la planche sont désactivés (rien n\'est supprimé, tes charges restent), fentes à 2 séries et marche du jeudi à 20 min.', '<button class="link" data-tab="progress" data-sub="balance">Voir l\'équilibre ›</button>'));
     const cal = S.core.cal; const h = cal && cal.hist && cal.hist[cal.hist.length - 1];
     if (h && h.delta && daysBetween(h.date, t) <= 3) out.push(alertRow('orange', 'flame', 'Calories ajustées', `<b>${h.delta > 0 ? '+' : ''}${h.delta} kcal par jour</b> : ${esc(h.why)}.`, '<button class="link" data-act="calUndo">Annuler cet ajustement</button>'));
     const hasData = allLogs().length > 0;
@@ -4413,7 +4594,43 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   function deloadNotice() { return isDeload(today()) ? '<div class="notice"><b>Semaine légère :</b> les séries sont divisées par deux, garde les mêmes charges.</div>' : ''; }
 
   Object.assign(ACT, {
+    stepsSheet: (el) => stepsSheet(el.dataset.date),
+    saveSteps: () => {
+      const date = $('#stDate').value || today(); if (date > today()) { toast('Pas de date dans le futur'); return; }
+      const n = parseSteps($('#stN').value); if (n == null) { toast('Entre un nombre de pas'); return; }
+      const g = parseSteps($('#stGoal').value);
+      if (g && g >= 1000 && g !== stepGoal()) { S.core.settings.stepGoal = g; persist(['core']); }
+      putSteps(date, n); closeSheet(); render(); toast('Pas enregistrés');
+    },
+    stepsPaste: async () => {
+      let txt = '';
+      try { txt = await navigator.clipboard.readText(); } catch (e) { stepsSheet(); toast('Colle le nombre dans le champ'); return; }
+      const n = parseSteps(txt);
+      if (n == null) { stepsSheet(); toast('Le presse-papiers ne contient pas de nombre de pas'); return; }
+      putSteps(today(), n); render(); toast(`${fmtInt(n)} pas enregistrés`);
+    },
     stepSwap: () => swapSheet(),
+    exSwap: () => exSwapSheet(),
+    exSwapOrder: (el) => {
+      const cs = curStep(); if (!cs || !cs.e || entryStarted(cs.e)) return;
+      const { act, e } = cs; const ei = act.entries.indexOf(e); const j = +el.dataset.i; const o = act.entries[j]; if (!o) return;
+      act.entries[ei] = o; act.entries[j] = e;
+      afterEntryChange(act, ei, `${o.name} d'abord, ${e.name} ensuite`);
+    },
+    exSwapProg: (el) => {
+      const cs = curStep(); if (!cs || !cs.e || entryStarted(cs.e)) return;
+      const { act, e } = cs; const ei = act.entries.indexOf(e); const fx = findEx(el.dataset.ex); if (!fx) return;
+      const ne = makeEntry(fx.ex, new Set(), act.deload); ne.swappedFrom = e.exId;
+      act.entries[ei] = ne;
+      afterEntryChange(act, ei, `Remplacé par ${ne.name}`);
+    },
+    sessAddEx: (el) => {
+      const act = S.core.active; const fx = findEx(el.dataset.ex); if (!act || !fx) return;
+      const atEnd = act.at === 'end';
+      act.entries.push(makeEntry(fx.ex, new Set(act.entries.filter((x) => x.type === 'wr').map((x) => x.muscle)), act.deload));
+      if (atEnd) act.at = stepKey(buildSteps(act).find((s) => s.ei === act.entries.length - 1) || { k: 'end' });
+      persist(['core']); render(); sessionMenuSheet(); toast(`${fx.ex.name} ajouté à la fin`);
+    },
     swapPick: (el) => {
       const cs = curStep(); if (!cs || !cs.e) return;
       const { act, e } = cs; const ei = act.entries.indexOf(e);
