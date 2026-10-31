@@ -241,6 +241,7 @@ h1, h2, h3 { text-wrap: balance; margin: 0; }
 }
 .tag svg { width: 12px; height: 12px; }
 .tag.delavier { background: var(--accent-soft); color: var(--accent); }
+.tag.ss { background: color-mix(in srgb, var(--c-green) 14%, transparent); color: var(--c-green); border-color: transparent; }
 .tag.good { background: color-mix(in srgb, var(--good) 16%, transparent); color: var(--good); }
 .tag.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
 
@@ -518,6 +519,7 @@ table.t td.n { font-family: var(--f-display); font-size: 17px; font-weight: 600;
 .step-kind { display: inline-flex; align-items: center; border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; background: var(--sunken); color: var(--ink-2); }
 .step-kind.warm { background: color-mix(in srgb, var(--c-yellow) 24%, transparent); color: var(--ink); }
 .step-kind.side { background: color-mix(in srgb, var(--c-blue) 18%, transparent); color: var(--c-blue); }
+.step-kind.ss { background: color-mix(in srgb, var(--c-green) 18%, transparent); color: var(--c-green); }
 .step-name { font-family: var(--f-display); font-weight: 700; font-size: 32px; line-height: .98; text-transform: uppercase; }
 .step-target { font-size: 15px; font-weight: 600; }
 .stepper-wrap { display: grid; gap: 6px; min-width: 0; }
@@ -711,28 +713,30 @@ function EX(id, name, muscle, sets, reps, type, pr, extra) {
 }
 
 /* Version du programme : à incrémenter quand le programme par défaut change (migration des données déjà enregistrées). */
-const PROGRAM_VERSION = 5;
+const PROGRAM_VERSION = 6;
 
 /* Objectif : recomposition jusqu'à 74 kg sec + progression des charges.
    Chaque séance : ~60 min de muscu (chauffe et changements de poste compris) + 20 min de marche inclinée, pour tenir dans 1 h 30.
    v4 : pecs répartis 10 séries lundi / 1 mercredi / 11 vendredi, chaque muscle dans sa zone hebdo, aucune séance au-delà du créneau.
    v5 : moins de fatigue d'un jour à l'autre. Biceps lundi + jeudi (plus jeudi puis vendredi), triceps groupés le vendredi,
         abdos lundi / jeudi / samedi (plus trois jours d'affilée), au moins un jour de pause entre deux séances d'un même muscle.
+   v6 : abdos retirés à ta demande (désactivés, pas supprimés). Déroulé optimisé : polyarticulaire avant isolation, exercices à la poulie
+        à la suite, et deux supersets de muscles opposés (ss = enchaîné avec l'exercice suivant) pour gagner du temps sans perdre de séries.
    rest = repos conseillé en secondes, inc = palier de progression en kg, minutes/speed = cardio. */
 const WALK = (id, minutes, tip) => EX(id, `Marche inclinée · ${minutes} min · inclinaison 12 · 5 km/h`, 'cardio', 1, `${minutes} min`, 'time', null, { minutes, speed: 5, rest: 0, tip: tip || 'Après la muscu, jamais avant : tu gardes ta force pour les charges. Ne tiens pas les barres du tapis, sinon la dépense chute. Environ 250 à 300 kcal pour 30 min à ton poids (estimation).' });
 
 const DEFAULT_PROGRAM = [
   {
     id: 'push', title: 'Pecs force + épaules + biceps', dow: [1], plate: 'red', kind: 'muscu',
-    warmup: 'Relevés de bassin en échauffement global, rotations externes à l\'élastique, curl marteau léger (tendon du long biceps), puis 2 séries de montée sur l\'incliné. Ceinture sur l\'incliné : elle rigidifie la cage thoracique.',
+    warmup: '5 min de vélo ou de rameur léger, rotations externes à l\'élastique, curl marteau léger (tendon du long biceps), puis 2 séries de montée sur l\'incliné. Ceinture sur l\'incliné : elle rigidifie la cage thoracique.',
     note: 'Séance lourde des pecs : c\'est ici que tes charges doivent monter. 6 à 8 reps sur l\'incliné, 3 min de repos. Haut des pecs en priorité.',
     exercises: [
-      EX('a-abs', 'Relevé de bassin au sol (bas des abdos)', 'abdos', 4, '20-25', 'reps', null, { src: 'delavier', rest: 45, tip: 'Échauffement global : les abdos en séries longues montent la température du corps plus vite que le cardio (Méthode 3). Décolle le bassin, ne lance pas les cuisses.' }),
       EX('p-incline', 'Développé incliné Smith ou barre (banc 20–30°)', 'pecs', 4, '6-8', 'wr', 60, { rest: 180, tip: '<b>Ton mouvement de force pour le haut des pecs.</b> Étude citée par Delavier (Barnett 1995) : à 40°, l\'incliné réduit l\'activation du grand pectoral d\'environ 30 % et augmente celle de l\'avant d\'épaule de 75 %. Donc banc bas (20–30°), omoplates serrées et basses, banc élargi avec 3–5 tapis (clavicules larges). Quand tes 4 séries atteignent 8 reps, +2,5 kg.' }),
-      EX('p-xover', 'Vis-à-vis poulie basse → haute, unilatéral', 'pecs', 3, '12-15', 'wr', null, { src: 'delavier', perSide: true, rest: 60, tip: '<b>Ton exercice haut de pecs n°1.</b> Pour Delavier, le haut des pecs répond surtout à la poulie vis-à-vis, et l\'unilatéral empêche l\'épaule de partir vers l\'avant. Poulie basse, une main à la fois : monte en diagonale jusque devant le menton en croisant légèrement la ligne médiane, tiens 2 s.' }),
       EX('p-conv', 'Développé machine convergente unilatéral', 'pecs', 3, '8-12', 'wr', 35, { perSide: true, rest: 90, tip: 'Tourne buste et genoux de 30 à 45° du côté du bras qui pousse : la convergence augmente et le centre des pecs travaille. Assis, les omoplates restent mieux en place que sur un banc.' }),
+      EX('p-xover', 'Vis-à-vis poulie basse → haute, unilatéral', 'pecs', 3, '12-15', 'wr', null, { src: 'delavier', perSide: true, rest: 60, tip: '<b>Ton exercice haut de pecs n°1.</b> Pour Delavier, le haut des pecs répond surtout à la poulie vis-à-vis, et l\'unilatéral empêche l\'épaule de partir vers l\'avant. Poulie basse, une main à la fois : monte en diagonale jusque devant le menton en croisant légèrement la ligne médiane, tiens 2 s.' }),
       EX('e-lat', 'Élévation latérale à la poulie', 'epaules', 3, '12-15', 'wr', 17.5, { perSide: true, rest: 60, tip: 'Seul exercice d\'épaules de la séance : l\'avant d\'épaule a déjà travaillé sur tous les développés. La poulie garde la tension en bas.' }),
       EX('e-curlm', 'Biceps curl machine', 'biceps', 2, '10-12', 'wr', 45, { rest: 60, tip: 'Tension continue : ne redescends pas jusqu\'au relâchement complet. Placé le lundi pour que les biceps aient 72 h avant le jeudi, au lieu de travailler jeudi puis vendredi.' }),
+      EX('a-abs', 'Relevé de bassin au sol (bas des abdos)', 'abdos', 4, '20-25', 'reps', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Échauffement global : les abdos en séries longues montent la température du corps plus vite que le cardio (Méthode 3). Décolle le bassin, ne lance pas les cuisses.' }),
       WALK('w-lun', 20),
     ],
   },
@@ -744,7 +748,7 @@ const DEFAULT_PROGRAM = [
       EX('j-velo', 'Échauffement vélo', 'cardio', 1, '5 min', 'time', null, { minutes: 5, rest: 0, tip: 'Monte progressivement l\'intensité.' }),
       EX('j-squat', 'Squat', 'quadris', 4, '6-8', 'wr', 100, { rest: 180, inc: 5, tip: '<b>Ton mouvement de force jambes.</b> Delavier conseille de faire tourner squat, presse et hack squat : ici le squat reste la référence et la presse passe au samedi. Quand tes 4 séries atteignent 8 reps : +5 kg.' }),
       EX('d-sdt', 'Semi soulevé de terre', 'ischios', 3, '5-8', 'wr', 170, { rest: 180, inc: 5, tip: 'Il travaille surtout ischios, fessiers et lombaires ; ton dos est déjà dominant. Dos neutre, ceinture sur les séries lourdes.' }),
-      EX('j-legext', 'Leg extension', 'quadris', 3, '10-15', 'wr', 85, { rest: 60, tip: 'Après le squat, pas avant : Delavier explique que la préfatigue d\'un gros muscle fait surtout perdre de la force sur l\'exercice de base. Tiens 1 s en haut.' }),
+      EX('j-legext', 'Leg extension', 'quadris', 3, '10-15', 'wr', 85, { rest: 60, ss: true, tip: 'Après le squat, pas avant : Delavier explique que la préfatigue d\'un gros muscle fait surtout perdre de la force sur l\'exercice de base. Tiens 1 s en haut.' }),
       EX('j-legcurl', 'Leg curl assis', 'ischios', 3, '10-12', 'wr', null, { src: 'delavier', rest: 60, tip: 'Les ischios plient la jambe (ici) et relèvent le buste (semi soulevé de terre) : Delavier conseille de travailler les deux fonctions.' }),
       EX('j-mollets', 'Mollets machine debout', 'mollets', 3, '12-15', 'wr', 110, { rest: 60, tip: 'Jambes tendues aujourd\'hui (gastrocnémiens), assis le samedi (soléaire). Tiens 1 s étiré en bas, 1 s contracté en haut.' }),
       EX('j-x100', 'Cross-over poulie basse → haute : série de 100 (haut des pecs)', 'pecs', 1, '100', 'wr', null, { src: 'delavier', rest: 0, tip: 'Delavier propose une série de 100 sur un muscle en retard, ni entraîné la veille ni le lendemain : c\'est le cas des pecs le mercredi. Charge très légère, mains qui montent devant le menton, épaules basses.' }),
@@ -753,10 +757,9 @@ const DEFAULT_PROGRAM = [
   },
   {
     id: 'pull', title: 'Dos + biceps', dow: [4], plate: 'blue', kind: 'muscu',
-    warmup: 'Crunchs avec rotation en échauffement global, rotations externes à l\'élastique, 2 séries légères de tirage.',
+    warmup: '5 min de rameur léger, rotations externes à l\'élastique, 2 séries légères de tirage.',
     note: 'Dos en entretien : peu de séries mais lourdes et propres. Tes lombaires ont travaillé la veille au semi soulevé de terre : au tirage horizontal, buste calé, pas d\'élan.',
     exercises: [
-      EX('d-abs', 'Crunch avec rotation (obliques)', 'abdos', 3, '20', 'reps', null, { src: 'delavier', rest: 45, tip: 'Angle « rotation » de tes abdos. Coude vers le genou opposé à mi-chemin, tiens 2 s, ne repose pas la tête.' }),
       EX('d-tractions', 'Tractions lestées / tirage vertical', 'dos', 3, '6-10', 'wr', 70, { rest: 150, tip: 'Bloque 2 s en contraction, ne relâche pas complètement en haut. Tu progresses ici en charge, pas en nombre de séries.' }),
       EX('d-horizontal', 'Tirage horizontal machine', 'dos', 3, '8-12', 'wr', 65, { rest: 120, tip: 'Bloque la poignée contre le ventre 2 à 3 s avant de revenir (tension continue).' }),
       EX('d-pullover', 'Pull-over poulie', 'dos', 2, '12-15', 'wr', 27.5, { rest: 60, tip: 'Isolation du grand dorsal, bras quasi tendus.' }),
@@ -764,6 +767,7 @@ const DEFAULT_PROGRAM = [
       EX('e-y', 'Élévation en Y', 'epaules', 2, '12-15', 'wr', 14, { perSide: true, rest: 60, tip: 'Bas des trapèzes : stabilise les omoplates, ce qui aide directement tes pecs.' }),
       EX('e-pupitre', 'Curl pupitre unilatéral', 'biceps', 3, '8-12', 'wr', 20, { perSide: true, rest: 75, tip: 'Commence par le bras faible. Ne tends pas complètement en bas : protège le tendon distal du biceps.' }),
       EX('e-marteau', 'Curl marteau', 'biceps', 3, '10-12', 'wr', 24, { rest: 60, tip: 'Prise neutre = brachial et brachio-radial, l\'épaisseur du bras.' }),
+      EX('d-abs', 'Crunch avec rotation (obliques)', 'abdos', 3, '20', 'reps', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Angle « rotation » de tes abdos. Coude vers le genou opposé à mi-chemin, tiens 2 s, ne repose pas la tête.' }),
       WALK('w-jeu', 20),
     ],
   },
@@ -772,7 +776,6 @@ const DEFAULT_PROGRAM = [
     warmup: '5 min de vélo ou de rameur léger, rotations à l\'élastique, curl marteau léger, puis 2 séries légères de développé haltères.',
     note: 'Séance volume : charges moyennes, contraction et sensations, 4 jours après la séance de force.',
     exercises: [
-      EX('e-abs', 'Relevés de jambes suspendu (bas des abdos)', 'abdos', 3, '12-20', 'reps', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé : avec lui, les abdos travaillaient jeudi, vendredi et samedi d\'affilée. Ils passent à lundi, jeudi et samedi, avec une série de plus le lundi et le samedi. Réactive-le si tu préfères. Enroule le bassin vers le haut, ne balance pas les jambes.' }),
       EX('v-incl', 'Développé incliné haltères (30°)', 'pecs', 3, '10-12', 'wr', null, { src: 'delavier', rest: 120, tip: 'Charge moyenne, mains qui se rapprochent en haut. Arrête à l\'échec sensitif. Ne descends pas les haltères au maximum : le haut des pecs est le plus exposé aux déchirures.' }),
       EX('p-dips', 'Dips lestés ou machine', 'pecs', 3, '8-10', 'wr', 70, { rest: 120, tip: 'Déplacés du lundi au vendredi : le lundi passe à 10 séries de pecs et ta séance tient dans le créneau. Buste penché en avant pour les pecs. Réduis l\'amplitude si l\'avant d\'épaule tire. Variante relance : superlent, 4 reps en montant en 10 s.' }),
       EX('p-ecartes', 'Écartés machine', 'pecs', 3, '12-15', 'wr', 60, { rest: 60, tip: 'Postfatigue juste après le développé : croise presque les bras et tiens 2 s la contraction.' }),
@@ -782,13 +785,14 @@ const DEFAULT_PROGRAM = [
       EX('e-front', 'Élévation frontale à la poulie', 'epaules', 3, '12-15', 'wr', 15, { enabled: false, rest: 60, tip: 'Désactivée : l\'avant d\'épaule travaille déjà sur tous tes développés. Réactive-la si tu y tiens.' }),
       EX('d-overhead', 'Extension triceps au-dessus de la tête (poulie)', 'triceps', 3, '10-12', 'wr', 25, { rest: 60, tip: 'Bras au-dessus de la tête : étire le long chef, celui qui fait le volume du bras.' }),
       EX('d-ext', 'Extensions triceps à la poulie', 'triceps', 3, '10-12', 'wr', 35, { rest: 60, tip: 'Coudes fixes contre le buste. Les triceps ont déjà travaillé à l\'incliné et aux dips : vise la qualité.' }),
-      EX('e-poignet', 'Curl poignet barre', 'avantbras', 2, '15-20', 'wr', null, { rest: 45, tip: 'Enchaîne avec l\'extension de poignet en superset.' }),
+      EX('e-poignet', 'Curl poignet barre', 'avantbras', 2, '15-20', 'wr', null, { rest: 45, ss: true, tip: 'Enchaîne avec l\'extension de poignet en superset.' }),
       EX('e-extpoignet', 'Extension poignet barre', 'avantbras', 2, '15-20', 'wr', null, { rest: 45, tip: 'Charge légère, protège les tendons du coude.' }),
+      EX('e-abs', 'Relevés de jambes suspendu (bas des abdos)', 'abdos', 3, '12-20', 'reps', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Enroule le bassin vers le haut, ne balance pas les jambes.' }),
       WALK('w-ven', 20),
     ],
   },
   {
-    id: 'jambes2', title: 'Jambes volume + fessiers + abdos', dow: [6], plate: 'orange', kind: 'muscu',
+    id: 'jambes2', title: 'Jambes volume + fessiers', dow: [6], plate: 'orange', kind: 'muscu',
     warmup: 'Vélo 5 min, mobilité hanches, 2 séries légères de presse.',
     note: 'Remplace le CrossFit. Deuxième séance jambes, 72 h après le squat : plus de reps, plus d\'amplitude, fessiers et ischios. Les jambes sont tes plus gros muscles, c\'est ce qui fait monter le poids de corps en muscle.',
     exercises: [
@@ -798,8 +802,8 @@ const DEFAULT_PROGRAM = [
       EX('j2-curl', 'Leg curl allongé', 'ischios', 3, '10-15', 'wr', null, { rest: 60, tip: 'Hanches plaquées au banc. Variante relance : superlent, 4 reps en montant en 10 s.' }),
       EX('j-add', 'Adducteurs machine', 'adducteurs', 3, '12-15', 'wr', 30, { rest: 60, tip: 'Amplitude contrôlée, pas d\'à-coups en position d\'écart maximal.' }),
       EX('j2-mollets', 'Mollets assis', 'mollets', 3, '15-20', 'wr', null, { rest: 45, tip: 'Assis, jambes pliées : c\'est le soléaire qui travaille. Delavier conseille d\'alterner avec les mollets jambes tendues.' }),
-      EX('p-crunch', 'Crunch machine (haut des abdos)', 'abdos', 4, '15-20', 'wr', null, { rest: 45, tip: 'Souffle en t\'enroulant, tête penchée en avant, regarde tes abdos. Ne tire pas avec les bras.' }),
-      EX('c-planche', 'Gainage planche', 'abdos', 3, '45 s', 'time', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé pour tenir dans le créneau : tes abdos ont déjà 11 séries sur 3 jours. Réactive-le si tu as du temps. Méthode 3 : la planche et ses variantes pour le gainage statique. Bassin aligné, abdos et fessiers serrés. Note la durée.' }),
+      EX('p-crunch', 'Crunch machine (haut des abdos)', 'abdos', 4, '15-20', 'wr', null, { enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Souffle en t\'enroulant, tête penchée en avant, regarde tes abdos. Ne tire pas avec les bras.' }),
+      EX('c-planche', 'Gainage planche', 'abdos', 3, '45 s', 'time', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Méthode 3 : la planche et ses variantes pour le gainage statique. Bassin aligné, abdos et fessiers serrés. Note la durée.' }),
       WALK('w-sam', 20),
     ],
   },
@@ -818,7 +822,7 @@ const KB = [
 <li><b>Photos du 25 octobre (torse nu).</b> Elles confirment l'analyse : épaules larges et rondes, bras épais, haut du dos et trapèzes développés. Le bas des pecs se dessine mais le haut reste plat sous la clavicule. Pas encore de tablette, avec un peu de gras sur le bas du ventre et les flancs : d'où l'objectif 74 kg sec et la marche inclinée.</li>
 <li><b>Abdos.</b> Les muscles peu sollicités dans la jeunesse partent en retard ; le volume et la fréquence comptent plus que la charge.</li>
 </ul>
-<p><b>Ce que l'app applique :</b> pecs 3 fois par semaine (lourd le lundi, série de 100 le mercredi, volume le vendredi), abdos 4 fois, jambes 2 fois, marche inclinée 5 fois, dos et épaules en entretien, élévation frontale remplacée par l'arrière d'épaule, un conseil technique sur chaque exercice. Les barres « Équilibre » dans Progrès vérifient tout ça.</p>`,
+<p><b>Ce que l'app applique :</b> pecs 3 fois par semaine (lourd le lundi, série de 100 le mercredi, volume le vendredi), jambes 2 fois, marche inclinée 5 fois, dos et épaules en entretien, élévation frontale remplacée par l'arrière d'épaule, un conseil technique sur chaque exercice. Les abdos sont retirés du programme à ta demande (exercices désactivés, réactivables). Les barres « Équilibre » dans Progrès vérifient tout ça.</p>`,
     src: 'Méthode Delavier 2, p. 16–19 et 166–169 · Méthode Delavier 3, « Cibler les pectoraux »',
   },
   {
@@ -826,16 +830,17 @@ const KB = [
     body: `
 <p>Chaque séance = environ 55 min de muscu + 20 à 30 min de marche inclinée, pour tenir dans un créneau de 1 h 30.</p>
 <ul>
-<li><b>Lundi · Pecs force + épaules + biceps.</b> Pecs frais après le dimanche : c'est là que les charges montent (incliné 4 × 6–8, 3 min de repos). Haut des pecs en priorité, 10 séries de pecs, puis 2 séries de curl : les biceps ont ensuite 72 h avant le jeudi.</li>
+<li><b>Lundi · Pecs force + épaules + biceps.</b> Pecs frais après le dimanche : c'est là que les charges montent (incliné 4 × 6–8, 3 min de repos). Haut des pecs en priorité, 10 séries de pecs : l'incliné lourd, puis la convergente (un autre développé, avant l'isolation), puis les deux exercices à la poulie à la suite (vis-à-vis, élévations latérales). Enfin 2 séries de curl : les biceps ont ensuite 72 h avant le jeudi.</li>
 <li><b>Mardi · Repos</b>. Récupération active : marche dehors si tu veux.</li>
-<li><b>Mercredi · Jambes force + rappel pecs.</b> Squat, semi soulevé de terre, leg extension, leg curl, mollets, puis la série de 100 du haut des pecs.</li>
+<li><b>Mercredi · Jambes force + rappel pecs.</b> Squat, semi soulevé de terre, puis leg extension et leg curl en superset (quadriceps et ischios, deux muscles opposés), mollets, puis la série de 100 du haut des pecs.</li>
 <li><b>Jeudi · Dos + biceps.</b> Dos en entretien une fois par semaine avec des charges lourdes, arrière d'épaule pour la posture. Les lombaires ont travaillé la veille au semi soulevé de terre : buste calé au tirage.</li>
-<li><b>Vendredi · Pecs volume + triceps.</b> charges moyennes, sensations, 4 jours après la séance de force. 11 séries de pecs avec les dips, puis les deux extensions triceps et les avant-bras en léger.</li>
-<li><b>Samedi · Jambes volume + fessiers + abdos.</b> Remplace le CrossFit : presse, hip thrust, fentes, ischios, adducteurs, mollets assis, crunch. 72 h après le squat.</li>
+<li><b>Vendredi · Pecs volume + triceps.</b> charges moyennes, sensations, 4 jours après la séance de force. 11 séries de pecs avec les dips, puis les deux extensions triceps et les avant-bras en léger, curl et extension de poignet en superset.</li>
+<li><b>Samedi · Jambes volume + fessiers.</b> Remplace le CrossFit : presse, hip thrust, fentes, ischios, adducteurs, mollets assis. 72 h après le squat.</li>
 <li><b>Dimanche · Repos.</b></li>
 </ul>
-<p><b>Récupération :</b> aucun muscle n'est travaillé en direct deux jours de suite. Biceps lundi et jeudi, triceps le vendredi, abdos lundi, jeudi et samedi, pecs lundi et vendredi (plus la série de 100 du mercredi), jambes mercredi et samedi. L'onglet Progrès › Équilibre le vérifie à chaque modification de ta semaine.</p>
+<p><b>Récupération :</b> aucun muscle n'est travaillé en direct deux jours de suite. Biceps lundi et jeudi, triceps le vendredi, pecs lundi et vendredi (plus la série de 100 du mercredi), jambes mercredi et samedi. L'onglet Progrès › Équilibre le vérifie à chaque modification de ta semaine.</p>
 <p><b>Progression :</b> double progression. Reste sur la même charge tant que toutes les séries n'atteignent pas le haut de la fourchette ; ensuite l'app propose +2,5 kg (haut du corps) ou +5 kg (squat, soulevé de terre, presse, hip thrust). <b>Repos :</b> 3 min sur les gros mouvements, 45 s à 1 min 30 sur l'isolation ; le chrono se règle tout seul.</p>
+<p><b>Déroulé de chaque séance :</b> les mouvements lourds et polyarticulaires d'abord, quand tu es frais : c'est sur les exercices faits en premier que la force progresse le plus, alors que la prise de muscle dépend peu de l'ordre. L'isolation vient ensuite, et les exercices au même poste se suivent. <b>Supersets :</b> deux muscles opposés s'enchaînent série par série, 30 s pour changer de poste, puis un repos calculé pour que chaque muscle garde au moins son repos habituel. Tu fais le même nombre de séries en moins de temps. Tu peux en créer d'autres dans Modifier › exercice.</p>
 <p><b>Alternance TNT, automatique :</b> la 7e semaine de chaque cycle, l'app divise tes séries par deux en gardant les charges, pour laisser tendons et système nerveux récupérer. Au début du cycle suivant, elle te propose de changer de variante sur un exercice par séance (jamais tes mouvements de référence). Réglable dans Menu › Réglages.</p>`,
     src: 'Construit à partir de la Méthode Delavier 2 (programme avancé 5 jours, rattrapage des pectoraux, alternance TNT, récupération)',
   },
@@ -1016,6 +1021,9 @@ const SOURCES = {
   zourdos2016: { kind: 'etude', short: 'Zourdos 2016', label: 'Zourdos et al., 2016, J Strength Cond Res', note: 'Échelle RPE fondée sur les reps en réserve : RPE 10 = 0 rep en réserve, RPE 9 = 1, etc.', url: 'https://pubmed.ncbi.nlm.nih.gov/26049792/' },
   schoenfeld2017: { kind: 'etude', short: 'Schoenfeld 2017', label: 'Schoenfeld, Ogborn, Krieger, 2017, J Sports Sci (méta-analyse)', note: 'Plus de séries par semaine pour un muscle = plus d\'hypertrophie, avec des rendements décroissants.', url: 'https://pubmed.ncbi.nlm.nih.gov/27433992/' },
   schoenfeld2019: { kind: 'etude', short: 'Schoenfeld 2019', label: 'Schoenfeld, Grgic, Krieger, 2019, J Sports Sci (méta-analyse)', note: 'À volume hebdomadaire égal, la fréquence change peu l\'hypertrophie ; elle sert surtout à répartir le volume.', url: 'https://pubmed.ncbi.nlm.nih.gov/30558493/' },
+  nunes2021: { kind: 'etude', short: 'Nunes 2021', label: 'Nunes et al., 2021, Eur J Sport Sci 21(2):149-157 (méta-analyse)', note: 'L\'ordre des exercices a compté pour la force : elle progressait plus sur les exercices faits en début de séance. Pour la prise de muscle, pas de différence selon l\'ordre.', url: 'https://doi.org/10.1080/17461391.2020.1733672' },
+  robbins2010: { kind: 'etude', short: 'Robbins 2010', label: 'Robbins et al., 2010, J Strength Cond Res 24(7):1782-1789', note: 'Enchaîner deux muscles opposés (tirage puis développé) a pris environ deux fois moins de temps que des séries classiques, sans baisse de performance.', url: 'https://doi.org/10.1519/JSC.0b013e3181dc3a53' },
+  zhang2025: { kind: 'etude', short: 'Zhang 2025', label: 'Zhang, Weakley, Li, Li, García-Ramos, 2025, Sports Med (méta-analyse, 19 études)', note: 'Les supersets raccourcissent la séance sans perte de volume ni de progrès à long terme. Avec deux muscles opposés, on fait même un peu plus de reps ; deux exercices du même muscle obligent à baisser la charge.', url: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC12011898/' },
   schoenfeld2016freq: { kind: 'etude', short: 'Schoenfeld 2016 (fréquence)', label: 'Schoenfeld, Ogborn, Krieger, 2016, Sports Med 46(11):1689-1697 (méta-analyse)', note: 'Travailler un muscle au moins 2 fois par semaine a donné un peu plus de croissance qu\'une seule fois ; les volumes n\'étaient pas toujours égaux entre les groupes.', url: 'https://pubmed.ncbi.nlm.nih.gov/27102172/' },
   morannavarro2017: { kind: 'etude', short: 'Morán-Navarro 2017', label: 'Morán-Navarro et al., 2017, Eur J Appl Physiol 117(12):2387-2399', note: 'Dix hommes entraînés, squat et développé couché. Aller à l\'échec à chaque série a ralenti le retour de la force et de la vitesse : récupération nettement plus lente entre 24 et 48 h qu\'en s\'arrêtant à mi-chemin, à volume égal. Petit échantillon.', url: 'https://pubmed.ncbi.nlm.nih.gov/28965198/' },
   belcher2019: { kind: 'etude', short: 'Belcher 2019', label: 'Belcher et al., 2019, Appl Physiol Nutr Metab 44(10):1033-1042', note: 'Douze hommes entraînés, 4 séries à l\'échec à 80 % du max, une semaine squat, une semaine développé couché, une semaine soulevé de terre. Les auteurs n\'ont pas trouvé de récupération plus longue pour le soulevé de terre que pour les deux autres. Petit échantillon.', url: 'https://pubmed.ncbi.nlm.nih.gov/30779596/' },
@@ -1199,6 +1207,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     moon: '<path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/>',
     swap: '<path d="M5 8h13l-3.5-3.5M19 16H6l3.5 3.5"/>',
     foot: '<path d="M8.5 3C6.6 3 5.5 5.3 5.5 8c0 2.2.9 3.7 2.7 3.7S11 10.3 11 8c0-2.7-.9-5-2.5-5zM6 14.5h5v1.7a2.5 2.5 0 0 1-5 0zM15.5 6.5c-1.9 0-3 2.3-3 5 0 2.2.9 3.7 2.7 3.7S18 13.8 18 11.5c0-2.7-.9-5-2.5-5zM13 18h5v.5a2.5 2.5 0 0 1-5 0z"/>',
+    link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
   };
   const ic = (n) => `<svg class="i" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
 
@@ -1272,6 +1281,12 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       out.programVersion = 5;
       out.updatedAt = Date.now();
     }
+    if ((out.programVersion || 1) < 6) {
+      rebalanceV6(out.program);
+      out.rebalance = { v: 6, date: today() };
+      out.programVersion = 6;
+      out.updatedAt = Date.now();
+    }
     /* Une couleur par séance : 2e séance pecs en rose, 2e séance jambes en orange. */
     out.program.forEach((d) => { if (d.id === 'pecs2' && d.plate === 'red') d.plate = 'pink'; if (d.id === 'jambes2' && d.plate === 'yellow') d.plate = 'orange'; });
     /* Fiches exercices (muscles, matériel, consignes, sources) : on complète sans écraser ce que tu as modifié. */
@@ -1327,6 +1342,52 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     if (pull && pull.note === 'Dos en entretien : peu de séries mais lourdes et propres. Séance plus courte, donc 30 min de marche.') pull.note = 'Dos en entretien : peu de séries mais lourdes et propres. Tes lombaires ont travaillé la veille au semi soulevé de terre : au tirage horizontal, buste calé, pas d\'élan.';
     const planche = at('c-planche');
     if (planche && typeof planche.e.tip === 'string') planche.e.tip = planche.e.tip.replace('tes abdos ont déjà 12 séries sur 4 jours.', 'tes abdos ont déjà 11 séries sur 3 jours.');
+  }
+  /* v6 : abdos retirés à ta demande et déroulé des séances optimisé. Même règle : on désactive et on déplace, on ne supprime rien,
+     et on ne touche à un texte que s'il est encore celui d'origine. */
+  function rebalanceV6(prog) {
+    const at = (id) => { for (const d of prog) { const i = (d.exercises || []).findIndex((e) => e.id === id); if (i >= 0) return { d, i, e: d.exercises[i] }; } return null; };
+    const day = (id) => prog.find((d) => d.id === id);
+    /* Place un exercice juste avant la marche de sa séance (ou à la fin s'il n'y en a pas). */
+    const beforeWalk = (x) => {
+      const ex = x.d.exercises; ex.splice(x.i, 1);
+      let j = ex.findIndex((e) => e.muscle === 'cardio' && e.minutes != null && /^w-/.test(e.id));
+      ex.splice(j < 0 ? ex.length : j, 0, x.e);
+    };
+    /* Abdos : désactivés, rangés après la muscu. Rien n'est supprimé : réactive-les dans Séance › Modifier. */
+    const OFF = 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. ';
+    const absTips = {
+      'a-abs': 'Échauffement global : les abdos en séries longues montent la température du corps plus vite que le cardio (Méthode 3). Décolle le bassin, ne lance pas les cuisses.',
+      'd-abs': 'Angle « rotation » de tes abdos. Coude vers le genou opposé à mi-chemin, tiens 2 s, ne repose pas la tête.',
+      'p-crunch': 'Souffle en t\'enroulant, tête penchée en avant, regarde tes abdos. Ne tire pas avec les bras.',
+    };
+    Object.keys(absTips).forEach((id) => {
+      const x = at(id); if (!x || x.e.enabled === false) return;
+      x.e.enabled = false;
+      if (x.e.tip === absTips[id]) x.e.tip = OFF + x.e.tip;
+    });
+    /* Ceux qui ouvraient la séance (lundi, jeudi, vendredi) sont rangés juste avant la marche, sauf si tu les avais déplacés. */
+    ['a-abs', 'd-abs', 'e-abs'].forEach((id) => { const x = at(id); if (x && x.e.enabled === false && x.i === 0) beforeWalk(x); });
+    const eabs = at('e-abs');
+    if (eabs && typeof eabs.e.tip === 'string') eabs.e.tip = eabs.e.tip.replace('Désactivé : avec lui, les abdos travaillaient jeudi, vendredi et samedi d\'affilée. Ils passent à lundi, jeudi et samedi, avec une série de plus le lundi et le samedi. Réactive-le si tu préfères. ', OFF);
+    const planche = at('c-planche');
+    if (planche && typeof planche.e.tip === 'string') planche.e.tip = planche.e.tip.replace('Désactivé pour tenir dans le créneau : tes abdos ont déjà 11 séries sur 3 jours. Réactive-le si tu as du temps. ', OFF);
+    /* Lundi : le développé convergent (polyarticulaire) passe avant le vis-à-vis (isolation), et les deux exercices à la poulie se suivent. */
+    const push = day('push');
+    if (push) {
+      const ids = push.exercises.map((e) => e.id); const xo = ids.indexOf('p-xover'); const cv = ids.indexOf('p-conv');
+      if (xo >= 0 && cv === xo + 1) { const t = push.exercises[xo]; push.exercises[xo] = push.exercises[cv]; push.exercises[cv] = t; }
+    }
+    /* Supersets antagonistes : quadriceps / ischios le mercredi, fléchisseurs / extenseurs d'avant-bras le vendredi. */
+    [['j-legext', 'j-legcurl'], ['e-poignet', 'e-extpoignet']].forEach(([a, b]) => {
+      const x = at(a), y = at(b);
+      if (x && y && x.d === y.d && y.i === x.i + 1 && x.e.ss == null) x.e.ss = true;
+    });
+    /* Échauffement global sans abdos : vélo ou rameur, comme le vendredi. */
+    const pull = day('pull'), j2 = day('jambes2');
+    if (push && push.warmup === 'Relevés de bassin en échauffement global, rotations externes à l\'élastique, curl marteau léger (tendon du long biceps), puis 2 séries de montée sur l\'incliné. Ceinture sur l\'incliné : elle rigidifie la cage thoracique.') push.warmup = '5 min de vélo ou de rameur léger, rotations externes à l\'élastique, curl marteau léger (tendon du long biceps), puis 2 séries de montée sur l\'incliné. Ceinture sur l\'incliné : elle rigidifie la cage thoracique.';
+    if (pull && pull.warmup === 'Crunchs avec rotation en échauffement global, rotations externes à l\'élastique, 2 séries légères de tirage.') pull.warmup = '5 min de rameur léger, rotations externes à l\'élastique, 2 séries légères de tirage.';
+    if (j2 && j2.title === 'Jambes volume + fessiers + abdos') j2.title = 'Jambes volume + fessiers';
   }
   function normalizeMonth(m) {
     m = m || {};
@@ -1532,6 +1593,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     return allLogs().filter((l) => l.date >= start && l.entries.some((e) => e.muscle === muscle && e.sets.some((s) => s.done))).length;
   }
   const absSessionsThisWeek = () => sessionsThisWeek('abdos');
+  /* Abdos au programme ? (désactivés depuis la v6 : la carte et l'objectif d'abdos restent dans tes données, juste masqués) */
+  const absPlanned = () => P().some((d) => d.exercises.some((e) => e.enabled && e.muscle === 'abdos'));
   function goalProgress(g) {
     let cur = null;
     if (g.type === 'poids') cur = latestWeight();
@@ -1575,13 +1638,29 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   const T = { state: 'idle', end: 0, dur: 180, left: 180, doneAt: 0 };
   const restDefault = () => S.core.settings.restSec || 180;
   const restFor = (ex) => (S.core.settings.perExerciseRest && ex && ex.rest != null ? ex.rest : restDefault());
-  /* Durée estimée : séries + repos, séries de chauffe (≈ 75 s chacune), ≈ 1 min pour changer de poste, et la marche. */
+  /* Superset : un exercice marqué « ss » s'enchaîne avec le suivant, série par série.
+     30 s pour changer de poste, puis un repos tel que chaque muscle garde au moins son repos habituel. */
+  const SS_SWITCH = 30;
+  const setSec = (ex) => (ex.perSide || ex.uni ? 90 : 45);
+  const ssRest = (a, b) => Math.max(SS_SWITCH, restFor(a) - SS_SWITCH - setSec(b), restFor(b) - SS_SWITCH - setSec(a));
+  /* Pour chaque exercice de la liste, l'index de son partenaire de superset (ou -1). */
+  function ssPairs(list) {
+    const pm = list.map(() => -1);
+    for (let i = 0; i < list.length - 1; i++) if (list[i].ss && pm[i] < 0 && list[i].type !== 'time' && list[i + 1].type !== 'time') { pm[i] = i + 1; pm[i + 1] = i; }
+    return pm;
+  }
+  /* Durée estimée : séries + repos, séries de chauffe (≈ 75 s chacune), ≈ 1 min pour changer de poste, et la marche.
+     Un superset compte des tours (série A, changement de poste, série B, repos), puis les séries restantes au repos normal. */
   function dayMinutes(d) {
     const warmed = new Set(); let sec = 0;
-    d.exercises.filter((e) => e.enabled).forEach((e0) => {
+    const en = d.exercises.filter((e) => e.enabled); const pm = ssPairs(en);
+    en.forEach((e0, i) => {
       if (e0.minutes != null) { sec += e0.minutes * 60; return; }
-      const e = effEx(e0);
-      sec += (e.sets || 0) * ((e.perSide ? 90 : 45) + restFor(e)) + 60;
+      const e = effEx(e0); const p = pm[i];
+      if (p > i) {
+        const b = effEx(en[p]); const n = Math.min(e.sets || 0, b.sets || 0);
+        sec += n * (setSec(e) + SS_SWITCH + setSec(b) + ssRest(e, b)) + ((e.sets || 0) - n) * (setSec(e) + restFor(e)) + ((b.sets || 0) - n) * (setSec(b) + restFor(b)) + 120;
+      } else if (p < 0) sec += (e.sets || 0) * (setSec(e) + restFor(e)) + 60;
       if (e.type === 'wr') { sec += warmupsFor(e, targetWeight(e), warmed.has(e.muscle)).length * 75; if (e.muscle) warmed.add(e.muscle); }
     });
     return sec / 60;
@@ -1778,12 +1857,12 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     'Arrête une série de pecs quand tu ne les sens plus travailler : c\'est l\'échec sensitif.',
     'Clavicules larges : élargis le banc avec 3 à 5 tapis pour garder les omoplates serrées.',
     'Haut des pecs : poulie basse vers le haut, un bras à la fois, épaule basse et en arrière.',
-    'Bas des abdos : décolle le bassin, ne lance pas les cuisses.',
+    'Superset : deux muscles opposés (quadriceps puis ischios), 30 s pour changer de poste, et chacun garde son repos.',
     'Sur la convergente unilatérale, tourne buste et genoux de 30 à 45° du côté qui pousse.',
     'Créatine monohydrate : 3 à 5 g par jour pendant un repas, sans phase de charge.',
     'Une série légère de 50 reps 24 à 48 h après une grosse séance accélère la récupération.',
-    'Échauffement en 3 temps : global (abdos), maillons faibles (biceps, coiffe), puis montée en charge.',
-    'Ton dos et tes épaules sont dominants : entretiens-les, mets ton énergie sur pecs et abdos.',
+    'Échauffement en 3 temps : global (vélo ou rameur), maillons faibles (biceps, coiffe), puis montée en charge.',
+    'Ton dos et tes épaules sont dominants : entretiens-les, mets ton énergie sur les pecs.',
     'Au rowing, bloque 2 à 3 s la poignée contre le ventre avant de revenir.',
     'Mets ta ceinture aux pecs aussi : elle rigidifie la cage thoracique.',
     'Environ 20 g de protéines par repas suffisent ; 30 à 40 g après une séance intense.',
@@ -1839,7 +1918,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <section class="sec">${secHead('Suivi')}<div class="grid2">
         ${stepsCard()}
         <div class="card stack-sm"><div class="eyebrow">Poids</div><div class="stat"><span class="v">${w ? fmt(w, 1) : '—'}<small>kg</small></span><span class="k">${delta != null ? `${delta >= 0 ? '+' : ''}${fmt(delta, 1)} kg depuis le début` : `${wk.length} pesée(s) cette semaine`}</span></div><button class="btn sm" data-act="bodySheet">${ic('plus')} Pesée</button></div>
-        <div class="card stack-sm"><div class="eyebrow">Abdos cette semaine</div><div class="stat"><span class="v">${absSessionsThisWeek()}<small>/ ${(S.core.goals.find((g) => g.type === 'habit' && (g.muscle || 'abdos') === 'abdos') || { target: 4 }).target}</small></span><span class="k">séances (minimum Delavier : 2)</span></div><button class="btn sm" data-tab="progress" data-sub="balance">Équilibre</button></div>
+        ${absPlanned() || absSessionsThisWeek() ? `<div class="card stack-sm"><div class="eyebrow">Abdos cette semaine</div><div class="stat"><span class="v">${absSessionsThisWeek()}<small>/ ${(S.core.goals.find((g) => g.type === 'habit' && (g.muscle || 'abdos') === 'abdos') || { target: 4 }).target}</small></span><span class="k">séances (minimum Delavier : 2)</span></div><button class="btn sm" data-tab="progress" data-sub="balance">Équilibre</button></div>` : ''}
       </div></section>
       <section class="sec">${secHead('Objectifs', '<button class="link" data-tab="progress" data-sub="goals">Tout voir ›</button>')}<div class="card stack">${goals || '<p class="muted small">Aucun objectif.</p>'}</div></section>
       <section class="sec">${secHead('Conseil Delavier du jour')}<div class="card tip-card stack-sm"><p style="margin:0">${esc(tip)}</p><button class="link" data-act="openMethod" style="justify-self:start">Ouvrir la méthode ›</button></div></section>
@@ -1909,7 +1988,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   function progCard(d, ex) {
     const view = effEx(ex);
     const last = lastEntryFor(view.id); const up = progressionHint(view); const open = UI.openTips[ex.id];
-    const tags = `${prBtn(view)}${ex.src === 'delavier' ? '<span class="tag delavier">Delavier</span>' : ''}${ex.enabled ? '' : '<span class="tag">désactivé</span>'}`;
+    const en = d.exercises.filter((e) => e.enabled); const pi = ssPairs(en)[en.indexOf(ex)]; const mate = pi >= 0 ? effEx(en[pi]) : null;
+    const tags = `${prBtn(view)}${mate ? `<span class="tag ss">${ic('link')} Superset avec ${esc(shortEx(mate.name))}</span>` : ''}${ex.src === 'delavier' ? '<span class="tag delavier">Delavier</span>' : ''}${ex.enabled ? '' : '<span class="tag">désactivé</span>'}`;
     return `<article class="card ex ${mClass(ex.muscle)} ${ex.enabled ? '' : 'off'}">
       <div class="ex-head"><span class="mbar" title="${esc((MUSCLES[ex.muscle] || {}).label || '')}"></span>
         <div class="grow stack-xs"><h3>${esc(view.name)}</h3>${view !== ex ? `<div class="hint">Variante de ce cycle · remplace ${esc(ex.name)}</div>` : ''}
@@ -1962,7 +2042,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <section class="card"><div class="eyebrow">Historique</div>${list || '<div class="empty">Aucune pesée.</div>'}</section>`;
   }
   /* Les objectifs de mensuration déjà créés restent dans tes données, ils ne sont simplement plus affichés. */
-  const shownGoals = () => S.core.goals.filter((g) => g.type !== 'mesure');
+  const shownGoals = () => S.core.goals.filter((g) => g.type !== 'mesure' && !(g.type === 'habit' && (g.muscle || 'abdos') === 'abdos' && !absPlanned()));
   function progGoals() {
     return `${shownGoals().map((g) => `<section class="card stack-sm"><div class="row between"><span class="eyebrow">${esc({ poids: 'Poids', pr: 'Charge', habit: 'Habitude', libre: 'Libre' }[g.type] || '')}${g.deadline ? ` · avant le ${esc(fmtDate(g.deadline, { day: 'numeric', month: 'long', year: 'numeric' }))}` : ''}</span><button class="icon-btn" data-act="goalSheet" data-id="${g.id}" aria-label="Modifier">${ic('edit')}</button></div>${goalRow(g)}</section>`).join('')}
       <button class="btn block" data-act="goalSheet">${ic('plus')} Nouvel objectif</button>
@@ -1970,7 +2050,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   }
   function progBalance() {
     const done = doneSetsSince(addDays(today(), -6)); const plan = weeklyPlannedSets(); const freq = weeklyPlannedFreq();
-    const keys = Object.keys(MUSCLES).filter((k) => MUSCLES[k].target).sort((a, b) => (MUSCLES[b].prio ? 1 : 0) - (MUSCLES[a].prio ? 1 : 0));
+    const keys = Object.keys(MUSCLES).filter((k) => MUSCLES[k].target && (plan[k] || done[k])).sort((a, b) => (MUSCLES[b].prio ? 1 : 0) - (MUSCLES[a].prio ? 1 : 0));
     const scale = 24;
     const rows = keys.map((k) => {
       const m = MUSCLES[k]; const v = done[k] || 0; const p = plan[k] || 0;
@@ -1983,7 +2063,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <div class="legend"><span><i class="bar" style="width:18px;height:8px;display:inline-block;background:color-mix(in srgb,var(--good) 22%,transparent);border:1.5px solid var(--good)"></i> zone cible hebdo</span><span><i style="width:18px;height:6px;border-radius:3px;display:inline-block;background:var(--accent)"></i> point faible</span></div></section>
       ${progRecovery()}
       ${progDays()}
-      <section class="card flat small stack-sm"><b>Pourquoi ces cibles ?</b><span>Pecs et abdos ont une zone plus haute : ce sont tes points faibles (rattrapage Delavier). Dos et épaules restent en entretien car ils dominent déjà ; s'ils dépassent largement leur zone, ils continuent à voler le travail des pecs.</span>
+      <section class="card flat small stack-sm"><b>Pourquoi ces cibles ?</b><span>${plan.abdos ? 'Pecs et abdos ont une zone plus haute : ce sont tes points faibles' : 'Les pecs ont une zone plus haute : c\'est ton point faible'} (rattrapage Delavier). Un muscle sans aucune série prévue ni faite n'est pas affiché. Dos et épaules restent en entretien car ils dominent déjà ; s'ils dépassent largement leur zone, ils continuent à voler le travail des pecs.</span>
         <span>Ce que disent les études : c'est surtout le nombre de séries par semaine qui fait grossir un muscle, avec un rendement qui diminue au-delà d'un certain volume. Travailler un muscle 2 fois par semaine plutôt qu'une aide un peu, surtout parce que ça permet de répartir le volume : à volume égal, la fréquence compte peu pour le muscle et davantage pour la force. D'où tes pecs coupés en 10 séries le lundi et 11 le vendredi, plutôt que 20 d'un coup en fin de séance quand tu es fatigué.</span>
         <span>Pour un muscle en entretien comme ton dos, une seule séance lourde par semaine suffit si les charges restent hautes : c'est l'intensité qui garde le muscle, pas le nombre de séances. Les zones en séries/semaine sont des repères courants en hypertrophie, pas des chiffres des livres.</span>
         ${srcChips(['schoenfeld2017', 'pelland2026', 'schoenfeld2016freq', 'schoenfeld2019', 'spiering2021', 'iversen2021'])}</section>`;
@@ -2025,7 +2105,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       const tone = !slot ? '' : est > slot ? 'bad' : est > slot - 5 ? 'warn' : 'good';
       return `<div class="dayrow"><span class="plate p-${d.plate}"></span><span class="grow"><b>${esc(DOW_S[dayDows(d)[0]] || '')} · ${esc(shortTitle(d))}</b><br><span class="hint">${nEx} exos · ${sets} séries${en.some((e) => e.minutes != null) ? ' + marche' : ''}${real ? ` · réel ${hm(real.avg)}` : ''}</span></span><span class="tag ${tone}">≈ ${hm(est)}${slot ? ` / ${hm(slot)}` : ''}</span></div>`;
     }).join('');
-    return `<section class="card stack-sm"><div class="eyebrow">Durée des séances face au créneau</div>${rows}<span class="hint">Estimation : séries, repos, séries de chauffe et ≈ 1 min par changement de poste, marche comprise. Vise 5 à 8 exercices de muscu et finis avant la fin du créneau ; si une séance déborde, coupe d'abord une isolation, pas un polyarticulaire du début. Regrouper deux exercices en superset fait aussi gagner du temps.</span></section>`;
+    return `<section class="card stack-sm"><div class="eyebrow">Durée des séances face au créneau</div>${rows}<span class="hint">Estimation : séries, repos, séries de chauffe et ≈ 1 min par changement de poste, marche comprise. Vise 5 à 8 exercices de muscu et finis avant la fin du créneau ; si une séance déborde, coupe d'abord une isolation, pas un polyarticulaire du début. Un superset (deux muscles opposés enchaînés, option dans Modifier › exercice) fait aussi gagner du temps. ${srcChips(['zhang2025', 'robbins2010'])}</span></section>`;
   }
   function progCalendar() {
     const [y, mo] = UI.calMonth.split('-').map(Number);
@@ -2103,7 +2183,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const f = (id, label, val, attrs) => `<div class="field"><label for="${id}">${label}</label><input class="input" id="${id}" value="${esc(val == null ? '' : String(val).replace('.', ','))}" ${attrs}></div>`;
     openSheet('profile', `${sheetHead('Profil & morphologie')}
       <section class="card flat stack-sm"><div class="row"><span class="plate p-red"></span><b>Morphologie</b></div>
-        <span class="small">Clavicules larges, dos et épaules dominants, bras forts. Points faibles : <b>pectoraux, surtout le haut</b>, et <b>abdominaux</b>. Objectif : <b>74 kg sec</b>. L'app met la priorité sur pecs et abdos et laisse dos et épaules en entretien.</span>
+        <span class="small">Clavicules larges, dos et épaules dominants, bras forts. Points faibles : <b>pectoraux, surtout le haut</b>, et <b>abdominaux</b>. Objectif : <b>74 kg sec</b>. L'app met la priorité sur les pecs et laisse dos et épaules en entretien (abdos retirés du programme à ta demande, réactivables).</span>
         <button class="link" data-act="openMethod" style="justify-self:start">Lire l'analyse complète ›</button></section>
       <div class="grid2">
         ${f('pfName', 'Prénom', p.name, 'data-ch="profile" data-k="name" autocomplete="off"')}
@@ -2219,6 +2299,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
         <div class="field"><label for="exInc">Palier (${wUnit(ex)})</label><select class="input" id="exInc">${(ex.equip === 'halteres' ? [1, 2, 4] : [1, 2.5, 5]).map((v) => `<option value="${v}" ${incOf(ex) === v ? 'selected' : ''}>+${fmt(v, 1)} kg</option>`).join('')}</select></div>
       </div>
       <div class="li"><div class="grow"><div class="t">Unilatéral (gauche / droite séparés)</div></div>${sw(ex.perSide, 'exPerSide', '', 'Par côté')}</div>
+      <div class="li"><div class="grow"><div class="t">Superset avec l'exercice suivant</div><div class="s">Une série de chaque, 30 s pour changer de poste, puis le repos. Idéal pour deux muscles opposés.</div></div>${sw(!!ex.ss, 'exSS', '', 'Superset')}</div>
       <div class="field"><label for="exNote">Note perso</label><textarea class="input" id="exNote" placeholder="Réglage machine, sensations…">${esc(ex.note || '')}</textarea></div>
       <button class="btn primary block" data-act="saveEx" data-ex="${ex.id}" data-day="${d.id}">Enregistrer</button>
       ${fx ? (UI.confirm === 'delEx' ? `<div class="row wrap"><span class="grow small">Supprimer définitivement cet exercice du programme ?</span><button class="btn sm danger" data-act="deleteEx" data-ex="${ex.id}" data-sure="1">Supprimer</button><button class="btn sm" data-act="confirmOff">Annuler</button></div>` : `<button class="btn ghost danger" data-act="deleteEx" data-ex="${ex.id}">${ic('trash')} Supprimer l'exercice</button>`) : ''}`, () => exEditorSheet(exId, dayId));
@@ -2322,9 +2403,10 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     },
     editEx: (el) => { UI.confirm = null; exEditorSheet(el.dataset.ex, el.dataset.day); },
     exPerSide: (el) => { el.setAttribute('aria-checked', el.getAttribute('aria-checked') === 'true' ? 'false' : 'true'); },
+    exSS: (el) => { el.setAttribute('aria-checked', el.getAttribute('aria-checked') === 'true' ? 'false' : 'true'); },
     saveEx: (el) => {
       const name = $('#exName').value.trim(); if (!name) { toast('Donne un nom à l\'exercice'); return; }
-      const data = { name, muscle: $('#exMuscle').value, type: $('#exType').value, sets: clamp(parseInt($('#exSets').value, 10) || 3, 1, 12), reps: $('#exReps').value.trim(), rest: +$('#exRest').value, inc: +$('#exInc').value, perSide: $('[data-act="exPerSide"]').getAttribute('aria-checked') === 'true', note: $('#exNote').value.trim() };
+      const data = { name, muscle: $('#exMuscle').value, type: $('#exType').value, sets: clamp(parseInt($('#exSets').value, 10) || 3, 1, 12), reps: $('#exReps').value.trim(), rest: +$('#exRest').value, inc: +$('#exInc').value, perSide: $('[data-act="exPerSide"]').getAttribute('aria-checked') === 'true', ss: $('[data-act="exSS"]').getAttribute('aria-checked') === 'true', note: $('#exNote').value.trim() };
       const fx = el.dataset.ex ? findEx(el.dataset.ex) : null;
       if (fx) Object.assign(fx.ex, data);
       else dayById(el.dataset.day).exercises.push(Object.assign({ id: 'x-' + uid(), pr: null, src: 'charles', enabled: true, tip: '' }, data));
@@ -2558,15 +2640,22 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   }
 
   const stepKey = (st) => (st.k === 'end' ? 'end' : `${st.k}:${st.ei}:${st.k === 'warm' ? st.wi : st.si}:${st.side || ''}`);
+  /* Superset : les chauffes des deux exercices d'abord, puis série 1 de A, série 1 de B, série 2 de A… */
   function buildSteps(act) {
-    const steps = [];
+    const steps = []; const pm = ssPairs(act.entries);
+    const pushSet = (e, ei, si) => {
+      const s = e.sets[si]; if (!s || s.skip) return;
+      if (e.uni) (e.first === 'R' ? ['R', 'L'] : ['L', 'R']).forEach((side) => steps.push({ k: 'set', ei, si, side }));
+      else steps.push({ k: 'set', ei, si });
+    };
     act.entries.forEach((e, ei) => {
+      if (pm[ei] >= 0 && pm[ei] < ei) return;
       (e.warm || []).forEach((w, wi) => steps.push({ k: 'warm', ei, wi }));
-      e.sets.forEach((s, si) => {
-        if (s.skip) return;
-        if (e.uni) (e.first === 'R' ? ['R', 'L'] : ['L', 'R']).forEach((side) => steps.push({ k: 'set', ei, si, side }));
-        else steps.push({ k: 'set', ei, si });
-      });
+      if (pm[ei] > ei) {
+        const bi = pm[ei]; const b = act.entries[bi];
+        (b.warm || []).forEach((w, wi) => steps.push({ k: 'warm', ei: bi, wi }));
+        for (let si = 0; si < Math.max(e.sets.length, b.sets.length); si++) { pushSet(e, ei, si); pushSet(b, bi, si); }
+      } else e.sets.forEach((x, si) => pushSet(e, ei, si));
     });
     steps.push({ k: 'end' });
     return steps;
@@ -2593,12 +2682,23 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const ex = fx ? fx.ex : { id: e.exId, reps: e.treps, type: e.type, name: e.name };
     return { act, steps, i, st, e, ex, data: stepData(act, st) };
   }
+  /* 1 : on passe de A à B dans un superset (changement de poste) ; 2 : de B à A (repos du tour) ; 0 : pas un enchaînement de superset. */
+  function ssStep(act, steps, i) {
+    const st = steps[i]; const nx = steps[i + 1];
+    if (!st || st.k !== 'set' || !nx || nx.k !== 'set') return 0;
+    const p = ssPairs(act.entries)[st.ei];
+    return p >= 0 && nx.ei === p ? (p > st.ei ? 1 : 2) : 0;
+  }
+  const entryEx = (e) => { const fx = findEx(e.exId); return fx ? fx.ex : { uni: e.uni }; };
   function restAfter(act, steps, i) {
     const st = steps[i]; const nx = steps[i + 1];
     if (!nx || nx.k === 'end') return 0;
-    const e = act.entries[st.ei]; const fx = findEx(e.exId); const ex = fx ? fx.ex : {};
+    const ex = entryEx(act.entries[st.ei]);
     if (st.k === 'warm') return nx.k === 'warm' ? 45 : 75;
     if (st.side && nx.k === 'set' && nx.ei === st.ei && nx.si === st.si) return 0;
+    const ss = ssStep(act, steps, i);
+    if (ss === 1) return SS_SWITCH;
+    if (ss === 2) return ssRest(entryEx(act.entries[nx.ei]), ex);
     return restFor(ex);
   }
   /* Ligne de séance pour un exercice du programme (variante du cycle comprise). */
@@ -2612,7 +2712,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const mk = () => ({ w: tw, r: null, rir: null, done: false });
     const nSets = deload ? Math.max(1, Math.ceil((ex.sets || 1) / 2)) : Math.max(1, ex.sets || 1);
     const sets = Array.from({ length: nSets }, () => (uni ? { L: mk(), R: mk(), done: false } : Object.assign(mk(), { t: null, d: null })));
-    return { exId: ex.id, name: ex.name, muscle: ex.muscle, type: ex.type, uni, first: uni ? firstSideFor(ex.id) : null, tw, treps: ex.reps, tr: nx && nx.r ? nx.r : null, warm, sets };
+    return { exId: ex.id, name: ex.name, muscle: ex.muscle, type: ex.type, uni, first: uni ? firstSideFor(ex.id) : null, tw, treps: ex.reps, tr: nx && nx.r ? nx.r : null, warm, sets, ss: !!ex0.ss };
   }
   const entryStarted = (e) => e.sets.some((s) => s.done || (s.L && (s.L.done || s.R.done))) || (e.warm || []).some((w) => w.done);
   /* Après un changement d'ordre, la chauffe suit : un muscle déjà chaud n'en refait qu'une courte. */
@@ -2646,11 +2746,12 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   }
   function sessionTop(cs) {
     const { act, steps, i, st } = cs; const nEx = act.entries.length;
-    const exN = st.k === 'end' ? nEx : st.ei + 1;
+    const exN = st.k === 'end' ? nEx : st.ei + 1; const p = st.k === 'end' ? -1 : ssPairs(act.entries)[st.ei];
+    const exLbl = p >= 0 ? `Exos ${Math.min(st.ei, p) + 1}+${Math.max(st.ei, p) + 1}/${nEx} · superset` : `Exo ${exN}/${nEx}`;
     const pct = Math.round((i / Math.max(1, steps.length - 1)) * 100);
     return `<div class="step-top">
       <button class="icon-btn" data-act="stepBack" ${i === 0 && !act.rest ? 'disabled' : ''} aria-label="Étape précédente">${ic('left')}</button>
-      <div class="grow"><div class="row between small"><b>Exo ${exN}/${nEx}</b><span class="muted"><span data-elapsed>${clock((Date.now() - act.startedAt) / 1000)}</span> · ${fmtInt(volumeOf(act))} kg</span></div>
+      <div class="grow"><div class="row between small"><b>${exLbl}</b><span class="muted"><span data-elapsed>${clock((Date.now() - act.startedAt) / 1000)}</span> · ${fmtInt(volumeOf(act))} kg</span></div>
         <div class="step-prog" role="progressbar" aria-valuenow="${pct}" aria-valuemin="0" aria-valuemax="100"><i style="width:${pct}%"></i></div></div>
       <button class="icon-btn" data-act="sessionMenu" aria-label="Options de la séance">${ic('gear')}</button></div>`;
   }
@@ -2682,6 +2783,10 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const tags = (act.deload ? '<span class="step-kind warm">Semaine légère</span>' : '') + (isWarm
       ? `<span class="step-kind warm">Chauffe ${st.wi + 1}/${e.warm.length}</span>`
       : `<span class="step-kind">Série ${st.si + 1}/${workN}</span>${st.side ? `<span class="step-kind side">Côté ${SIDE_LABEL[st.side]}</span>` : ''}`);
+    const mi = ssPairs(act.entries)[st.ei]; const mate = mi >= 0 ? act.entries[mi] : null; const isA = mi > st.ei;
+    const ssTag = mate ? `<span class="step-kind ss">Superset ${isA ? 1 : 2}/2</span>` : '';
+    const ssNote = mate && !isWarm && st.si === 0 && !data.done && (!st.side || st.side === e.first)
+      ? `<div class="notice">${isA ? `Superset avec <b>${esc(shortEx(mate.name))}</b> : après chaque série, 30 s pour changer de poste, une série de ${esc(shortEx(mate.name))}, puis la pause complète.` : `2e exercice du superset : après cette série, la pause complète, puis retour à <b>${esc(shortEx(mate.name))}</b>.`}</div>` : '';
     const tr = e.tr || repsMin(e.treps);
     let target = ''; let inputs = '';
     if (e.type === 'time') {
@@ -2706,12 +2811,12 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const cues = (ex.cues || []).length ? `<ul class="cues">${ex.cues.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '';
     return `<section class="step">
       <div class="step-card">
-        <div class="row wrap">${tags}${data.done ? '<span class="tag good">enregistrée</span>' : ''}</div>
+        <div class="row wrap">${tags}${ssTag}${data.done ? '<span class="tag good">enregistrée</span>' : ''}</div>
         <h2 class="step-name">${esc(e.name)}</h2>
         <div class="step-meta">${muscleChip(e.muscle)}${equipChip(ex.equip)}${swapNote(e, ex)}</div>
         ${ex.targets ? `<div class="muted small">${esc(ex.targets)}</div>` : ''}
         <div class="step-target">${target}</div>
-        ${firstNote}
+        ${ssNote}${firstNote}
         ${inputs}
         ${isWarm ? '' : lastPerfLine(e.exId, st, ex)}
       </div>
@@ -2738,13 +2843,16 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     return { t: `${e.name} — ${what}`, s };
   }
   function restScreen(cs) {
-    const { act, st } = cs; const nx = nextLabel(act, st);
+    const { act, st } = cs; const nx = nextLabel(act, st); const ss = act.rest.ss;
+    const hint = ss === 1 ? `Change de poste : la vraie pause vient après ${esc(shortEx((act.entries[st.ei] || {}).name))}. ${srcChips(['zhang2025', 'robbins2010'])}`
+      : ss === 2 ? `Repos du superset : ${clock(act.rest.dur)}, calculé pour que chaque muscle garde au moins son repos habituel. ${srcChips(['zhang2025', 'robbins2010'])}`
+      : `Repos conseillé : ${clock(act.rest.dur)} ${srcChips(act.rest.dur >= 120 ? ['schoenfeld2016', 'singer2024'] : ['singer2024', 'pratique'])}`;
     return `<section class="rest-screen">
-      <div class="eyebrow">Repos</div>
+      <div class="eyebrow">${ss === 1 ? 'Superset · change de poste' : ss === 2 ? 'Repos du superset' : 'Repos'}</div>
       <div class="rest-time num" id="restBig">${clock(timerLeft())}</div>
       <div class="card next-card"><div class="eyebrow">À suivre</div><h3>${esc(nx.t)}</h3><div class="muted">${esc(nx.s)}</div></div>
       <div class="rest-actions"><button class="btn big-btn" data-act="tNudge" data-v="-15">−15 s</button><button class="btn primary big-btn" data-act="restSkip">Passer</button><button class="btn big-btn" data-act="tNudge" data-v="15">+15 s</button></div>
-      <p class="hint">Repos conseillé : ${clock(act.rest.dur)} ${srcChips(act.rest.dur >= 120 ? ['schoenfeld2016', 'singer2024'] : ['singer2024', 'pratique'])}</p>
+      <p class="hint">${hint}</p>
     </section>`;
   }
   function endScreen(act) {
@@ -2763,11 +2871,11 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     persist(['core']); render();
   }
   function sessionMenuSheet() {
-    const act = S.core.active; if (!act) return;
+    const act = S.core.active; if (!act) return; const pm = ssPairs(act.entries);
     const rows = act.entries.map((e, ei) => {
       const done = e.sets.filter((s) => s.done).length; const tot = e.sets.filter((s) => !s.skip).length;
       const key = stepKey(buildSteps(act).find((s) => s.ei === ei && s.k !== 'end') || { k: 'end' });
-      return `<button class="li" style="all:unset;cursor:pointer;display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)" data-act="stepJump" data-key="${esc(key)}">${mDot(e.muscle)}<div class="grow"><div class="t">${esc(e.name)}</div><div class="s">${mName(e.muscle)} · ${done}/${tot} séries${e.uni ? ' · gauche/droite' : ''}${(e.warm || []).length ? ` · ${e.warm.filter((w) => w.done).length}/${e.warm.length} chauffe` : ''}</div></div>${done >= tot ? `<span class="tag good">${ic('check')}</span>` : ic('chev')}</button>`;
+      return `<button class="li" style="all:unset;cursor:pointer;display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)" data-act="stepJump" data-key="${esc(key)}">${mDot(e.muscle)}<div class="grow"><div class="t">${esc(e.name)}</div><div class="s">${mName(e.muscle)} · ${done}/${tot} séries${e.uni ? ' · gauche/droite' : ''}${pm[ei] >= 0 ? ` · superset avec ${esc(shortEx(act.entries[pm[ei]].name))}` : ''}${(e.warm || []).length ? ` · ${e.warm.filter((w) => w.done).length}/${e.warm.length} chauffe` : ''}</div></div>${done >= tot ? `<span class="tag good">${ic('check')}</span>` : ic('chev')}</button>`;
     }).join('');
     const d = dayById(act.dayId); const inSession = new Set(act.entries.map((e) => String(e.exId).split('@')[0]));
     const extra = d ? d.exercises.filter((x) => !inSession.has(x.id)) : [];
@@ -3194,7 +3302,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       const nx = steps[i + 1]; act.at = stepKey(nx);
       if (was) { persist(['core']); render(); toast('Série mise à jour'); return; }
       const rest = restAfter(act, steps, i);
-      if (rest > 0 && S.core.settings.autoRest) { act.rest = { dur: rest, t0: Date.now() }; startTimer(rest); }
+      if (rest > 0 && S.core.settings.autoRest) { act.rest = { dur: rest, t0: Date.now(), ss: ssStep(act, steps, i) || undefined }; startTimer(rest); }
       persist(['core']); render(); window.scrollTo(0, 0);
     },
     stepBack: () => {
@@ -3222,7 +3330,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       const cs = curStep(); if (!cs || !cs.e) return;
       cs.e.sets.forEach((s) => { if (!s.done && !(s.L && (s.L.done || s.R.done))) s.skip = true; });
       (cs.e.warm || []).forEach((w) => { if (!w.done) w.done = false; });
-      const steps = buildSteps(cs.act); const nx = steps.find((s, k) => k > 0 && (s.k === 'end' || s.ei > cs.st.ei));
+      const cur = cs.st.ei; const mate = ssPairs(cs.act.entries)[cur];
+      const steps = buildSteps(cs.act); const nx = steps.find((s, k) => k > 0 && (s.k === 'end' || (s.ei !== cur && (s.ei > cur || s.ei === mate) && !(stepData(cs.act, s) || {}).done)));
       cs.act.at = stepKey(nx || steps[steps.length - 1]); cs.act.rest = null;
       persist(['core']); render(); window.scrollTo(0, 0);
     },
@@ -3424,7 +3533,9 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     if (rotationPending()) out.push(alertRow('accent', 'reset', 'Nouveau cycle', 'Je te propose de changer de variante sur quelques exercices pour relancer les sensations.', '<button class="btn sm" data-act="rotOpen">Voir les propositions</button>'));
     const rb = S.core.rebalance;
     if (rb && rb.date && daysBetween(rb.date, t) <= 7) {
-      const txt = rb.v >= 5
+      const txt = rb.v >= 6
+        ? 'Abdos retirés à ta demande : leurs exercices sont désactivés et rangés en fin de séance, réactivables dans Modifier. Déroulé optimisé : le lundi, le développé convergent passe avant le vis-à-vis et les deux exercices à la poulie se suivent ; leg extension + leg curl le mercredi et curl + extension de poignet le vendredi s\'enchaînent en superset (30 s pour changer de poste). Rien n\'est supprimé, tes charges restent.'
+        : rb.v >= 5
         ? 'Moins de fatigue d\'un jour à l\'autre : le curl machine passe du vendredi au lundi (biceps lundi + jeudi, plus jeudi puis vendredi), les extensions triceps du lundi au vendredi, et les relevés de jambes du vendredi sont désactivés pour que les abdos ne travaillent plus trois jours d\'affilée (une série de plus le lundi et le samedi). Rien n\'est supprimé, tes charges restent.'
         : 'Chaque séance tient maintenant dans ton créneau et chaque muscle est dans sa zone hebdo : les dips passent du lundi au vendredi, le développé décliné, le développé épaules et la planche sont désactivés (rien n\'est supprimé, tes charges restent), fentes à 2 séries et marche du jeudi à 20 min.';
       out.push(alertRow('accent', 'reset', 'Programme rééquilibré', txt, '<button class="link" data-tab="progress" data-sub="balance">Voir l\'équilibre ›</button>'));
@@ -3457,20 +3568,22 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     exSwapOrder: (el) => {
       const cs = curStep(); if (!cs || !cs.e || entryStarted(cs.e)) return;
       const { act, e } = cs; const ei = act.entries.indexOf(e); const j = +el.dataset.i; const o = act.entries[j]; if (!o) return;
+      const f = !!o.ss; o.ss = !!e.ss; e.ss = f;
       act.entries[ei] = o; act.entries[j] = e;
       afterEntryChange(act, ei, `${o.name} d'abord, ${e.name} ensuite`);
     },
     exSwapProg: (el) => {
       const cs = curStep(); if (!cs || !cs.e || entryStarted(cs.e)) return;
       const { act, e } = cs; const ei = act.entries.indexOf(e); const fx = findEx(el.dataset.ex); if (!fx) return;
-      const ne = makeEntry(fx.ex, new Set(), act.deload); ne.swappedFrom = e.exId;
+      const ne = makeEntry(fx.ex, new Set(), act.deload); ne.swappedFrom = e.exId; ne.ss = !!e.ss;
       act.entries[ei] = ne;
       afterEntryChange(act, ei, `Remplacé par ${ne.name}`);
     },
     sessAddEx: (el) => {
       const act = S.core.active; const fx = findEx(el.dataset.ex); if (!act || !fx) return;
       const atEnd = act.at === 'end';
-      act.entries.push(makeEntry(fx.ex, new Set(act.entries.filter((x) => x.type === 'wr').map((x) => x.muscle)), act.deload));
+      const added = makeEntry(fx.ex, new Set(act.entries.filter((x) => x.type === 'wr').map((x) => x.muscle)), act.deload); added.ss = false;
+      act.entries.push(added);
       if (atEnd) act.at = stepKey(buildSteps(act).find((s) => s.ei === act.entries.length - 1) || { k: 'end' });
       persist(['core']); render(); sessionMenuSheet(); toast(`${fx.ex.name} ajouté à la fin`);
     },
