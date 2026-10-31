@@ -713,7 +713,7 @@ function EX(id, name, muscle, sets, reps, type, pr, extra) {
 }
 
 /* Version du programme : à incrémenter quand le programme par défaut change (migration des données déjà enregistrées). */
-const PROGRAM_VERSION = 6;
+const PROGRAM_VERSION = 7;
 
 /* Objectif : recomposition jusqu'à 74 kg sec + progression des charges.
    Chaque séance : ~60 min de muscu (chauffe et changements de poste compris) + 20 min de marche inclinée, pour tenir dans 1 h 30.
@@ -722,6 +722,7 @@ const PROGRAM_VERSION = 6;
         abdos lundi / jeudi / samedi (plus trois jours d'affilée), au moins un jour de pause entre deux séances d'un même muscle.
    v6 : abdos retirés à ta demande (désactivés, pas supprimés). Déroulé optimisé : polyarticulaire avant isolation, exercices à la poulie
         à la suite, et deux supersets de muscles opposés (ss = enchaîné avec l'exercice suivant) pour gagner du temps sans perdre de séries.
+   v7 : supersets retirés, la salle est trop pleine pour garder deux postes ; l'option ss reste dans Modifier › exercice.
    rest = repos conseillé en secondes, inc = palier de progression en kg, minutes/speed = cardio. */
 const WALK = (id, minutes, tip) => EX(id, `Marche inclinée · ${minutes} min · inclinaison 12 · 5 km/h`, 'cardio', 1, `${minutes} min`, 'time', null, { minutes, speed: 5, rest: 0, tip: tip || 'Après la muscu, jamais avant : tu gardes ta force pour les charges. Ne tiens pas les barres du tapis, sinon la dépense chute. Environ 250 à 300 kcal pour 30 min à ton poids (estimation).' });
 
@@ -748,7 +749,7 @@ const DEFAULT_PROGRAM = [
       EX('j-velo', 'Échauffement vélo', 'cardio', 1, '5 min', 'time', null, { minutes: 5, rest: 0, tip: 'Monte progressivement l\'intensité.' }),
       EX('j-squat', 'Squat', 'quadris', 4, '6-8', 'wr', 100, { rest: 180, inc: 5, tip: '<b>Ton mouvement de force jambes.</b> Delavier conseille de faire tourner squat, presse et hack squat : ici le squat reste la référence et la presse passe au samedi. Quand tes 4 séries atteignent 8 reps : +5 kg.' }),
       EX('d-sdt', 'Semi soulevé de terre', 'ischios', 3, '5-8', 'wr', 170, { rest: 180, inc: 5, tip: 'Il travaille surtout ischios, fessiers et lombaires ; ton dos est déjà dominant. Dos neutre, ceinture sur les séries lourdes.' }),
-      EX('j-legext', 'Leg extension', 'quadris', 3, '10-15', 'wr', 85, { rest: 60, ss: true, tip: 'Après le squat, pas avant : Delavier explique que la préfatigue d\'un gros muscle fait surtout perdre de la force sur l\'exercice de base. Tiens 1 s en haut.' }),
+      EX('j-legext', 'Leg extension', 'quadris', 3, '10-15', 'wr', 85, { rest: 60, tip: 'Après le squat, pas avant : Delavier explique que la préfatigue d\'un gros muscle fait surtout perdre de la force sur l\'exercice de base. Tiens 1 s en haut.' }),
       EX('j-legcurl', 'Leg curl assis', 'ischios', 3, '10-12', 'wr', null, { src: 'delavier', rest: 60, tip: 'Les ischios plient la jambe (ici) et relèvent le buste (semi soulevé de terre) : Delavier conseille de travailler les deux fonctions.' }),
       EX('j-mollets', 'Mollets machine debout', 'mollets', 3, '12-15', 'wr', 110, { rest: 60, tip: 'Jambes tendues aujourd\'hui (gastrocnémiens), assis le samedi (soléaire). Tiens 1 s étiré en bas, 1 s contracté en haut.' }),
       EX('j-x100', 'Cross-over poulie basse → haute : série de 100 (haut des pecs)', 'pecs', 1, '100', 'wr', null, { src: 'delavier', rest: 0, tip: 'Delavier propose une série de 100 sur un muscle en retard, ni entraîné la veille ni le lendemain : c\'est le cas des pecs le mercredi. Charge très légère, mains qui montent devant le menton, épaules basses.' }),
@@ -785,7 +786,7 @@ const DEFAULT_PROGRAM = [
       EX('e-front', 'Élévation frontale à la poulie', 'epaules', 3, '12-15', 'wr', 15, { enabled: false, rest: 60, tip: 'Désactivée : l\'avant d\'épaule travaille déjà sur tous tes développés. Réactive-la si tu y tiens.' }),
       EX('d-overhead', 'Extension triceps au-dessus de la tête (poulie)', 'triceps', 3, '10-12', 'wr', 25, { rest: 60, tip: 'Bras au-dessus de la tête : étire le long chef, celui qui fait le volume du bras.' }),
       EX('d-ext', 'Extensions triceps à la poulie', 'triceps', 3, '10-12', 'wr', 35, { rest: 60, tip: 'Coudes fixes contre le buste. Les triceps ont déjà travaillé à l\'incliné et aux dips : vise la qualité.' }),
-      EX('e-poignet', 'Curl poignet barre', 'avantbras', 2, '15-20', 'wr', null, { rest: 45, ss: true, tip: 'Enchaîne avec l\'extension de poignet en superset.' }),
+      EX('e-poignet', 'Curl poignet barre', 'avantbras', 2, '15-20', 'wr', null, { rest: 45, tip: 'Avant-bras posés sur le banc, seuls les poignets bougent. L\'extension de poignet vient juste après.' }),
       EX('e-extpoignet', 'Extension poignet barre', 'avantbras', 2, '15-20', 'wr', null, { rest: 45, tip: 'Charge légère, protège les tendons du coude.' }),
       EX('e-abs', 'Relevés de jambes suspendu (bas des abdos)', 'abdos', 3, '12-20', 'reps', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Enroule le bassin vers le haut, ne balance pas les jambes.' }),
       WALK('w-ven', 20),
@@ -832,15 +833,15 @@ const KB = [
 <ul>
 <li><b>Lundi · Pecs force + épaules + biceps.</b> Pecs frais après le dimanche : c'est là que les charges montent (incliné 4 × 6–8, 3 min de repos). Haut des pecs en priorité, 10 séries de pecs : l'incliné lourd, puis la convergente (un autre développé, avant l'isolation), puis les deux exercices à la poulie à la suite (vis-à-vis, élévations latérales). Enfin 2 séries de curl : les biceps ont ensuite 72 h avant le jeudi.</li>
 <li><b>Mardi · Repos</b>. Récupération active : marche dehors si tu veux.</li>
-<li><b>Mercredi · Jambes force + rappel pecs.</b> Squat, semi soulevé de terre, puis leg extension et leg curl en superset (quadriceps et ischios, deux muscles opposés), mollets, puis la série de 100 du haut des pecs.</li>
+<li><b>Mercredi · Jambes force + rappel pecs.</b> Squat, semi soulevé de terre, puis leg extension et leg curl l'un après l'autre (quadriceps puis ischios), mollets, puis la série de 100 du haut des pecs.</li>
 <li><b>Jeudi · Dos + biceps.</b> Dos en entretien une fois par semaine avec des charges lourdes, arrière d'épaule pour la posture. Les lombaires ont travaillé la veille au semi soulevé de terre : buste calé au tirage.</li>
-<li><b>Vendredi · Pecs volume + triceps.</b> charges moyennes, sensations, 4 jours après la séance de force. 11 séries de pecs avec les dips, puis les deux extensions triceps et les avant-bras en léger, curl et extension de poignet en superset.</li>
+<li><b>Vendredi · Pecs volume + triceps.</b> charges moyennes, sensations, 4 jours après la séance de force. 11 séries de pecs avec les dips, puis les deux extensions triceps et les avant-bras en léger, curl puis extension de poignet.</li>
 <li><b>Samedi · Jambes volume + fessiers.</b> Remplace le CrossFit : presse, hip thrust, fentes, ischios, adducteurs, mollets assis. 72 h après le squat.</li>
 <li><b>Dimanche · Repos.</b></li>
 </ul>
 <p><b>Récupération :</b> aucun muscle n'est travaillé en direct deux jours de suite. Biceps lundi et jeudi, triceps le vendredi, pecs lundi et vendredi (plus la série de 100 du mercredi), jambes mercredi et samedi. L'onglet Progrès › Équilibre le vérifie à chaque modification de ta semaine.</p>
 <p><b>Progression :</b> double progression. Reste sur la même charge tant que toutes les séries n'atteignent pas le haut de la fourchette ; ensuite l'app propose +2,5 kg (haut du corps) ou +5 kg (squat, soulevé de terre, presse, hip thrust). <b>Repos :</b> 3 min sur les gros mouvements, 45 s à 1 min 30 sur l'isolation ; le chrono se règle tout seul.</p>
-<p><b>Déroulé de chaque séance :</b> les mouvements lourds et polyarticulaires d'abord, quand tu es frais : c'est sur les exercices faits en premier que la force progresse le plus, alors que la prise de muscle dépend peu de l'ordre. L'isolation vient ensuite, et les exercices au même poste se suivent. <b>Supersets :</b> deux muscles opposés s'enchaînent série par série, 30 s pour changer de poste, puis un repos calculé pour que chaque muscle garde au moins son repos habituel. Tu fais le même nombre de séries en moins de temps. Tu peux en créer d'autres dans Modifier › exercice.</p>
+<p><b>Déroulé de chaque séance :</b> les mouvements lourds et polyarticulaires d'abord, quand tu es frais : c'est sur les exercices faits en premier que la force progresse le plus, alors que la prise de muscle dépend peu de l'ordre. L'isolation vient ensuite, et les exercices au même poste se suivent : moins de déplacements, et tu gardes ta place quand la salle est pleine. <b>Pas de superset</b> pour l'instant : il faudrait occuper deux machines à la fois. Si un jour la salle est calme, tu peux en activer un dans Modifier › exercice : deux muscles opposés enchaînés série par série, 30 s pour changer de poste, puis un repos calculé pour que chaque muscle garde au moins son repos habituel.</p>
 <p><b>Alternance TNT, automatique :</b> la 7e semaine de chaque cycle, l'app divise tes séries par deux en gardant les charges, pour laisser tendons et système nerveux récupérer. Au début du cycle suivant, elle te propose de changer de variante sur un exercice par séance (jamais tes mouvements de référence). Réglable dans Menu › Réglages.</p>`,
     src: 'Construit à partir de la Méthode Delavier 2 (programme avancé 5 jours, rattrapage des pectoraux, alternance TNT, récupération)',
   },
@@ -1287,6 +1288,12 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       out.programVersion = 6;
       out.updatedAt = Date.now();
     }
+    if ((out.programVersion || 1) < 7) {
+      rebalanceV7(out.program);
+      out.rebalance = { v: 7, date: today() };
+      out.programVersion = 7;
+      out.updatedAt = Date.now();
+    }
     /* Une couleur par séance : 2e séance pecs en rose, 2e séance jambes en orange. */
     out.program.forEach((d) => { if (d.id === 'pecs2' && d.plate === 'red') d.plate = 'pink'; if (d.id === 'jambes2' && d.plate === 'yellow') d.plate = 'orange'; });
     /* Fiches exercices (muscles, matériel, consignes, sources) : on complète sans écraser ce que tu as modifié. */
@@ -1388,6 +1395,14 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     if (push && push.warmup === 'Relevés de bassin en échauffement global, rotations externes à l\'élastique, curl marteau léger (tendon du long biceps), puis 2 séries de montée sur l\'incliné. Ceinture sur l\'incliné : elle rigidifie la cage thoracique.') push.warmup = '5 min de vélo ou de rameur léger, rotations externes à l\'élastique, curl marteau léger (tendon du long biceps), puis 2 séries de montée sur l\'incliné. Ceinture sur l\'incliné : elle rigidifie la cage thoracique.';
     if (pull && pull.warmup === 'Crunchs avec rotation en échauffement global, rotations externes à l\'élastique, 2 séries légères de tirage.') pull.warmup = '5 min de rameur léger, rotations externes à l\'élastique, 2 séries légères de tirage.';
     if (j2 && j2.title === 'Jambes volume + fessiers + abdos') j2.title = 'Jambes volume + fessiers';
+  }
+  /* v7 : plus de superset, la salle est trop pleine pour garder deux postes à la fois. Les exercices restent à leur place,
+     chacun avec son repos normal ; l'option reste dans Modifier › exercice. */
+  function rebalanceV7(prog) {
+    prog.forEach((d) => (d.exercises || []).forEach((e) => {
+      if (e.ss === true) e.ss = false;
+      if (e.id === 'e-poignet' && e.tip === 'Enchaîne avec l\'extension de poignet en superset.') e.tip = 'Avant-bras posés sur le banc, seuls les poignets bougent. L\'extension de poignet vient juste après.';
+    }));
   }
   function normalizeMonth(m) {
     m = m || {};
@@ -1857,7 +1872,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     'Arrête une série de pecs quand tu ne les sens plus travailler : c\'est l\'échec sensitif.',
     'Clavicules larges : élargis le banc avec 3 à 5 tapis pour garder les omoplates serrées.',
     'Haut des pecs : poulie basse vers le haut, un bras à la fois, épaule basse et en arrière.',
-    'Superset : deux muscles opposés (quadriceps puis ischios), 30 s pour changer de poste, et chacun garde son repos.',
+    'Salle pleine : garde ton poste pour toutes les séries d\'un exercice ; si la machine est prise, « Changer d\'exercice » propose le même mouvement avec un autre matériel.',
     'Sur la convergente unilatérale, tourne buste et genoux de 30 à 45° du côté qui pousse.',
     'Créatine monohydrate : 3 à 5 g par jour pendant un repas, sans phase de charge.',
     'Une série légère de 50 reps 24 à 48 h après une grosse séance accélère la récupération.',
@@ -2105,7 +2120,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       const tone = !slot ? '' : est > slot ? 'bad' : est > slot - 5 ? 'warn' : 'good';
       return `<div class="dayrow"><span class="plate p-${d.plate}"></span><span class="grow"><b>${esc(DOW_S[dayDows(d)[0]] || '')} · ${esc(shortTitle(d))}</b><br><span class="hint">${nEx} exos · ${sets} séries${en.some((e) => e.minutes != null) ? ' + marche' : ''}${real ? ` · réel ${hm(real.avg)}` : ''}</span></span><span class="tag ${tone}">≈ ${hm(est)}${slot ? ` / ${hm(slot)}` : ''}</span></div>`;
     }).join('');
-    return `<section class="card stack-sm"><div class="eyebrow">Durée des séances face au créneau</div>${rows}<span class="hint">Estimation : séries, repos, séries de chauffe et ≈ 1 min par changement de poste, marche comprise. Vise 5 à 8 exercices de muscu et finis avant la fin du créneau ; si une séance déborde, coupe d'abord une isolation, pas un polyarticulaire du début. Un superset (deux muscles opposés enchaînés, option dans Modifier › exercice) fait aussi gagner du temps. ${srcChips(['zhang2025', 'robbins2010'])}</span></section>`;
+    return `<section class="card stack-sm"><div class="eyebrow">Durée des séances face au créneau</div>${rows}<span class="hint">Estimation : séries, repos, séries de chauffe et ≈ 1 min par changement de poste, marche comprise. Vise 5 à 8 exercices de muscu et finis avant la fin du créneau ; si une séance déborde, coupe d'abord une isolation, pas un polyarticulaire du début. Quand la salle est calme, un superset (deux muscles opposés enchaînés, option dans Modifier › exercice) fait aussi gagner du temps. ${srcChips(['zhang2025', 'robbins2010'])}</span></section>`;
   }
   function progCalendar() {
     const [y, mo] = UI.calMonth.split('-').map(Number);
@@ -2299,7 +2314,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
         <div class="field"><label for="exInc">Palier (${wUnit(ex)})</label><select class="input" id="exInc">${(ex.equip === 'halteres' ? [1, 2, 4] : [1, 2.5, 5]).map((v) => `<option value="${v}" ${incOf(ex) === v ? 'selected' : ''}>+${fmt(v, 1)} kg</option>`).join('')}</select></div>
       </div>
       <div class="li"><div class="grow"><div class="t">Unilatéral (gauche / droite séparés)</div></div>${sw(ex.perSide, 'exPerSide', '', 'Par côté')}</div>
-      <div class="li"><div class="grow"><div class="t">Superset avec l'exercice suivant</div><div class="s">Une série de chaque, 30 s pour changer de poste, puis le repos. Idéal pour deux muscles opposés.</div></div>${sw(!!ex.ss, 'exSS', '', 'Superset')}</div>
+      <div class="li"><div class="grow"><div class="t">Superset avec l'exercice suivant</div><div class="s">Une série de chaque, 30 s pour changer de poste, puis le repos. Idéal pour deux muscles opposés, quand la salle est assez calme pour garder deux postes.</div></div>${sw(!!ex.ss, 'exSS', '', 'Superset')}</div>
       <div class="field"><label for="exNote">Note perso</label><textarea class="input" id="exNote" placeholder="Réglage machine, sensations…">${esc(ex.note || '')}</textarea></div>
       <button class="btn primary block" data-act="saveEx" data-ex="${ex.id}" data-day="${d.id}">Enregistrer</button>
       ${fx ? (UI.confirm === 'delEx' ? `<div class="row wrap"><span class="grow small">Supprimer définitivement cet exercice du programme ?</span><button class="btn sm danger" data-act="deleteEx" data-ex="${ex.id}" data-sure="1">Supprimer</button><button class="btn sm" data-act="confirmOff">Annuler</button></div>` : `<button class="btn ghost danger" data-act="deleteEx" data-ex="${ex.id}">${ic('trash')} Supprimer l'exercice</button>`) : ''}`, () => exEditorSheet(exId, dayId));
@@ -3533,7 +3548,9 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     if (rotationPending()) out.push(alertRow('accent', 'reset', 'Nouveau cycle', 'Je te propose de changer de variante sur quelques exercices pour relancer les sensations.', '<button class="btn sm" data-act="rotOpen">Voir les propositions</button>'));
     const rb = S.core.rebalance;
     if (rb && rb.date && daysBetween(rb.date, t) <= 7) {
-      const txt = rb.v >= 6
+      const txt = rb.v >= 7
+        ? 'Plus de superset : avec la salle pleine, garder deux postes à la fois n\'est pas tenable. Leg extension puis leg curl (mercredi) et les deux exercices de poignet (vendredi) se font l\'un après l\'autre, avec leur repos normal. Le reste ne change pas : abdos retirés (réactivables dans Modifier) et, le lundi, le développé convergent avant le vis-à-vis pour enchaîner les deux exercices à la poulie. Rien n\'est supprimé, tes charges restent.'
+        : rb.v >= 6
         ? 'Abdos retirés à ta demande : leurs exercices sont désactivés et rangés en fin de séance, réactivables dans Modifier. Déroulé optimisé : le lundi, le développé convergent passe avant le vis-à-vis et les deux exercices à la poulie se suivent ; leg extension + leg curl le mercredi et curl + extension de poignet le vendredi s\'enchaînent en superset (30 s pour changer de poste). Rien n\'est supprimé, tes charges restent.'
         : rb.v >= 5
         ? 'Moins de fatigue d\'un jour à l\'autre : le curl machine passe du vendredi au lundi (biceps lundi + jeudi, plus jeudi puis vendredi), les extensions triceps du lundi au vendredi, et les relevés de jambes du vendredi sont désactivés pour que les abdos ne travaillent plus trois jours d\'affilée (une série de plus le lundi et le samedi). Rien n\'est supprimé, tes charges restent.'
