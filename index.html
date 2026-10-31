@@ -689,7 +689,6 @@ a.src:hover { color: var(--accent); border-color: var(--accent); }
 
 const MUSCLES = {
   pecs:      { label: 'Pectoraux',       plate: 'red',    target: [18, 24], prio: true },
-  abdos:     { label: 'Abdominaux',      plate: 'red',    target: [10, 16], prio: true },
   dos:       { label: 'Dos',             plate: 'blue',   target: [8, 12] },
   triceps:   { label: 'Triceps',         plate: 'blue',   target: [6, 10] },
   epaules:   { label: 'Épaules',         plate: 'green',  target: [8, 12] },
@@ -713,7 +712,7 @@ function EX(id, name, muscle, sets, reps, type, pr, extra) {
 }
 
 /* Version du programme : à incrémenter quand le programme par défaut change (migration des données déjà enregistrées). */
-const PROGRAM_VERSION = 7;
+const PROGRAM_VERSION = 8;
 
 /* Objectif : recomposition jusqu'à 74 kg sec + progression des charges.
    Chaque séance : ~60 min de muscu (chauffe et changements de poste compris) + 20 min de marche inclinée, pour tenir dans 1 h 30.
@@ -723,6 +722,8 @@ const PROGRAM_VERSION = 7;
    v6 : abdos retirés à ta demande (désactivés, pas supprimés). Déroulé optimisé : polyarticulaire avant isolation, exercices à la poulie
         à la suite, et deux supersets de muscles opposés (ss = enchaîné avec l'exercice suivant) pour gagner du temps sans perdre de séries.
    v7 : supersets retirés, la salle est trop pleine pour garder deux postes ; l'option ss reste dans Modifier › exercice.
+   v8 : abdos supprimés à ta demande (exercices, objectif, fiche). La marge du lundi et du vendredi va au haut des pecs :
+        une série de plus au vis-à-vis poulie basse et au développé incliné haltères (pecs 11 / 1 / 12 = 24 séries).
    rest = repos conseillé en secondes, inc = palier de progression en kg, minutes/speed = cardio. */
 const WALK = (id, minutes, tip) => EX(id, `Marche inclinée · ${minutes} min · inclinaison 12 · 5 km/h`, 'cardio', 1, `${minutes} min`, 'time', null, { minutes, speed: 5, rest: 0, tip: tip || 'Après la muscu, jamais avant : tu gardes ta force pour les charges. Ne tiens pas les barres du tapis, sinon la dépense chute. Environ 250 à 300 kcal pour 30 min à ton poids (estimation).' });
 
@@ -734,10 +735,9 @@ const DEFAULT_PROGRAM = [
     exercises: [
       EX('p-incline', 'Développé incliné Smith ou barre (banc 20–30°)', 'pecs', 4, '6-8', 'wr', 60, { rest: 180, tip: '<b>Ton mouvement de force pour le haut des pecs.</b> Étude citée par Delavier (Barnett 1995) : à 40°, l\'incliné réduit l\'activation du grand pectoral d\'environ 30 % et augmente celle de l\'avant d\'épaule de 75 %. Donc banc bas (20–30°), omoplates serrées et basses, banc élargi avec 3–5 tapis (clavicules larges). Quand tes 4 séries atteignent 8 reps, +2,5 kg.' }),
       EX('p-conv', 'Développé machine convergente unilatéral', 'pecs', 3, '8-12', 'wr', 35, { perSide: true, rest: 90, tip: 'Tourne buste et genoux de 30 à 45° du côté du bras qui pousse : la convergence augmente et le centre des pecs travaille. Assis, les omoplates restent mieux en place que sur un banc.' }),
-      EX('p-xover', 'Vis-à-vis poulie basse → haute, unilatéral', 'pecs', 3, '12-15', 'wr', null, { src: 'delavier', perSide: true, rest: 60, tip: '<b>Ton exercice haut de pecs n°1.</b> Pour Delavier, le haut des pecs répond surtout à la poulie vis-à-vis, et l\'unilatéral empêche l\'épaule de partir vers l\'avant. Poulie basse, une main à la fois : monte en diagonale jusque devant le menton en croisant légèrement la ligne médiane, tiens 2 s.' }),
+      EX('p-xover', 'Vis-à-vis poulie basse → haute, unilatéral', 'pecs', 4, '12-15', 'wr', null, { src: 'delavier', perSide: true, rest: 60, tip: '<b>Ton exercice haut de pecs n°1.</b> Pour Delavier, le haut des pecs répond surtout à la poulie vis-à-vis, et l\'unilatéral empêche l\'épaule de partir vers l\'avant. Poulie basse, une main à la fois : monte en diagonale jusque devant le menton en croisant légèrement la ligne médiane, tiens 2 s.' }),
       EX('e-lat', 'Élévation latérale à la poulie', 'epaules', 3, '12-15', 'wr', 17.5, { perSide: true, rest: 60, tip: 'Seul exercice d\'épaules de la séance : l\'avant d\'épaule a déjà travaillé sur tous les développés. La poulie garde la tension en bas.' }),
       EX('e-curlm', 'Biceps curl machine', 'biceps', 2, '10-12', 'wr', 45, { rest: 60, tip: 'Tension continue : ne redescends pas jusqu\'au relâchement complet. Placé le lundi pour que les biceps aient 72 h avant le jeudi, au lieu de travailler jeudi puis vendredi.' }),
-      EX('a-abs', 'Relevé de bassin au sol (bas des abdos)', 'abdos', 4, '20-25', 'reps', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Échauffement global : les abdos en séries longues montent la température du corps plus vite que le cardio (Méthode 3). Décolle le bassin, ne lance pas les cuisses.' }),
       WALK('w-lun', 20),
     ],
   },
@@ -768,7 +768,6 @@ const DEFAULT_PROGRAM = [
       EX('e-y', 'Élévation en Y', 'epaules', 2, '12-15', 'wr', 14, { perSide: true, rest: 60, tip: 'Bas des trapèzes : stabilise les omoplates, ce qui aide directement tes pecs.' }),
       EX('e-pupitre', 'Curl pupitre unilatéral', 'biceps', 3, '8-12', 'wr', 20, { perSide: true, rest: 75, tip: 'Commence par le bras faible. Ne tends pas complètement en bas : protège le tendon distal du biceps.' }),
       EX('e-marteau', 'Curl marteau', 'biceps', 3, '10-12', 'wr', 24, { rest: 60, tip: 'Prise neutre = brachial et brachio-radial, l\'épaisseur du bras.' }),
-      EX('d-abs', 'Crunch avec rotation (obliques)', 'abdos', 3, '20', 'reps', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Angle « rotation » de tes abdos. Coude vers le genou opposé à mi-chemin, tiens 2 s, ne repose pas la tête.' }),
       WALK('w-jeu', 20),
     ],
   },
@@ -777,18 +776,17 @@ const DEFAULT_PROGRAM = [
     warmup: '5 min de vélo ou de rameur léger, rotations à l\'élastique, curl marteau léger, puis 2 séries légères de développé haltères.',
     note: 'Séance volume : charges moyennes, contraction et sensations, 4 jours après la séance de force.',
     exercises: [
-      EX('v-incl', 'Développé incliné haltères (30°)', 'pecs', 3, '10-12', 'wr', null, { src: 'delavier', rest: 120, tip: 'Charge moyenne, mains qui se rapprochent en haut. Arrête à l\'échec sensitif. Ne descends pas les haltères au maximum : le haut des pecs est le plus exposé aux déchirures.' }),
-      EX('p-dips', 'Dips lestés ou machine', 'pecs', 3, '8-10', 'wr', 70, { rest: 120, tip: 'Déplacés du lundi au vendredi : le lundi passe à 10 séries de pecs et ta séance tient dans le créneau. Buste penché en avant pour les pecs. Réduis l\'amplitude si l\'avant d\'épaule tire. Variante relance : superlent, 4 reps en montant en 10 s.' }),
+      EX('v-incl', 'Développé incliné haltères (30°)', 'pecs', 4, '10-12', 'wr', null, { src: 'delavier', rest: 120, tip: 'Charge moyenne, mains qui se rapprochent en haut. Arrête à l\'échec sensitif. Ne descends pas les haltères au maximum : le haut des pecs est le plus exposé aux déchirures.' }),
+      EX('p-dips', 'Dips lestés ou machine', 'pecs', 3, '8-10', 'wr', 70, { rest: 120, tip: 'Déplacés du lundi au vendredi : le lundi garde 11 séries de pecs et ta séance tient dans le créneau. Buste penché en avant pour les pecs. Réduis l\'amplitude si l\'avant d\'épaule tire. Variante relance : superlent, 4 reps en montant en 10 s.' }),
       EX('p-ecartes', 'Écartés machine', 'pecs', 3, '12-15', 'wr', 60, { rest: 60, tip: 'Postfatigue juste après le développé : croise presque les bras et tiens 2 s la contraction.' }),
       EX('v-xover', 'Vis-à-vis mains croisées (intérieur des pecs)', 'pecs', 2, '15-20', 'wr', null, { src: 'delavier', rest: 60, tip: 'Plus les mains se rapprochent et se croisent, plus le centre des pecs travaille (Méthode 3). Léger, contraction maximale.' }),
       EX('p-decline', 'Développé décliné haltères ou Smith', 'pecs', 2, '10-12', 'wr', 40, { enabled: false, rest: 90, tip: 'Désactivé : les dips du vendredi travaillent déjà le bas des pecs, qui n\'est pas ta priorité. Réactive-le à la place des dips si tu préfères.' }),
-      EX('e-smith', 'Smith développé militaire', 'epaules', 3, '6-10', 'wr', 50, { enabled: false, rest: 150, tip: 'Désactivé : l\'avant d\'épaule travaille déjà sur tes 22 séries de développés et tes épaules dominent tes pecs. Il te fait gagner 15 min le vendredi. Mouvement de force des épaules, en entretien. Barre au niveau du menton. Développé épaules = 14 % des blessures : pas d\'ego sur la charge.' }),
+      EX('e-smith', 'Smith développé militaire', 'epaules', 3, '6-10', 'wr', 50, { enabled: false, rest: 150, tip: 'Désactivé : l\'avant d\'épaule travaille déjà sur tous tes développés et tes épaules dominent tes pecs. Il te fait gagner 15 min le vendredi. Mouvement de force des épaules, en entretien. Barre au niveau du menton. Développé épaules = 14 % des blessures : pas d\'ego sur la charge.' }),
       EX('e-front', 'Élévation frontale à la poulie', 'epaules', 3, '12-15', 'wr', 15, { enabled: false, rest: 60, tip: 'Désactivée : l\'avant d\'épaule travaille déjà sur tous tes développés. Réactive-la si tu y tiens.' }),
       EX('d-overhead', 'Extension triceps au-dessus de la tête (poulie)', 'triceps', 3, '10-12', 'wr', 25, { rest: 60, tip: 'Bras au-dessus de la tête : étire le long chef, celui qui fait le volume du bras.' }),
       EX('d-ext', 'Extensions triceps à la poulie', 'triceps', 3, '10-12', 'wr', 35, { rest: 60, tip: 'Coudes fixes contre le buste. Les triceps ont déjà travaillé à l\'incliné et aux dips : vise la qualité.' }),
       EX('e-poignet', 'Curl poignet barre', 'avantbras', 2, '15-20', 'wr', null, { rest: 45, tip: 'Avant-bras posés sur le banc, seuls les poignets bougent. L\'extension de poignet vient juste après.' }),
       EX('e-extpoignet', 'Extension poignet barre', 'avantbras', 2, '15-20', 'wr', null, { rest: 45, tip: 'Charge légère, protège les tendons du coude.' }),
-      EX('e-abs', 'Relevés de jambes suspendu (bas des abdos)', 'abdos', 3, '12-20', 'reps', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Enroule le bassin vers le haut, ne balance pas les jambes.' }),
       WALK('w-ven', 20),
     ],
   },
@@ -803,8 +801,6 @@ const DEFAULT_PROGRAM = [
       EX('j2-curl', 'Leg curl allongé', 'ischios', 3, '10-15', 'wr', null, { rest: 60, tip: 'Hanches plaquées au banc. Variante relance : superlent, 4 reps en montant en 10 s.' }),
       EX('j-add', 'Adducteurs machine', 'adducteurs', 3, '12-15', 'wr', 30, { rest: 60, tip: 'Amplitude contrôlée, pas d\'à-coups en position d\'écart maximal.' }),
       EX('j2-mollets', 'Mollets assis', 'mollets', 3, '15-20', 'wr', null, { rest: 45, tip: 'Assis, jambes pliées : c\'est le soléaire qui travaille. Delavier conseille d\'alterner avec les mollets jambes tendues.' }),
-      EX('p-crunch', 'Crunch machine (haut des abdos)', 'abdos', 4, '15-20', 'wr', null, { enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Souffle en t\'enroulant, tête penchée en avant, regarde tes abdos. Ne tire pas avec les bras.' }),
-      EX('c-planche', 'Gainage planche', 'abdos', 3, '45 s', 'time', null, { src: 'delavier', enabled: false, rest: 45, tip: 'Désactivé à ta demande : abdos retirés du programme. Réactive-le si tu veux les reprendre. Méthode 3 : la planche et ses variantes pour le gainage statique. Bassin aligné, abdos et fessiers serrés. Note la durée.' }),
       WALK('w-sam', 20),
     ],
   },
@@ -813,17 +809,16 @@ const DEFAULT_PROGRAM = [
 /* ---------- Méthode Delavier : synthèses (reformulées) des 6 livres ---------- */
 const KB = [
   {
-    id: 'morpho', plate: 'red', title: 'Ta morphologie, lue avec Delavier', tags: 'morphologie clavicules épaules dos pecs haut des pecs abdos points faibles',
+    id: 'morpho', plate: 'red', title: 'Ta morphologie, lue avec Delavier', tags: 'morphologie clavicules épaules dos pecs haut des pecs point faible',
     body: `
-<p>D'après tes photos et ta description : <b>clavicules larges</b>, deltoïdes (surtout le faisceau latéral) et bras très développés, <b>dos dominant</b>, pecs et abdos en retard. 1,73–1,74 m pour ~70 kg, soit un IMC d'environ 23 : gabarit sec, de quoi prendre du muscle sans prendre de gras.</p>
+<p>D'après tes photos et ta description : <b>clavicules larges</b>, deltoïdes (surtout le faisceau latéral) et bras très développés, <b>dos dominant</b>, pecs en retard. 1,73–1,74 m pour ~70 kg, soit un IMC d'environ 23 : gabarit sec, de quoi prendre du muscle sans prendre de gras.</p>
 <ul>
 <li><b>Compétition intermusculaire.</b> Sur un exercice de base qui fait travailler bras + épaules + pecs, ce sont les muscles les plus forts qui prennent le travail. Chez toi, épaules et triceps « volent » les développés aux pecs.</li>
 <li><b>Clavicules larges.</b> Plus on est large d'épaules, plus il est dur de garder les omoplates serrées sur un banc. Les épaules basculent vers l'avant et poussent à la place des pecs. Les bancs du commerce (25–35 cm) sont trop étroits pour ta carrure.</li>
 <li><b>Haut des pecs en retard.</b> Delavier explique que le recrutement du grand pectoral se fait par zones. En bilatéral, les deltoïdes se projettent vers l'avant et prennent le travail du faisceau claviculaire ; plus le tendon du pec s'insère haut sur le bras, plus ce faisceau est dur à étirer et à sentir. L'incliné ne suffit donc pas : il faut de l'unilatéral et de la poulie basse vers le haut.</li>
 <li><b>Photos du 25 octobre (torse nu).</b> Elles confirment l'analyse : épaules larges et rondes, bras épais, haut du dos et trapèzes développés. Le bas des pecs se dessine mais le haut reste plat sous la clavicule. Pas encore de tablette, avec un peu de gras sur le bas du ventre et les flancs : d'où l'objectif 74 kg sec et la marche inclinée.</li>
-<li><b>Abdos.</b> Les muscles peu sollicités dans la jeunesse partent en retard ; le volume et la fréquence comptent plus que la charge.</li>
 </ul>
-<p><b>Ce que l'app applique :</b> pecs 3 fois par semaine (lourd le lundi, série de 100 le mercredi, volume le vendredi), jambes 2 fois, marche inclinée 5 fois, dos et épaules en entretien, élévation frontale remplacée par l'arrière d'épaule, un conseil technique sur chaque exercice. Les abdos sont retirés du programme à ta demande (exercices désactivés, réactivables). Les barres « Équilibre » dans Progrès vérifient tout ça.</p>`,
+<p><b>Ce que l'app applique :</b> pecs 3 fois par semaine (lourd le lundi, série de 100 le mercredi, volume le vendredi), jambes 2 fois, marche inclinée 5 fois, dos et épaules en entretien, élévation frontale remplacée par l'arrière d'épaule, un conseil technique sur chaque exercice. Les barres « Équilibre » dans Progrès vérifient tout ça.</p>`,
     src: 'Méthode Delavier 2, p. 16–19 et 166–169 · Méthode Delavier 3, « Cibler les pectoraux »',
   },
   {
@@ -831,11 +826,11 @@ const KB = [
     body: `
 <p>Chaque séance = environ 55 min de muscu + 20 à 30 min de marche inclinée, pour tenir dans un créneau de 1 h 30.</p>
 <ul>
-<li><b>Lundi · Pecs force + épaules + biceps.</b> Pecs frais après le dimanche : c'est là que les charges montent (incliné 4 × 6–8, 3 min de repos). Haut des pecs en priorité, 10 séries de pecs : l'incliné lourd, puis la convergente (un autre développé, avant l'isolation), puis les deux exercices à la poulie à la suite (vis-à-vis, élévations latérales). Enfin 2 séries de curl : les biceps ont ensuite 72 h avant le jeudi.</li>
+<li><b>Lundi · Pecs force + épaules + biceps.</b> Pecs frais après le dimanche : c'est là que les charges montent (incliné 4 × 6–8, 3 min de repos). Haut des pecs en priorité, 11 séries de pecs : l'incliné lourd, puis la convergente (un autre développé, avant l'isolation), puis les deux exercices à la poulie à la suite (4 séries de vis-à-vis, puis les élévations latérales). Enfin 2 séries de curl : les biceps ont ensuite 72 h avant le jeudi.</li>
 <li><b>Mardi · Repos</b>. Récupération active : marche dehors si tu veux.</li>
 <li><b>Mercredi · Jambes force + rappel pecs.</b> Squat, semi soulevé de terre, puis leg extension et leg curl l'un après l'autre (quadriceps puis ischios), mollets, puis la série de 100 du haut des pecs.</li>
 <li><b>Jeudi · Dos + biceps.</b> Dos en entretien une fois par semaine avec des charges lourdes, arrière d'épaule pour la posture. Les lombaires ont travaillé la veille au semi soulevé de terre : buste calé au tirage.</li>
-<li><b>Vendredi · Pecs volume + triceps.</b> charges moyennes, sensations, 4 jours après la séance de force. 11 séries de pecs avec les dips, puis les deux extensions triceps et les avant-bras en léger, curl puis extension de poignet.</li>
+<li><b>Vendredi · Pecs volume + triceps.</b> charges moyennes, sensations, 4 jours après la séance de force. 12 séries de pecs, dips compris, dont 4 de développé incliné haltères pour le haut ; puis les deux extensions triceps et les avant-bras en léger, curl puis extension de poignet.</li>
 <li><b>Samedi · Jambes volume + fessiers.</b> Remplace le CrossFit : presse, hip thrust, fentes, ischios, adducteurs, mollets assis. 72 h après le squat.</li>
 <li><b>Dimanche · Repos.</b></li>
 </ul>
@@ -874,20 +869,6 @@ const KB = [
 </ul>
 <p>Si les pecs ne répondent pas après 6 à 8 semaines, passe au cycle complet de rattrapage (fiche « Programmes de référence »).</p>`,
     src: 'Méthode Delavier 2, p. 39, 166–171 · Méthode Delavier 3, p. 131–143',
-  },
-  {
-    id: 'abdos', plate: 'red', title: 'Abdominaux : trois angles', tags: 'abdos abdominaux crunch relevé bassin rotation obliques respiration cambrure',
-    body: `
-<ul>
-<li><b>Répartition :</b> 40 % des séries pour le bas, 30 % pour le haut, 30 % pour les rotations. Minimum : 4 séries de 25, au moins 2 fois par semaine. Plus tu en fais souvent, plus chaque séance se spécialise sur un angle (c'est ce que fait ton programme : bas le lundi, rotations le jeudi, bas le vendredi, haut + gainage le samedi).</li>
-<li><b>Bas des abdos :</b> son rôle est de décoller le bassin, pas de lever les cuisses. Si tu lèves les jambes, le psoas fait le travail et cambre le dos.</li>
-<li><b>Jamais le dos cambré.</b> Les exercices qui cambrent (ciseaux, jambes tenues en l'air) brûlent mais travaillent mal les abdos.</li>
-<li><b>Respiration :</b> souffle doucement en t'enroulant, inspire en redescendant. Bloquer transfère la tension vers le psoas.</li>
-<li><b>Tête vers l'avant,</b> regard sur les abdos : la tête en arrière contracte les lombaires par réflexe.</li>
-<li><b>Progression :</b> mains le long du corps → sur la poitrine → sur les épaules → derrière la tête → bras tendus derrière, puis un disque sur la poitrine.</li>
-<li><b>Visibilité :</b> au-delà de ~15 % de masse grasse, pas de tablette visible ; mais des abdos plus épais se voient plus tôt, et un muscle actif puise dans la graisse qui le recouvre.</li>
-</ul>`,
-    src: 'Méthode Delavier 2, p. 300–311',
   },
   {
     id: 'dominants', plate: 'blue', title: 'Épaules et dos dominants', tags: 'épaules dos entretien frontale oiseau arrière tension continue blessure équilibre',
@@ -933,7 +914,7 @@ const KB = [
     id: 'echauffement', plate: 'grey', title: 'Échauffement et blessures', tags: 'échauffement blessure tendon biceps infra-épineux épaule déchirure pectoral température crossfit',
     body: `
 <ul>
-<li><b>Trois phases :</b> réchauffement global (des abdos en séries longues plutôt que du cardio), puis les maillons faibles (tendon du long biceps, infra- et supra-épineux, avant-bras, genoux), puis montée progressive sur le premier exercice.</li>
+<li><b>Trois phases :</b> réchauffement global du corps, puis les maillons faibles (tendon du long biceps, infra- et supra-épineux, avant-bras, genoux), puis montée progressive sur le premier exercice.</li>
 <li>Chaque degré gagné dans le muscle donne environ 2,8 % de force. Reste couvert entre les séries ; en hiver les blessures doublent chez les athlètes.</li>
 <li>Causes des blessures : mauvais échauffement (45 %), surestimation de ses capacités (35 %). Exercices les plus en cause : développé couché (16 %), développé épaules (14 %), squat (10 %).</li>
 <li><b>Déchirure du grand pectoral :</b> surtout à l'incliné lourd avec un grand étirement. Ne descends pas les haltères au maximum.</li>
@@ -982,13 +963,12 @@ const KB = [
     src: 'Musculation pour le fight et les sports de combat (conditioning) · repères de dépense hors livres',
   },
   {
-    id: 'relance', plate: 'grey', title: 'Relancer la progression', tags: 'progression plateau relance amplitude belt squat gainage planche élastique',
+    id: 'relance', plate: 'grey', title: 'Relancer la progression', tags: 'progression plateau relance amplitude belt squat élastique',
     body: `
 <ul>
 <li>Change d'exercice quand une sensation « grille » : le même circuit nerveux finit par s'user.</li>
 <li>Cherche l'amplitude qui fait travailler le muscle, pas l'étirement maximal qui use les tendons.</li>
 <li>Épaules : élargir <i>et</i> protéger (rotations à l'élastique avant chaque séance haut du corps).</li>
-<li>Abdos : ajoute du gainage (planche et variantes) et du crunch debout à l'élastique pour le gainage dynamique.</li>
 <li>Quadriceps sans stress lombaire : belt squat, squat machine, presse verticale.</li>
 <li><b>Progression dans l'app :</b> quand toutes tes séries atteignent le haut de la fourchette de reps, l'app propose +2,5 kg la fois suivante.</li>
 </ul>`,
@@ -997,7 +977,7 @@ const KB = [
   {
     id: 'programmes', plate: 'grey', title: 'Programmes de référence', tags: 'programme rattrapage pectoraux 4 jours 5 jours cycle',
     body: `
-<p><b>Cycle de rattrapage des pectoraux</b> (4 à 8 semaines, puis au moins 1 mois normal). En échauffement : 3–4 séries de 20–25 d'abdos.</p>
+<p><b>Cycle de rattrapage des pectoraux</b> (4 à 8 semaines, puis au moins 1 mois normal).</p>
 <ul>
 <li><b>J1 pecs lourd :</b> développé couché avec négatives accentuées (4–6 × 8–10), dips en superlent (2–4 × 4), écartés (1–2 × 20–25).</li>
 <li><b>J2 :</b> presse, leg curl assis, tractions, élévations latérales, curls poulie.</li>
@@ -1061,7 +1041,6 @@ const SOURCES = {
    polyarticulaire ou non (pour la chauffe), consignes courtes et sources. Fusionnée sans écraser tes modifications. */
 const M = (targets, equip, compound, cues, refs) => ({ targets, equip, compound, cues, refs });
 const EXMETA = {
-  'a-abs': M('Bas du grand droit de l\'abdomen', 'pdc', false, ['Bas du dos plaqué au sol', 'Enroule le bassin vers les côtes, ne lance pas les jambes', 'Souffle en montant, inspire en redescendant'], ['delavier2']),
   'p-incline': M('Haut du grand pectoral, deltoïde antérieur, triceps', 'smith', true, ['Banc à 20–30°, omoplates serrées et basses', 'Barre vers le haut de la poitrine, coudes à ~60° du buste', 'Inspire en descendant, souffle en poussant'], ['rodriguez2020', 'delavier3']),
   'p-xover': M('Haut du grand pectoral', 'poulie', false, ['Poulie basse, épaule basse et en arrière', 'Monte en diagonale jusque devant le menton', 'Tiens 1 à 2 s en contraction'], ['delavier2', 'delavier3']),
   'p-conv': M('Grand pectoral (centre), triceps', 'machine', true, ['Tourne buste et genoux de 30–45° vers le bras qui pousse', 'Ramène la main vers le centre en fin de poussée', 'Omoplate plaquée au dossier'], ['delavier3']),
@@ -1075,7 +1054,6 @@ const EXMETA = {
   'j-legcurl': M('Ischio-jambiers', 'machine', false, ['Genou aligné sur l\'axe de la machine', 'Plie complètement, 1 s de contraction', 'Ne décolle pas les hanches'], ['delavier2']),
   'j-mollets': M('Gastrocnémiens (mollets)', 'machine', false, ['Jambes tendues', '1 s étiré en bas, 1 s contracté en haut', 'Pas de rebond'], ['delavier2']),
   'j-x100': M('Haut du grand pectoral', 'poulie', false, ['Charge très légère', 'Mains qui montent devant le menton', 'Enchaîne jusqu\'à 100, micro-pauses autorisées'], ['delavier2']),
-  'd-abs': M('Obliques, grand droit', 'pdc', false, ['Coude vers le genou opposé, à mi-course', 'Tiens 2 s', 'Ne repose pas la tête entre les reps'], ['delavier2']),
   'd-tractions': M('Grand dorsal, biceps, rhomboïdes', 'machine', true, ['Poitrine sortie, tire les coudes vers les hanches', 'Bloque 2 s en bas', 'Ne relâche pas complètement en haut'], ['delavier2']),
   'd-horizontal': M('Grand dorsal, rhomboïdes, trapèzes moyens', 'machine', true, ['Buste droit contre l\'appui', 'Poignée contre le ventre 2 s', 'Reviens sans arrondir le dos'], ['delavier2']),
   'd-pullover': M('Grand dorsal, grand rond', 'poulie', false, ['Bras quasi tendus', 'Descends jusqu\'aux cuisses en serrant les dorsaux', 'Remonte lentement'], ['delavier2']),
@@ -1083,7 +1061,6 @@ const EXMETA = {
   'e-y': M('Bas des trapèzes, deltoïdes', 'halteres', false, ['Bras en Y à 45°', 'Pouces vers le haut', 'Monte sans hausser les épaules'], ['delavier3']),
   'e-pupitre': M('Biceps, brachial', 'halteres', false, ['Bras bien plaqué au pupitre', 'Ne tends pas complètement en bas', 'Monte en 1 s, descends en 2 s, pense au biceps'], ['delavierBras', 'schoenfeld2018focus']),
   'e-marteau': M('Brachial, brachio-radial, biceps', 'halteres', false, ['Prise neutre, pouces vers le haut', 'Coudes fixes', 'Pas de balancier'], ['delavierBras']),
-  'e-abs': M('Bas des abdominaux', 'pdc', false, ['Enroule le bassin vers le haut', 'Pas de balancier', 'Descente lente'], ['delavier2']),
   'v-incl': M('Haut du grand pectoral, deltoïde antérieur', 'halteres', true, ['Banc à 30°', 'Haltères qui se rapprochent en haut', 'Ne descends pas au-delà d\'un étirement confortable'], ['rodriguez2020', 'delavier3']),
   'p-ecartes': M('Grand pectoral', 'machine', false, ['Coudes légèrement fléchis et fixes', 'Croise presque les bras, tiens 2 s', 'Retour contrôlé, sans étirement extrême'], ['delavier2']),
   'v-xover': M('Centre du grand pectoral', 'poulie', false, ['Mains qui se croisent devant toi', 'Charge légère', 'Contraction maximale 2 s'], ['delavier3']),
@@ -1100,8 +1077,6 @@ const EXMETA = {
   'j2-curl': M('Ischio-jambiers', 'machine', false, ['Hanches plaquées au banc', 'Plie complètement', 'Descente en 2 s'], ['delavier2']),
   'j-add': M('Adducteurs', 'machine', false, ['Dos plaqué', 'Ferme lentement', 'Pas d\'à-coup en écart maximal'], ['pratique']),
   'j2-mollets': M('Soléaire', 'machine', false, ['Assis, genoux à 90°', '1 s étiré, 1 s contracté', 'Séries longues'], ['delavier2']),
-  'p-crunch': M('Haut du grand droit', 'machine', false, ['Enroule la colonne, regarde tes abdos', 'Souffle en t\'enroulant', 'Ne tire pas avec les bras'], ['delavier2']),
-  'c-planche': M('Transverse, grand droit, gainage', 'pdc', false, ['Corps aligné de la tête aux talons', 'Serre abdos et fessiers', 'Respire normalement'], ['delavier3']),
 };
 ['w-lun', 'w-mer', 'w-jeu', 'w-ven', 'w-sam'].forEach((id) => {
   EXMETA[id] = M('Cardio, dépense énergétique', 'cardio', false, ['Inclinaison 12, vitesse 5 km/h', 'Ne tiens pas les barres du tapis', 'Respiration régulière : tu dois pouvoir parler'], ['schumann2021', 'pratique']);
@@ -1143,7 +1118,6 @@ const EXALT = {
   'j2-curl': [['Leg curl assis', 'machine', false], ['Leg curl debout unilatéral', 'machine', false]],
   'j-add': [['Adducteurs à la poulie', 'poulie', false]],
   'j2-mollets': [['Mollets debout machine', 'machine', false]],
-  'p-crunch': [['Crunch à la poulie haute', 'poulie', false], ['Crunch au sol lesté', 'pdc', false]],
 };
 /* Mouvements de référence : jamais changés par la rotation, pour mesurer ta progression. */
 const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
@@ -1227,7 +1201,6 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       { id: 'g6', type: 'mesure', field: 'taille', label: 'Tour de taille stable (perte de gras)', target: null, start: null, unit: 'cm', deadline: '', lower: true, suggested: true },
       { id: 'g2', type: 'pr', exId: 'p-incline', label: 'Développé incliné', target: 70, start: 60, unit: 'kg', deadline: '2027-03-31', suggested: true },
       { id: 'g7', type: 'pr', exId: 'j-squat', label: 'Squat', target: 120, start: 100, unit: 'kg', deadline: '2027-06-30', suggested: true },
-      { id: 'g4', type: 'habit', muscle: 'abdos', label: 'Séances avec abdos cette semaine', target: 4, start: 0, unit: 'séances', deadline: '', suggested: true },
       { id: 'g8', type: 'habit', muscle: 'cardio', label: 'Marches inclinées cette semaine', target: 5, start: 0, unit: 'marches', deadline: '', suggested: true },
       { id: 'g5', type: 'mesure', field: 'poitrine', label: 'Tour de poitrine', target: null, start: null, unit: 'cm', deadline: '', suggested: true },
     ];
@@ -1292,6 +1265,14 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       rebalanceV7(out.program);
       out.rebalance = { v: 7, date: today() };
       out.programVersion = 7;
+      out.updatedAt = Date.now();
+    }
+    if ((out.programVersion || 1) < 8) {
+      rebalanceV8(out.program);
+      /* L'objectif « séances avec abdos » part avec eux. Tes séances déjà faites gardent leurs séries d'abdos dans l'historique. */
+      out.goals = out.goals.filter((g) => !(g.type === 'habit' && (g.muscle || 'abdos') === 'abdos'));
+      out.rebalance = { v: 8, date: today() };
+      out.programVersion = 8;
       out.updatedAt = Date.now();
     }
     /* Une couleur par séance : 2e séance pecs en rose, 2e séance jambes en orange. */
@@ -1403,6 +1384,21 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       if (e.ss === true) e.ss = false;
       if (e.id === 'e-poignet' && e.tip === 'Enchaîne avec l\'extension de poignet en superset.') e.tip = 'Avant-bras posés sur le banc, seuls les poignets bougent. L\'extension de poignet vient juste après.';
     }));
+  }
+  /* v8 : abdos supprimés à ta demande, cette fois pour de bon (plus désactivés : retirés du programme).
+     La marge du lundi et du vendredi va au haut des pecs, ton point faible : une série de plus au vis-à-vis
+     et au développé incliné haltères, soit 24 séries de pecs par semaine, le haut de la zone. */
+  function rebalanceV8(prog) {
+    const DIPS_OLD = 'Déplacés du lundi au vendredi : le lundi passe à 10 séries de pecs';
+    prog.forEach((d) => {
+      if (!Array.isArray(d.exercises)) return;
+      d.exercises = d.exercises.filter((e) => e.muscle !== 'abdos');
+      d.exercises.forEach((e) => {
+        if ((e.id === 'p-xover' || e.id === 'v-incl') && e.sets === 3) e.sets = 4;
+        if (e.id === 'p-dips' && typeof e.tip === 'string') e.tip = e.tip.replace(DIPS_OLD, 'Déplacés du lundi au vendredi : le lundi garde 11 séries de pecs');
+        if (e.id === 'e-smith' && typeof e.tip === 'string') e.tip = e.tip.replace('travaille déjà sur tes 22 séries de développés', 'travaille déjà sur tous tes développés');
+      });
+    });
   }
   function normalizeMonth(m) {
     m = m || {};
@@ -1607,9 +1603,6 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const start = mondayOf(today());
     return allLogs().filter((l) => l.date >= start && l.entries.some((e) => e.muscle === muscle && e.sets.some((s) => s.done))).length;
   }
-  const absSessionsThisWeek = () => sessionsThisWeek('abdos');
-  /* Abdos au programme ? (désactivés depuis la v6 : la carte et l'objectif d'abdos restent dans tes données, juste masqués) */
-  const absPlanned = () => P().some((d) => d.exercises.some((e) => e.enabled && e.muscle === 'abdos'));
   function goalProgress(g) {
     let cur = null;
     if (g.type === 'poids') cur = latestWeight();
@@ -1617,7 +1610,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     else if (g.type === 'mesure') cur = latestMeasure(g.field);
     let target = g.target; let start = g.start;
     if (g.type === 'mesure' && g.lower && target == null) { const f = allBody().find((x) => x[g.field]); if (f) { target = f[g.field]; start = f[g.field]; } }
-    else if (g.type === 'habit') cur = sessionsThisWeek(g.muscle || 'abdos');
+    else if (g.type === 'habit') cur = sessionsThisWeek(g.muscle || 'cardio');
     else cur = g.current != null ? g.current : null;
     let pct = null;
     if (cur != null && target != null) {
@@ -1933,7 +1926,6 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <section class="sec">${secHead('Suivi')}<div class="grid2">
         ${stepsCard()}
         <div class="card stack-sm"><div class="eyebrow">Poids</div><div class="stat"><span class="v">${w ? fmt(w, 1) : '—'}<small>kg</small></span><span class="k">${delta != null ? `${delta >= 0 ? '+' : ''}${fmt(delta, 1)} kg depuis le début` : `${wk.length} pesée(s) cette semaine`}</span></div><button class="btn sm" data-act="bodySheet">${ic('plus')} Pesée</button></div>
-        ${absPlanned() || absSessionsThisWeek() ? `<div class="card stack-sm"><div class="eyebrow">Abdos cette semaine</div><div class="stat"><span class="v">${absSessionsThisWeek()}<small>/ ${(S.core.goals.find((g) => g.type === 'habit' && (g.muscle || 'abdos') === 'abdos') || { target: 4 }).target}</small></span><span class="k">séances (minimum Delavier : 2)</span></div><button class="btn sm" data-tab="progress" data-sub="balance">Équilibre</button></div>` : ''}
       </div></section>
       <section class="sec">${secHead('Objectifs', '<button class="link" data-tab="progress" data-sub="goals">Tout voir ›</button>')}<div class="card stack">${goals || '<p class="muted small">Aucun objectif.</p>'}</div></section>
       <section class="sec">${secHead('Conseil Delavier du jour')}<div class="card tip-card stack-sm"><p style="margin:0">${esc(tip)}</p><button class="link" data-act="openMethod" style="justify-self:start">Ouvrir la méthode ›</button></div></section>
@@ -2057,7 +2049,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <section class="card"><div class="eyebrow">Historique</div>${list || '<div class="empty">Aucune pesée.</div>'}</section>`;
   }
   /* Les objectifs de mensuration déjà créés restent dans tes données, ils ne sont simplement plus affichés. */
-  const shownGoals = () => S.core.goals.filter((g) => g.type !== 'mesure' && !(g.type === 'habit' && (g.muscle || 'abdos') === 'abdos' && !absPlanned()));
+  const shownGoals = () => S.core.goals.filter((g) => g.type !== 'mesure');
   function progGoals() {
     return `${shownGoals().map((g) => `<section class="card stack-sm"><div class="row between"><span class="eyebrow">${esc({ poids: 'Poids', pr: 'Charge', habit: 'Habitude', libre: 'Libre' }[g.type] || '')}${g.deadline ? ` · avant le ${esc(fmtDate(g.deadline, { day: 'numeric', month: 'long', year: 'numeric' }))}` : ''}</span><button class="icon-btn" data-act="goalSheet" data-id="${g.id}" aria-label="Modifier">${ic('edit')}</button></div>${goalRow(g)}</section>`).join('')}
       <button class="btn block" data-act="goalSheet">${ic('plus')} Nouvel objectif</button>
@@ -2078,8 +2070,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       <div class="legend"><span><i class="bar" style="width:18px;height:8px;display:inline-block;background:color-mix(in srgb,var(--good) 22%,transparent);border:1.5px solid var(--good)"></i> zone cible hebdo</span><span><i style="width:18px;height:6px;border-radius:3px;display:inline-block;background:var(--accent)"></i> point faible</span></div></section>
       ${progRecovery()}
       ${progDays()}
-      <section class="card flat small stack-sm"><b>Pourquoi ces cibles ?</b><span>${plan.abdos ? 'Pecs et abdos ont une zone plus haute : ce sont tes points faibles' : 'Les pecs ont une zone plus haute : c\'est ton point faible'} (rattrapage Delavier). Un muscle sans aucune série prévue ni faite n'est pas affiché. Dos et épaules restent en entretien car ils dominent déjà ; s'ils dépassent largement leur zone, ils continuent à voler le travail des pecs.</span>
-        <span>Ce que disent les études : c'est surtout le nombre de séries par semaine qui fait grossir un muscle, avec un rendement qui diminue au-delà d'un certain volume. Travailler un muscle 2 fois par semaine plutôt qu'une aide un peu, surtout parce que ça permet de répartir le volume : à volume égal, la fréquence compte peu pour le muscle et davantage pour la force. D'où tes pecs coupés en 10 séries le lundi et 11 le vendredi, plutôt que 20 d'un coup en fin de séance quand tu es fatigué.</span>
+      <section class="card flat small stack-sm"><b>Pourquoi ces cibles ?</b><span>Les pecs ont une zone plus haute : c'est ton point faible (rattrapage Delavier). Un muscle sans aucune série prévue ni faite n'est pas affiché. Dos et épaules restent en entretien car ils dominent déjà ; s'ils dépassent largement leur zone, ils continuent à voler le travail des pecs.</span>
+        <span>Ce que disent les études : c'est surtout le nombre de séries par semaine qui fait grossir un muscle, avec un rendement qui diminue au-delà d'un certain volume. Travailler un muscle 2 fois par semaine plutôt qu'une aide un peu, surtout parce que ça permet de répartir le volume : à volume égal, la fréquence compte peu pour le muscle et davantage pour la force. D'où tes pecs coupés en 11 séries le lundi et 12 le vendredi, plutôt que 23 d'un coup en fin de séance quand tu es fatigué.</span>
         <span>Pour un muscle en entretien comme ton dos, une seule séance lourde par semaine suffit si les charges restent hautes : c'est l'intensité qui garde le muscle, pas le nombre de séances. Les zones en séries/semaine sont des repères courants en hypertrophie, pas des chiffres des livres.</span>
         ${srcChips(['schoenfeld2017', 'pelland2026', 'schoenfeld2016freq', 'schoenfeld2019', 'spiering2021', 'iversen2021'])}</section>`;
   }
@@ -2183,13 +2175,13 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const words = q.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').split(/\s+/).filter(Boolean);
     const norm = (s) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
     const items = KB.filter((k) => !words.length || words.every((w) => norm(k.title + ' ' + k.tags + ' ' + k.body.replace(/<[^>]+>/g, ' ')).includes(w)));
-    if (!items.length) return '<div class="empty">Rien trouvé. Essaie « pecs », « abdos », « créatine », « échauffement »…</div>';
+    if (!items.length) return '<div class="empty">Rien trouvé. Essaie « pecs », « squat », « créatine », « échauffement »…</div>';
     return items.map((k, i) => `<details class="card kb-card" ${words.length || i === 0 ? 'open' : ''}><summary><span class="plate p-${k.plate}"></span><h3>${esc(k.title)}</h3><svg class="i chev" viewBox="0 0 24 24">${ICONS.chev}</svg></summary><div class="kb-body">${k.body}<span class="kb-src">Source : ${esc(k.src)}</span></div></details>`).join('');
   }
   function methodSheet() {
     openSheet('method', `${sheetHead('Méthode Delavier')}
       <p class="small muted" style="margin:0">Synthèse, reformulée, des six livres que tu m'as fournis (Méthode 2 et 3, Bras, Blessures, Compléments, Fight), appliquée à ta morphologie. Pour le détail, reporte-toi aux pages citées.</p>
-      <div class="search">${ic('search')}<input class="input" id="kbSearch" type="search" placeholder="Rechercher : pecs, abdos, créatine…" value="${esc(UI.kbQuery)}" data-in="kbSearch" autocomplete="off"></div>
+      <div class="search">${ic('search')}<input class="input" id="kbSearch" type="search" placeholder="Rechercher : pecs, squat, créatine…" value="${esc(UI.kbQuery)}" data-in="kbSearch" autocomplete="off"></div>
       <div class="stack" id="kbList">${kbList(UI.kbQuery)}</div>
       ${referencesHTML()}`);
   }
@@ -2198,7 +2190,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const f = (id, label, val, attrs) => `<div class="field"><label for="${id}">${label}</label><input class="input" id="${id}" value="${esc(val == null ? '' : String(val).replace('.', ','))}" ${attrs}></div>`;
     openSheet('profile', `${sheetHead('Profil & morphologie')}
       <section class="card flat stack-sm"><div class="row"><span class="plate p-red"></span><b>Morphologie</b></div>
-        <span class="small">Clavicules larges, dos et épaules dominants, bras forts. Points faibles : <b>pectoraux, surtout le haut</b>, et <b>abdominaux</b>. Objectif : <b>74 kg sec</b>. L'app met la priorité sur les pecs et laisse dos et épaules en entretien (abdos retirés du programme à ta demande, réactivables).</span>
+        <span class="small">Clavicules larges, dos et épaules dominants, bras forts. Point faible : <b>pectoraux, surtout le haut</b>. Objectif : <b>74 kg sec</b>. L'app met la priorité sur les pecs et laisse dos et épaules en entretien.</span>
         <button class="link" data-act="openMethod" style="justify-self:start">Lire l'analyse complète ›</button></section>
       <div class="grid2">
         ${f('pfName', 'Prénom', p.name, 'data-ch="profile" data-k="name" autocomplete="off"')}
@@ -2285,9 +2277,9 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const exOpts = P().flatMap((d) => d.exercises.filter((e) => e.type === 'wr').map((e) => `<option value="${e.id}" ${g.exId === e.id ? 'selected' : ''}>${esc(e.name)}</option>`)).join('');
     const v = (x) => (x == null ? '' : String(x).replace('.', ','));
     openSheet('goal', `${sheetHead(id ? 'Modifier l\'objectif' : 'Nouvel objectif')}
-      <div class="field"><label for="glType">Type</label><select class="input" id="glType" data-ch="goalType">${[['poids', 'Poids de corps'], ['pr', 'Charge sur un exercice'], ['habit', 'Séances par semaine (abdos ou marche)'], ['libre', 'Libre']].map(([k, l]) => `<option value="${k}" ${g.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field"><label for="glType">Type</label><select class="input" id="glType" data-ch="goalType">${[['poids', 'Poids de corps'], ['pr', 'Charge sur un exercice'], ['habit', 'Séances par semaine (marche)'], ['libre', 'Libre']].map(([k, l]) => `<option value="${k}" ${g.type === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="field" ${g.type === 'pr' ? '' : 'hidden'} id="glExWrap"><label for="glEx">Exercice</label><select class="input" id="glEx">${exOpts}</select></div>
-      <div class="field" ${g.type === 'habit' ? '' : 'hidden'} id="glHabitWrap"><label for="glHabit">Compter les séances avec</label><select class="input" id="glHabit">${[['abdos', 'Abdos'], ['cardio', 'Marche inclinée / cardio']].map(([k, l]) => `<option value="${k}" ${(g.muscle || 'abdos') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
+      <div class="field" ${g.type === 'habit' ? '' : 'hidden'} id="glHabitWrap"><label for="glHabit">Compter les séances avec</label><select class="input" id="glHabit">${[['cardio', 'Marche inclinée / cardio']].map(([k, l]) => `<option value="${k}" ${(g.muscle || 'cardio') === k ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div class="field"><label for="glLabel">Intitulé</label><input class="input" id="glLabel" value="${esc(g.label)}" placeholder="ex. Développé incliné à 70 kg"></div>
       <div class="grid3">
         <div class="field"><label for="glStart">Départ</label><input class="input" id="glStart" inputmode="decimal" value="${v(g.start)}"></div>
@@ -2575,6 +2567,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   /* ===================== Code couleur des muscles ===================== */
   /* Les disques colorés restent réservés aux séances. Un muscle s'affiche en pastille nommée,
      avec sa propre palette (6 familles) pour ne plus se confondre avec la couleur du jour. */
+  /* « abdos » ne sert plus qu'à afficher les séances faites avant la v8 dans l'historique. */
   const MGROUP = { pecs: 'pecs', abdos: 'abdos', dos: 'dos', epaules: 'epaules', biceps: 'bras', triceps: 'bras', avantbras: 'bras', quadris: 'jambes', ischios: 'jambes', adducteurs: 'jambes', fessiers: 'jambes', mollets: 'jambes', cardio: 'cardio' };
   const MSHORT = { pecs: 'Pecs', abdos: 'Abdos', dos: 'Dos', epaules: 'Épaules', biceps: 'Biceps', triceps: 'Triceps', avantbras: 'Avant-bras', quadris: 'Quadriceps', ischios: 'Ischios', adducteurs: 'Adducteurs', fessiers: 'Fessiers', mollets: 'Mollets', cardio: 'Cardio' };
   function mClass(k) { return `m-${MGROUP[k] || 'autre'}`; }
@@ -2582,7 +2575,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   function muscleChip(k) { return `<span class="mchip ${mClass(k)}"><i></i>${mName(k) || '—'}</span>`; }
   function mDot(k) { return `<span class="mdot ${mClass(k)}" title="${esc((MUSCLES[k] || {}).label || '')}"></span>`; }
   function muscleLegend() {
-    const gs = [['pecs', 'Pecs'], ['abdos', 'Abdos'], ['dos', 'Dos'], ['epaules', 'Épaules'], ['bras', 'Bras'], ['jambes', 'Jambes'], ['cardio', 'Cardio']];
+    const gs = [['pecs', 'Pecs'], ['dos', 'Dos'], ['epaules', 'Épaules'], ['bras', 'Bras'], ['jambes', 'Jambes'], ['cardio', 'Cardio']];
     return `<div class="legend mlegend">${gs.map(([g, l]) => `<span><span class="mdot m-${g}"></span>${l}</span>`).join('')}<span class="muted">· disque = séance</span></div>`;
   }
   const EQUIP_LABEL = { pdc: 'Poids du corps', smith: 'Smith', poulie: 'Poulie', machine: 'Machine', barre: 'Barre', halteres: 'Haltères', cardio: 'Cardio' };
@@ -3548,7 +3541,9 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     if (rotationPending()) out.push(alertRow('accent', 'reset', 'Nouveau cycle', 'Je te propose de changer de variante sur quelques exercices pour relancer les sensations.', '<button class="btn sm" data-act="rotOpen">Voir les propositions</button>'));
     const rb = S.core.rebalance;
     if (rb && rb.date && daysBetween(rb.date, t) <= 7) {
-      const txt = rb.v >= 7
+      const txt = rb.v >= 8
+        ? 'Abdos supprimés pour de bon : leurs 5 exercices, l\'objectif « séances avec abdos » et leur fiche disparaissent. Tes séances déjà faites restent dans l\'historique. À la place, le haut des pecs, ton point faible : une série de plus au vis-à-vis poulie basse du lundi et au développé incliné haltères du vendredi (24 séries de pecs par semaine, le haut de ta zone). Environ 3 min de plus ces deux jours, toujours dans le créneau.'
+        : rb.v >= 7
         ? 'Plus de superset : avec la salle pleine, garder deux postes à la fois n\'est pas tenable. Leg extension puis leg curl (mercredi) et les deux exercices de poignet (vendredi) se font l\'un après l\'autre, avec leur repos normal. Le reste ne change pas : abdos retirés (réactivables dans Modifier) et, le lundi, le développé convergent avant le vis-à-vis pour enchaîner les deux exercices à la poulie. Rien n\'est supprimé, tes charges restent.'
         : rb.v >= 6
         ? 'Abdos retirés à ta demande : leurs exercices sont désactivés et rangés en fin de séance, réactivables dans Modifier. Déroulé optimisé : le lundi, le développé convergent passe avant le vis-à-vis et les deux exercices à la poulie se suivent ; leg extension + leg curl le mercredi et curl + extension de poignet le vendredi s\'enchaînent en superset (30 s pour changer de poste). Rien n\'est supprimé, tes charges restent.'
