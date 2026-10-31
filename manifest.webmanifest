@@ -1,7 +1,7 @@
 {
   "name": "Carnet Charles",
   "short_name": "Carnet",
-  "description": "Séances, PR, chrono, repas, courses et objectifs — méthode Delavier.",
+  "description": "Séances, PR, chrono et objectifs — méthode Delavier.",
   "lang": "fr",
   "start_url": "./",
   "scope": "./",
