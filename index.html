@@ -2280,7 +2280,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       ${item('openMethod', 'book', 'Méthode Delavier', 'Synthèse des 6 livres appliquée à ton profil')}
       ${item('openProfile', 'user', 'Profil & morphologie', 'Taille, poids, points forts et faibles')}
       ${item('openCalendar', 'cal', 'Calendrier', 'Séances faites, prévues et manquées')}
-      ${item('openPlan', 'swap', 'Planning', 'Semaines entreprise et école, pause vacances, Google Agenda')}
+      ${item('openPlan', 'swap', 'Planning', window.claude && typeof window.claude.use === 'function' ? 'Semaines entreprise et école, pause vacances, Google Agenda' : 'Semaines entreprise et école, pause vacances')}
       ${item('weekSheet', 'target', 'Bilan de la semaine', 'Séances, charges, sommeil et un conseil')}
       ${item('openSettings', 'gear', 'Réglages', 'Chrono, son, semaine légère, thème')}
       ${item('openBackup', 'save', 'Sauvegarde & synchro', 'Exporter, importer, état de la synchro')}
@@ -4176,17 +4176,19 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
         <button class="btn" data-act="pauseAdd">Mettre le programme en pause</button>
         <span class="hint">Pendant la pause, aucune séance n'est prévue ni comptée comme manquée. Tu peux quand même en lancer une depuis l'onglet Séance.</span>
       </section>
-      <section class="card stack-sm"><h3>Google Agenda</h3>
+      ${HAS_CLAUDE ? `<section class="card stack-sm"><h3>Google Agenda</h3>
         <span class="hint">Ajoute tes séances des 14 prochains jours à ton agenda, avec leur créneau. Relance après un décalage ou une pause : les événements suivent. Seuls les événements créés par l'appli sont modifiés.</span>
         <div class="notice" id="gcalStatus">${g.last ? `Dernière synchro : ${esc(new Date(g.last).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }))}, jusqu'au ${esc(fmtDate(g.until, { day: 'numeric', month: 'long' }))}.${gcalStale() ? ' Ton planning a changé depuis.' : ''}` : 'Pas encore synchronisé.'}</div>
         <button class="btn primary" data-act="gcalSync">${ic('cal')} Synchroniser mon agenda</button>
         ${g.last ? '<button class="btn ghost" data-act="gcalClear">Retirer mes séances de l\'agenda</button>' : ''}
-      </section>`);
+      </section>` : ''}`);
   }
 
   /* Google Agenda, par le connecteur de la personne qui regarde. Chaque événement créé porte une marque dans sa description :
      la synchro relit l'agenda, puis ajoute, déplace ou retire uniquement ces événements-là. Relancer ne crée pas de doublon. */
   const GCAL = 'Google Calendar';
+  /* Hors de Claude (site autonome), pas de connecteur : la synchro d'agenda n'est pas proposée. */
+  const HAS_CLAUDE = !!(window.claude && typeof window.claude.use === 'function');
   function slotOf(time) {
     const m = [...String(time || '').matchAll(/(\d{1,2})\s*h\s*(\d{2})?/g)].map((x) => (+x[1]) * 60 + (+x[2] || 0)).filter((x) => x < 24 * 60);
     if (!m.length) return null;
@@ -4205,7 +4207,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   }
   const gcalKey = (w) => (w ? `${w.dayId}@${w.start.slice(11, 16)}-${w.end.slice(11, 16)}` : '');
   function gcalStale() {
-    const g = S.core.gcal; if (!g || !g.last || !g.until || !g.plan) return null;
+    const g = S.core.gcal; if (!HAS_CLAUDE || !g || !g.last || !g.until || !g.plan) return null;
     const t = today(); if (g.until < t) return 'fin';
     const want = gcalWanted();
     for (let d = t; d <= g.until; d = addDays(d, 1)) if (gcalKey(want[d]) !== (g.plan[d] || '')) return 'diff';
