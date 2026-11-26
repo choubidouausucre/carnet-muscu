@@ -3210,7 +3210,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     } else {
       const w = isWarm ? data.w : (data.w != null ? data.w : e.tw); const u = wUnit(ex);
       if (isWarm) target = data.w != null ? `${data.w === 0 ? 'Barre à vide' : `${fmt(data.w, 2)} ${u}`} × ${data.r}${data.pct ? ` · ~${Math.round(data.pct * 100)} % de ta charge` : (ex.equip === 'barre' || ex.equip === 'smith' ? ' · barre seule' : ' · très léger, pour le geste')}` : `Charge légère × ${data.r} (~${Math.round((data.pct || 0.5) * 100)} %)`;
-      else target = `${e.tw != null ? `${fmt(e.tw, 2)} ${u}` : 'Charge à définir'} × ${esc(e.treps || '')} reps${e.tr ? ` (objectif ${e.tr})` : ''} · garde ${comp ? '1 à 3' : '0 à 2'} reps en réserve`;
+      else target = `${e.tw != null ? `${fmt(e.tw, 2)} ${u}` : 'Charge à définir'} × ${esc(e.treps || '')} reps${e.tr ? ` (objectif ${e.tr})` : ''}${S.core.settings.showRir ? ` · garde ${comp ? '1 à 3' : '0 à 2'} reps en réserve` : ''}`;
       inputs = `<div class="grid2">${stepper(ex.equip === 'halteres' ? 'Charge par haltère' : 'Charge', 'w', w, loadStep(ex), 'kg', isWarm ? data.w : e.tw)}${stepper('Répétitions', 'r', data.r, 1, '', isWarm ? data.r : (tr || ''))}</div>${isWarm || !S.core.settings.showRir ? '' : rirPicker(data, comp)}`;
     }
     const firstNote = st.side && st.si === 0 && st.side === e.first && !data.done
