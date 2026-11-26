@@ -809,6 +809,81 @@ body::before, .top { background: color-mix(in srgb, var(--bg) 40%, transparent);
 .bar, .step-prog, .restbar-track, .bal .track { background: var(--sunken); }
 
 @media (prefers-reduced-motion: reduce) { .bgfx i { animation: none; } }
+
+/* ======================================================================
+   Mouvement : ressorts partout, transitions entre onglets, goutte liquide, feuilles qu'on tire au doigt.
+   Uniquement transform et opacity, pour rester à 60/120 i/s.
+   ====================================================================== */
+:root { --spring: cubic-bezier(.32, 1.42, .42, 1); --spring-soft: cubic-bezier(.25, 1.18, .4, 1); --ease-out: cubic-bezier(.16, 1, .3, 1); }
+.btn, .chip, .icon-btn, .day, .choice, .rpe-btn, .mv, .timer-pill, .shortcuts button, .stepper button, .rir button, .seg button, .rest-nudge button, .cal .c, .q-row, .alert-row .btn, .hist-main, .li[data-act], .tab {
+  transition: transform .42s var(--spring), background-color .25s ease, color .25s ease, box-shadow .3s ease, opacity .25s ease;
+  -webkit-user-select: none; user-select: none; touch-action: manipulation;
+}
+.btn:active, .chip:active, .icon-btn:active, .choice:active, .rpe-btn:active, .mv:active, .timer-pill:active, .shortcuts button:active, .stepper button:active, .rir button:active, .rest-nudge button:active, .q-row:active, .hist-main:active { transform: scale(.94); transition-duration: .12s; }
+.day:active b, .cal .c:active { transform: scale(.88); }
+.tab:active svg { transform: scale(.82); }
+.card[data-act]:active, .hero:active { transform: scale(.985); }
+.card, .hero, .step-card { transition: transform .5s var(--spring-soft); }
+
+/* Entrée des écrans : montée + léger flou qui se dissipe, en cascade */
+.view.enter > * { animation: rise-in .7s var(--ease-out) backwards; }
+@keyframes rise-in { from { opacity: 0; transform: translateY(22px) scale(.97); filter: blur(6px); } 60% { filter: blur(0); } to { opacity: 1; transform: none; filter: none; } }
+.view.enter[data-anim="step"] > *, .view.enter[data-anim="feel"] > * { animation: slide-spring .6s var(--spring-soft) backwards; }
+@keyframes slide-spring { from { opacity: 0; transform: translateX(46px) scale(.96); } to { opacity: 1; transform: none; } }
+.view.enter[data-dir="back"][data-anim="step"] > * { animation-name: slide-spring-back; }
+@keyframes slide-spring-back { from { opacity: 0; transform: translateX(-46px) scale(.96); } to { opacity: 1; transform: none; } }
+.view.enter .card > *, .view.enter .list > *, .view.enter .q-list > *, .view.enter .alerts > * { animation: rise-in .6s var(--ease-out) backwards; }
+.view.enter .list > :nth-child(2), .view.enter .alerts > :nth-child(2), .view.enter .q-list > :nth-child(2) { animation-delay: .06s; }
+.view.enter .list > :nth-child(3), .view.enter .alerts > :nth-child(3), .view.enter .q-list > :nth-child(3) { animation-delay: .12s; }
+.view.enter .list > :nth-child(n+4), .view.enter .alerts > :nth-child(n+4), .view.enter .q-list > :nth-child(n+4) { animation-delay: .18s; }
+.view.enter .hero h1 { animation: title-in .8s .08s var(--ease-out) backwards; }
+@keyframes title-in { from { opacity: 0; transform: translateY(12px); letter-spacing: .02em; } to { opacity: 1; transform: none; } }
+.view.enter .hero-ring { animation: pop-in .8s .15s var(--spring) backwards; }
+.view.enter .rest-dial { animation: dial-in .8s var(--spring) backwards; }
+@keyframes dial-in { from { opacity: 0; transform: scale(.7) rotate(-25deg); } to { opacity: 1; transform: none; } }
+.view.enter .week .day b { animation: pop-in .6s var(--spring) backwards; }
+
+/* Révélation au défilement : les blocs hors écran montent quand ils arrivent (visibles par défaut) */
+.reveal-wait { opacity: 0; transform: translateY(28px) scale(.98); }
+.reveal-in { animation: rise-in .7s var(--ease-out) both; }
+
+/* Goutte liquide de la barre d'onglets : elle s'étire pendant le trajet */
+.tab-ind { transition: none; will-change: transform; }
+
+/* Feuilles : ressort à l'ouverture, on peut les tirer vers le bas pour fermer */
+.sheet { transition: transform .55s var(--spring-soft); will-change: transform; }
+.sheet.dragging { transition: none; }
+.scrim { transition: opacity .35s ease; }
+.sheet.opening.show .sheet-inner > * { animation: rise-in .55s var(--ease-out) backwards; }
+.sheet.opening.show .sheet-inner > :nth-child(2) { animation-delay: .05s; }
+.sheet.opening.show .sheet-inner > :nth-child(3) { animation-delay: .1s; }
+.sheet.opening.show .sheet-inner > :nth-child(n+4) { animation-delay: .15s; }
+
+/* Toast : arrive en ressort */
+.toast { transition: transform .5s var(--spring), opacity .25s ease; }
+
+/* Le fond respire un peu plus vite pendant une séance */
+body.playing .bgfx i { animation-duration: 18s; }
+
+/* Transitions natives entre onglets (Safari 18+) : glissement dans le sens du trajet */
+::view-transition-old(main), ::view-transition-new(main) { animation-duration: .5s; animation-timing-function: var(--ease-out); }
+::view-transition-old(main) { animation-name: vt-out; }
+::view-transition-new(main) { animation-name: vt-in; }
+html[data-vt="back"]::view-transition-old(main) { animation-name: vt-out-back; }
+html[data-vt="back"]::view-transition-new(main) { animation-name: vt-in-back; }
+@keyframes vt-out { to { opacity: 0; transform: translateX(-60px) scale(.97); } }
+@keyframes vt-in { from { opacity: 0; transform: translateX(60px) scale(.97); } }
+@keyframes vt-out-back { to { opacity: 0; transform: translateX(60px) scale(.97); } }
+@keyframes vt-in-back { from { opacity: 0; transform: translateX(-60px) scale(.97); } }
+#view { view-transition-name: main; }
+.tabs-inner { view-transition-name: tabs; }
+.top { view-transition-name: top; }
+::view-transition-group(tabs), ::view-transition-group(top) { animation: none; }
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal-wait { opacity: 1; transform: none; }
+  ::view-transition-old(main), ::view-transition-new(main) { animation: none; }
+}
 </style>
 </head><body>
 <div class="bgfx" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
@@ -885,7 +960,7 @@ function EX(id, name, muscle, sets, reps, type, pr, extra) {
 }
 
 /* Version du programme : à incrémenter quand le programme par défaut change (migration des données déjà enregistrées). */
-const PROGRAM_VERSION = 10;
+const PROGRAM_VERSION = 11;
 
 /* Objectif : recomposition jusqu'à 74 kg sec + progression des charges.
    Calé sur l'emploi du temps : cours Efrei jusqu'à 17 h 10, créneaux salle de 1 h 30 (lun, mer, jeu 19 h ; sam 14 h),
@@ -1457,6 +1532,10 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       out.programVersion = 9;
       out.updatedAt = Date.now();
     }
+    if ((out.programVersion || 1) < 11) {
+      (out.program || []).forEach((d) => { if (d.id === 'jambes2' && !(d.dow || []).length) d.hidden = true; });
+      if (out.programVersion >= 10) { out.programVersion = 11; out.updatedAt = Date.now(); }
+    }
     if ((out.programVersion || 1) < 10) {
       /* v10 : charges de travail du 26 novembre ; curl pupitre à deux bras ; hip thrust et fentes retirés (pas faits). */
       const W10 = { 'p-incline': 62.5, 'p-conv': 35, 'p-xover': 12.5, 'e-lat': 7.5, 'e-curlm': 40,
@@ -1486,7 +1565,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
         js.dow = []; delete js.pick; if (js.alt) js.alt.dow = [];
         if (out.shift) Object.keys(out.shift).forEach((d) => { if (out.shift[d] === 'jambes2' && d >= today()) delete out.shift[d]; });
       }
-      out.programVersion = 10; out.updatedAt = Date.now();
+      (out.program || []).forEach((d) => { if (d.id === 'jambes2') d.hidden = true; });
+      out.programVersion = 11; out.updatedAt = Date.now();
     }
 
     /* Une couleur par séance : 2e séance pecs en rose, 2e séance jambes en orange. */
@@ -1769,8 +1849,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   }
 
   /* ===================== Domaine : programme & séances ===================== */
-  const P = () => S.core.program;
-  const dayById = (id) => P().find((d) => d.id === id);
+  const P = () => S.core.program.filter((d) => !d.hidden);
+  const dayById = (id) => S.core.program.find((d) => d.id === id);
   function findEx(id) { if (id && String(id).includes('@')) return findAlt(id); for (const d of P()) { const e = d.exercises.find((x) => x.id === id); if (e) return { day: d, ex: e }; } return null; }
   const dayDows = (d) => ((d.dow || []).length > 1 ? [d.pick != null ? d.pick : d.dow[0]] : (d.dow || []));
   /* Pause vacances : entre deux dates incluses, aucune séance n'est prévue, donc aucune n'est « manquée ». */
@@ -2157,7 +2237,8 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     const doneToday = logsOn(t).length > 0;
     const mon = mondayOf(t); const wdays = [0, 1, 2, 3, 4, 5, 6].map((i) => addDays(mon, i));
     const wkDone = wdays.filter((x) => logsOn(x).length).length;
-    const wkPlan = wdays.filter((x) => sessionDayFor(x) || logsOn(x).length).length;
+    /* Séances prévues cette semaine ; une séance faite un jour de repos remplace une séance prévue, elle ne s'ajoute pas. */
+    const wkPlan = Math.max(wdays.filter((x) => sessionDayFor(x)).length, wkDone);
     const weekRing = ringSVG(wkDone, wkPlan, 'semaine');
     let hero;
     if (act) {
@@ -2623,17 +2704,31 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     if (a && a.dayId === UI.trainDay) return a.rest && !a.rest.bg ? 'rest' : `step:${a.at}`;
     return `day:${UI.trainDay}`;
   }
+  let lastTab = null; let lastStepIdx = null;
   function render() {
+    const tabChanged = lastTab != null && lastTab !== UI.tab;
+    const dir = tabChanged && TAB_ORDER.indexOf(UI.tab) < TAB_ORDER.indexOf(lastTab) ? 'back' : 'fwd';
+    lastTab = UI.tab;
+    if (tabChanged && !REDUCED && document.startViewTransition) {
+      document.documentElement.dataset.vt = dir;
+      try { document.startViewTransition(() => renderInner()); return; } catch (e) { /* repli sans transition native */ }
+    }
+    renderInner();
+  }
+  function renderInner() {
     const v = $('#view');
     const fn = { home: renderHome, train: renderTrain, progress: renderProgress }[UI.tab] || renderHome;
     v.innerHTML = fn();
     const k = viewKey();
     if (k !== lastViewKey) {
-      lastViewKey = k; v.dataset.anim = k.split(':')[0];
+      const kind = k.split(':')[0]; let back = false;
+      if (kind === 'step' && S.core.active) { const st = buildSteps(S.core.active); const idx = st.findIndex((x) => stepKey(x) === S.core.active.at); back = lastStepIdx != null && idx < lastStepIdx; lastStepIdx = idx; }
+      lastViewKey = k; v.dataset.anim = kind; v.dataset.dir = back ? 'back' : 'fwd';
       v.classList.remove('enter'); void v.offsetWidth; v.classList.add('enter');
+      countUp(v); armReveal(v);
     } else v.classList.remove('enter');
     $$('.tab').forEach((t) => t.setAttribute('aria-current', t.dataset.tab === UI.tab ? 'page' : 'false'));
-    const ti = $('#tabsInner'); if (ti) ti.style.setProperty('--i', String(Math.max(0, ['home', 'train', 'progress'].indexOf(UI.tab))));
+    moveTabInd(Math.max(0, TAB_ORDER.indexOf(UI.tab)));
     document.body.classList.toggle('playing', !!S.core.active);
     $('#topSub').innerHTML = subLine();
     updateTimerUI();
@@ -4568,6 +4663,63 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     },
     storySig: (el) => { S.core.profile.handle = el.value.trim(); persist(['core']); drawStory(el.dataset.id); },
   });
+  /* ===================== Mouvement ===================== */
+  const REDUCED = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const TAB_ORDER = ['home', 'train', 'progress'];
+  /* Goutte liquide : glisse jusqu'à l'onglet, s'étire en route, rebondit à l'arrivée. */
+  let indAt = null;
+  function moveTabInd(i) {
+    const ind = $('.tab-ind'); if (!ind) return;
+    const to = `translateX(${i * 100}%)`;
+    if (indAt == null || REDUCED || !ind.animate) { ind.style.transform = to; indAt = i; return; }
+    if (indAt === i) return;
+    const from = `translateX(${indAt * 100}%)`; const mid = `translateX(${((indAt + i) / 2) * 100}%) scaleX(${1 + 0.32 * Math.abs(i - indAt)}) scaleY(.86)`;
+    ind.animate([{ transform: from }, { transform: mid, offset: 0.45 }, { transform: `${to} scaleX(.94) scaleY(1.06)`, offset: 0.78 }, { transform: to }], { duration: 560, easing: 'cubic-bezier(.3,.9,.3,1)' });
+    ind.style.transform = to; indAt = i;
+  }
+  /* Chiffres qui défilent jusqu'à leur valeur. */
+  function countUp(root) {
+    if (REDUCED) return;
+    $$('.stat .v, .hr-t b, .num-h', root).forEach((el) => {
+      const node = [...el.childNodes].find((n) => n.nodeType === 3 && /\d/.test(n.nodeValue)); if (!node) return;
+      const m = /^(\D*)(\d+(?:[.,]\d+)?)(.*)$/.exec(node.nodeValue); if (!m) return;
+      const target = parseFloat(m[2].replace(',', '.')); if (!(target > 0)) return;
+      const dec = (m[2].split(/[.,]/)[1] || '').length; const sep = m[2].includes(',') ? ',' : '.';
+      const t0 = performance.now(); const dur = 900;
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / dur); const e = 1 - Math.pow(1 - k, 4);
+        node.nodeValue = m[1] + (target * e).toFixed(dec).replace('.', sep) + m[3];
+        if (k < 1) requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+  /* Les blocs sous la ligne de flottaison montent quand on y arrive. */
+  let revealObs = null;
+  function armReveal(root) {
+    if (REDUCED || !window.IntersectionObserver) return;
+    if (!revealObs) revealObs = new IntersectionObserver((ents) => ents.forEach((en) => { if (en.isIntersecting) { en.target.classList.remove('reveal-wait'); en.target.classList.add('reveal-in'); revealObs.unobserve(en.target); } }), { rootMargin: '0px 0px -6% 0px' });
+    const h = window.innerHeight;
+    $$(':scope > *, :scope > .sec > .card', root).forEach((el) => { if (el.getBoundingClientRect().top > h * 0.95) { el.classList.add('reveal-wait'); revealObs.observe(el); } });
+  }
+  /* Feuille : on la tire vers le bas pour la fermer. */
+  (function sheetDrag() {
+    const sh = $('#sheet'); if (!sh) return; let y0 = null; let dy = 0; let t0 = 0;
+    sh.addEventListener('touchstart', (e) => { if (sh.scrollTop > 0 || !e.touches[0]) return; y0 = e.touches[0].clientY; dy = 0; t0 = Date.now(); }, { passive: true });
+    sh.addEventListener('touchmove', (e) => {
+      if (y0 == null) return; dy = e.touches[0].clientY - y0;
+      if (dy <= 0) { sh.classList.remove('dragging'); sh.style.transform = ''; return; }
+      sh.classList.add('dragging'); sh.style.transform = `translateY(${dy < 120 ? dy : 120 + (dy - 120) * 0.6}px)`;
+      const sc = $('#scrim'); if (sc) sc.style.opacity = String(Math.max(0, 1 - dy / 400));
+    }, { passive: true });
+    sh.addEventListener('touchend', () => {
+      if (y0 == null) return; const fast = dy > 60 && Date.now() - t0 < 260; y0 = null;
+      sh.classList.remove('dragging'); sh.style.transform = ''; const sc = $('#scrim'); if (sc) sc.style.opacity = '';
+      if (dy > 140 || fast) closeSheet();
+    });
+  }());
+  /* Petit retour haptique là où le téléphone le permet. */
+  document.addEventListener('pointerdown', (e) => { const b = e.target.closest && e.target.closest('.btn.primary, .tab'); if (b) { try { if (navigator.vibrate) navigator.vibrate(8); } catch (x) { /* pas de vibreur */ } } }, { passive: true });
 
   /* ===================== Démarrage ===================== */
   applyTheme();
