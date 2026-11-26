@@ -1462,7 +1462,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     return {
       schema: SCHEMA, programVersion: PROGRAM_VERSION, updatedAt: 0,
       profile: { name: 'Charles', heightCm: 173.5, weightKg: 70, age: 21, ageConfirmed: false, bodyFat: null, gym: 'Fitness Park du Chesnay' },
-      settings: { restSec: 180, autoRest: true, perExerciseRest: true, sound: true, countBeep: true, theme: 'auto' },
+      settings: { restSec: 180, autoRest: true, perExerciseRest: true, sound: true, countBeep: true, haptics: true, theme: 'auto' },
       program,
       goals: defaultGoals(),
       next: {}, uniFirst: {}, shift: {}, quiz: { box: {}, wrong: {} }, altPR: {}, lastBackup: null,
@@ -2045,7 +2045,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       if (sec !== T.lastSec) { T.lastSec = sec; if (sec === 10 || (sec >= 1 && sec <= 3)) beep(sec === 10 ? 660 : 880, sec === 10 ? 0.22 : 0.1); }
     }
     if (T.state === 'run' && Date.now() >= T.end) {
-      T.state = 'done'; T.doneAt = Date.now(); saveTimerState(); ring(); flashGo(); toast('Repos terminé, à toi');
+      T.state = 'done'; T.doneAt = Date.now(); saveTimerState(); ring(); flashGo(); HAPTIC.warn(); toast('Repos terminé, à toi');
     }
     if (S.core.active && S.core.active.rest && (T.state === 'done' || T.state === 'idle')) endRest();
     if (T.state === 'done' && Date.now() - T.doneAt > 12000) { T.state = 'idle'; T.left = T.dur; saveTimerState(); }
@@ -2573,6 +2573,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       ${row('Durée de repos par défaut', 'Pour les exercices sans repos conseillé (3 min au départ)', `<select class="input" style="width:110px" id="stRest" data-ch="restSec">${[60, 90, 120, 150, 180, 210, 240, 300].map((s) => `<option value="${s}" ${st.restSec === s ? 'selected' : ''}>${clock(s)}</option>`).join('')}</select>`)}
       ${row('Chrono automatique', 'Démarre quand tu valides une série', sw(st.autoRest, 'setToggle', 'data-k="autoRest"', 'Chrono automatique'))}
       ${row('Son et vibration', 'Bip à la fin du repos (la vibration ne marche pas sur iPhone)', sw(st.sound, 'setToggle', 'data-k="sound"', 'Son'))}
+      ${row('Retours haptiques', 'Un petit tic sous le doigt à chaque bouton (iPhone avec iOS 18 ou plus)', sw(st.haptics !== false, 'setToggle', 'data-k="haptics"', 'Retours haptiques'))}
       ${row('Bips avant la fin du repos', 'Un bip à 10 s, puis 3, 2, 1', sw(st.countBeep !== false, 'setToggle', 'data-k="countBeep"', 'Bips avant la fin du repos'))}
       ${row('Semaine légère', 'Moitié des séries, mêmes charges, en fin de cycle (alternance TNT)', `<select class="input" style="width:130px" id="stDeload" data-ch="deloadEvery">${[[0, 'Jamais'], [5, 'Toutes les 5 sem.'], [6, 'Toutes les 6 sem.'], [7, 'Toutes les 7 sem.'], [8, 'Toutes les 8 sem.'], [9, 'Toutes les 9 sem.']].map(([v, l]) => `<option value="${v}" ${(S.core.cycle && S.core.cycle.every || 0) === v ? 'selected' : ''}>${l}</option>`).join('')}</select>`)}
     </div>
@@ -3210,7 +3211,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       const w = isWarm ? data.w : (data.w != null ? data.w : e.tw); const u = wUnit(ex);
       if (isWarm) target = data.w != null ? `${data.w === 0 ? 'Barre à vide' : `${fmt(data.w, 2)} ${u}`} × ${data.r}${data.pct ? ` · ~${Math.round(data.pct * 100)} % de ta charge` : (ex.equip === 'barre' || ex.equip === 'smith' ? ' · barre seule' : ' · très léger, pour le geste')}` : `Charge légère × ${data.r} (~${Math.round((data.pct || 0.5) * 100)} %)`;
       else target = `${e.tw != null ? `${fmt(e.tw, 2)} ${u}` : 'Charge à définir'} × ${esc(e.treps || '')} reps${e.tr ? ` (objectif ${e.tr})` : ''} · garde ${comp ? '1 à 3' : '0 à 2'} reps en réserve`;
-      inputs = `<div class="grid2">${stepper(ex.equip === 'halteres' ? 'Charge par haltère' : 'Charge', 'w', w, loadStep(ex), 'kg', isWarm ? data.w : e.tw)}${stepper('Répétitions', 'r', data.r, 1, '', isWarm ? data.r : (tr || ''))}</div>${isWarm ? '' : rirPicker(data, comp)}`;
+      inputs = `<div class="grid2">${stepper(ex.equip === 'halteres' ? 'Charge par haltère' : 'Charge', 'w', w, loadStep(ex), 'kg', isWarm ? data.w : e.tw)}${stepper('Répétitions', 'r', data.r, 1, '', isWarm ? data.r : (tr || ''))}</div>${isWarm || !S.core.settings.showRir ? '' : rirPicker(data, comp)}`;
     }
     const firstNote = st.side && st.si === 0 && st.side === e.first && !data.done
       ? `<div class="notice">Commence par le côté <b>${SIDE_LABEL[e.first]}</b>${(S.core.uniFirst || {})[e.exId] ? ' (alterné à chaque séance)' : ''}, puis enchaîne l'autre côté sans repos.</div>` : '';
@@ -4099,7 +4100,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
 
   /* ===================== Effets : validation, fin de repos, record ===================== */
   function okBurst() {
-    try { if (navigator.vibrate) navigator.vibrate(25); } catch (e) { /* pas de vibreur */ }
+    HAPTIC.success();
     const el = document.createElement('div'); el.className = 'okburst'; el.setAttribute('aria-hidden', 'true');
     el.innerHTML = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
     document.body.appendChild(el); setTimeout(() => el.remove(), 700);
@@ -4107,6 +4108,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
   function flashGo() { document.body.classList.add('go'); setTimeout(() => document.body.classList.remove('go'), 1200); }
   /* Record battu : une pluie de confettis, surtout verts. */
   function confetti() {
+    setTimeout(() => HAPTIC.heavy(), 0);
     if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const cv = document.createElement('canvas'); cv.className = 'confetti'; cv.setAttribute('aria-hidden', 'true');
     const ctx = cv.getContext && cv.getContext('2d'); if (!ctx) return;
@@ -4195,7 +4197,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
     restPick: (el) => {
       const act = S.core.active; if (!act) return;
       act.at = el.dataset.key; if (act.rest) act.rest.key = act.at;
-      persist(['core']); render();
+      persist(['core']); render(); HAPTIC.success();
       const cs = curStep(); if (cs && cs.e) toast(`Ensuite : ${shortEx(cs.e.name)}`);
     },
     moveSheet: (el) => moveSheet(el.dataset.date),
@@ -4206,7 +4208,7 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       sh[to] = a.id; sh[from] = b ? b.id : '';
       [from, to].forEach((d) => { const tp = tmplDayFor(d); if (sh[d] === (tp ? tp.id : '')) delete sh[d]; });
       const old = addDays(today(), -120); Object.keys(sh).forEach((d) => { if (d < old) delete sh[d]; });
-      persist(['core']); closeSheet(); render();
+      persist(['core']); closeSheet(); render(); HAPTIC.success();
       toast(`${shortTitle(a)} : ${fmtDate(to, { weekday: 'long', day: 'numeric' })}${b ? `. ${shortTitle(b)} passe à ${fmtDate(from, { weekday: 'long', day: 'numeric' })}` : ''}`);
     },
     moveReset: (el) => {
@@ -4718,8 +4720,33 @@ const REF_LIFTS = ['p-incline', 'j-squat', 'd-sdt', 'd-tractions', 'e-smith'];
       if (dy > 140 || fast) closeSheet();
     });
   }());
-  /* Petit retour haptique là où le téléphone le permet. */
-  document.addEventListener('pointerdown', (e) => { const b = e.target.closest && e.target.closest('.btn.primary, .tab'); if (b) { try { if (navigator.vibrate) navigator.vibrate(8); } catch (x) { /* pas de vibreur */ } } }, { passive: true });
+  /* Retour haptique. Android : navigator.vibrate. iPhone (iOS 18+) : Safari n'a pas d'API de vibration, mais basculer
+     un interrupteur natif (<input type="checkbox" switch>) déclenche le petit « tic » du système. On en garde un caché. */
+  const HAPTIC = (() => {
+    let lbl = null;
+    try {
+      lbl = document.createElement('label'); lbl.setAttribute('aria-hidden', 'true');
+      lbl.style.cssText = 'position:fixed;left:-100px;top:0;width:1px;height:1px;overflow:hidden;opacity:0;pointer-events:none';
+      const cb = document.createElement('input'); cb.type = 'checkbox'; cb.setAttribute('switch', ''); cb.tabIndex = -1;
+      lbl.appendChild(cb); document.body.appendChild(lbl);
+    } catch (e) { lbl = null; }
+    const canVibrate = typeof navigator.vibrate === 'function';
+    const tick = () => { if (S.core.settings.haptics === false) return; if (canVibrate) { try { navigator.vibrate(10); } catch (e) { /* refusé */ } } else if (lbl) lbl.click(); };
+    const pattern = (n, gap, ms) => {
+      if (S.core.settings.haptics === false) return;
+      if (canVibrate) { const p = []; for (let i = 0; i < n; i++) { p.push(ms); if (i < n - 1) p.push(gap); } try { navigator.vibrate(p); } catch (e) { /* refusé */ } return; }
+      for (let i = 0; i < n; i++) setTimeout(() => { if (lbl) lbl.click(); }, i * gap);
+    };
+    return { tick, success: () => pattern(2, 90, 18), warn: () => pattern(3, 70, 14), heavy: () => pattern(1, 0, 35) };
+  })();
+  /* Un tic sur chaque bouton, onglet, puce, jour ; le reste (série validée, record, fin de repos) a son propre motif. */
+  document.addEventListener('click', (e) => {
+    const b = e.target.closest && e.target.closest('button, .q-row, [data-act]');
+    if (!b || b.disabled || b.closest('label[aria-hidden]')) return;
+    const act = b.dataset ? b.dataset.act : '';
+    if (act === 'stepDone' || act === 'restPick' || act === 'movePick') return;
+    HAPTIC.tick();
+  }, true);
 
   /* ===================== Démarrage ===================== */
   applyTheme();
